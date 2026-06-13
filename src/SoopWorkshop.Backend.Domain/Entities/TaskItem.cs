@@ -1,4 +1,4 @@
-﻿using SoopWorkshop.Backend.Domain.Enums;
+﻿using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Domain.Entities;
 

@@ -1,4 +1,4 @@
-﻿namespace SoopWorkshop.Backend.Domain.Enums
+﻿namespace SoopWorkshop.Shared.Enums
 {
     public enum SubmissionStatus
     {
