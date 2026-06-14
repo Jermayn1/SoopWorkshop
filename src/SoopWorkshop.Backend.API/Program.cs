@@ -1,6 +1,7 @@
 using SoopWorkshop.Backend.API.Middleware;
 using SoopWorkshop.Backend.Application;
 using SoopWorkshop.Backend.Infrastructure;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,8 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    // Zum testen der Endpunkte und Datenbank befüllen zum test
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
