@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Domain.Entities;
 
 namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories

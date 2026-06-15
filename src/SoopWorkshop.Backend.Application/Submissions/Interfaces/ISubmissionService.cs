@@ -2,7 +2,7 @@
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.DTOs.Submissions;
 
-namespace SoopWorkshop.Backend.Application.Submissions.Services
+namespace SoopWorkshop.Backend.Application.Submissions.Interfaces
 {
     public interface ISubmissionService
     {

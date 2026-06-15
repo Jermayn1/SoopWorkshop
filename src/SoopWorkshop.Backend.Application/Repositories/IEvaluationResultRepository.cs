@@ -1,6 +1,6 @@
 ﻿using SoopWorkshop.Backend.Domain.Entities;
 
-namespace SoopWorkshop.Backend.Application.Repositories.Interfaces
+namespace SoopWorkshop.Backend.Application.Repositories
 {
     public interface IEvaluationResultRepository
     {
