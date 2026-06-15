@@ -21,6 +21,7 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<ITaskItemRepository, TaskItemRepository>();
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IEvaluationResultRepository, EvaluationResultRepository>();
+            services.AddScoped<ITaskTestRepository, TaskTestRepository>();
 
             services.AddScoped<CharacterSetChecker>();
             services.AddScoped<NamingConventionChecker>();

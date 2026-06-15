@@ -16,6 +16,7 @@ namespace SoopWorkshop.Backend.Application
             services.AddScoped<ITaskItemService, TaskItemService>();
             services.AddScoped<ISubmissionService, SubmissionService>();
             services.AddScoped<IEvaluationService, EvaluationService>();
+            services.AddScoped<ITaskTestService, TaskTestService>();
 
             return services;
         }
