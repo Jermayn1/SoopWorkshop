@@ -1,0 +1,101 @@
+﻿@page "/result/{Id:guid}"
+
+<PageTitle>Ergebnis - SoopWorkshop</PageTitle>
+
+@if (_isPolling)
+{
+    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="4" Class="mt-16">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h6">Auswertung laeuft...</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            Deine Loesung wird gerade geprueft. Bitte warte kurz.
+        </MudText>
+    </MudStack>
+}
+else if (_result is null)
+{
+    <MudAlert Severity="Severity.Error">
+        Ergebnis konnte nicht geladen werden.
+    </MudAlert>
+}
+else
+{
+    <MudStack Spacing="4">
+        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.h3" Color="@GetScoreColor()">
+                @_result.TotalScore / @_result.MaxScore
+            </MudText>
+            <MudText Typo="Typo.h6" Class="mud-text-secondary">
+                @GetScoreLabel()
+            </MudText>
+            <MudProgressLinear Value="@GetScorePercentage()"
+                               Color="@GetScoreColor()"
+                               Rounded="true"
+                               Size="Size.Large"
+                               Class="mt-2"
+                               Style="max-width: 400px;" />
+        </MudStack>
+
+        <MudDivider />
+
+        <MudText Typo="Typo.h6">Auswertung nach Kategorien</MudText>
+
+        @foreach (var category in _result.CategoryResults)
+        {
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@(category.Passed ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                     Color="@(category.Passed ? Color.Success : Color.Error)" />
+                            <MudText Typo="Typo.subtitle1">@GetCategoryName(category.Category)</MudText>
+                        </MudStack>
+                        <MudChip T="string" Color="@(category.Passed ? Color.Success : Color.Error)" Size="Size.Small">
+                            @category.Points / @category.MaxPoints Punkte
+                        </MudChip>
+                    </MudStack>
+
+                    <MudProgressLinear Value="@GetCategoryPercentage(category)"
+                                       Color="@(category.Passed ? Color.Success : Color.Error)"
+                                       Rounded="true" />
+
+                    @if (!category.Passed && !string.IsNullOrEmpty(category.ErrorTip))
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true">@category.ErrorTip</MudAlert>
+                    }
+
+                    @if (category.TestCaseResults.Count > 0)
+                    {
+                        <MudList T="string" Dense="true">
+                            @foreach (var test in category.TestCaseResults)
+                            {
+                                <MudListItem Icon="@(test.Passed ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                             IconColor="@(test.Passed ? Color.Success : Color.Error)">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.body2">@test.Description</MudText>
+                                        @if (!test.Passed && !string.IsNullOrEmpty(test.ExpectedOutput))
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                Erwartet: <code>@test.ExpectedOutput</code>
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                Erhalten: <code>@test.ActualOutput</code>
+                                            </MudText>
+                                        }
+                                    </MudStack>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="GoBack">
+            Zurueck zur Aufgabe
+        </MudButton>
+    </MudStack>
+}

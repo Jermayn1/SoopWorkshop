@@ -53,7 +53,7 @@ namespace SoopWorkshop.Frontend.Web.Components.Pages.Tasks
                 return;
             }
 
-            Navigation.NavigateTo($"/submissions/{submission.Id}/result");
+            Navigation.NavigateTo($"/result/{submission.Id}");
         }
 
         private Color GetDifficultyColor() => _task?.Difficulty switch

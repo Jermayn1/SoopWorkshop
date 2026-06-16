@@ -8,10 +8,10 @@ namespace SoopWorkshop.Frontend.Services.StateManagment
     {
         private readonly SubmissionApiClient _submissionApiClient;
         private CancellationTokenSource? _cts;
-        
+
         // Sobald ein Ergebnis vorliegt abboniert das UI das Event und ruft StatehasChanged() auf, um neu zu rendern
-        public event Action<EvaluationResultDto>? OnResultRecieved;
-        
+        public event Action<EvaluationResultDto>? OnResultReceived;
+
         // Wird aufgerufen, wenn die Auswertung fehlschlägt
         public event Action<string>? OnError;
         
@@ -60,7 +60,7 @@ namespace SoopWorkshop.Frontend.Services.StateManagment
                     {
                         CurrentResult = result;
                         IsPolling = false;
-                        OnResultRecieved?.Invoke(result);
+                        OnResultReceived?.Invoke(result);
                         break;
                     }
                 }

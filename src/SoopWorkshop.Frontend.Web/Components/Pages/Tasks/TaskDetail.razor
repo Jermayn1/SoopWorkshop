@@ -1,6 +1,6 @@
 ﻿@page "/tasks/{Id:guid}"
 
-<PageTitle>@(_task?.Title ?? "Aufgabe") — SoopWorkshop</PageTitle>
+<PageTitle>@(_task?.Title ?? "Aufgabe") - SoopWorkshop</PageTitle>
 
 @if (_isLoading)
 {
@@ -14,7 +14,6 @@ else
 {
     <MudStack Spacing="4">
 
-        @* Header *@
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudText Typo="Typo.h4">@_task.Title</MudText>
             <MudChip T="string" Color="@GetDifficultyColor()" Size="Size.Small">
@@ -22,14 +21,12 @@ else
             </MudChip>
         </MudStack>
 
-        @* Aufgabenstellung *@
         <MudPaper Elevation="2" Class="pa-4">
             <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
                 @_task.Description
             </MudText>
         </MudPaper>
 
-        @* Tipps & Hilfestellungen *@
         @if (_task.Hints.Count > 0)
         {
             <MudExpansionPanels>
@@ -44,7 +41,7 @@ else
                         <MudList T="string">
                             @foreach (var hint in _task.Hints)
                             {
-                                <MudListItem Icon="@Icons.Material.Filled.ChevronRight">
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ChevronRight">
                                     @hint.Content
                                 </MudListItem>
                             }
@@ -54,19 +51,17 @@ else
             </MudExpansionPanels>
         }
 
-        @* Upload *@
         <MudPaper Elevation="2" Class="pa-4">
             <MudText Typo="Typo.h6" GutterBottom="true">Lösung abgeben</MudText>
 
             <MudFileUpload T="IReadOnlyList<IBrowserFile>"
-                           Multiple="true"
                            Accept=".java"
                            OnFilesChanged="OnFilesChanged">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.UploadFile">
-                        .java Dateien auswählen
+                        .java Dateien auswaehlen
                     </MudButton>
                 </ActivatorContent>
             </MudFileUpload>
@@ -76,7 +71,7 @@ else
                 <MudList T="string" Class="mt-2">
                     @foreach (var file in _selectedFiles)
                     {
-                        <MudListItem Icon="@Icons.Material.Filled.Code">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Code">
                             @file.Name
                         </MudListItem>
                     }
@@ -101,7 +96,7 @@ else
                 }
                 else
                 {
-                    <span>Jetzt prüfen</span>
+                    <span>Jetzt pruefen</span>
                 }
             </MudButton>
 
