@@ -2,6 +2,7 @@ using SoopWorkshop.Frontend.Web.Components;
 using MudBlazor.Services;
 using SoopWorkshop.Frontend.Services;
 using SoopWorkshop.Frontend.Services.HttpClients;
+using SoopWorkshop.Frontend.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.Services.AddHttpClient<SubmissionApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl));
 builder.Services.AddHttpClient<AdminApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl));
+
+// Themes registrieren
+builder.Services.AddScoped<ThemeService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
