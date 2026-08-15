@@ -73,6 +73,14 @@ dotnet run --project src/SoopWorkshop.Frontend.Web
 **Voraussetzungen (lokal):** .NET 10 SDK, PostgreSQL, JDK im `PATH`
 (`javac`/`java` werden als Prozess aufgerufen). Ab Phase 7 läuft alles in Docker Compose.
 
+Connection-String einmalig setzen (steht **nicht** im Repository):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
+```
+
+Im Betrieb stattdessen die Umgebungsvariable `ConnectionStrings__DefaultConnection`.
+
 Migrationen:
 
 ```bash
@@ -205,7 +213,9 @@ Ergebnisse erscheinen im Frontend derzeit in beliebiger Reihenfolge. Zu ergänze
 - **Razor-Komponenten** immer mit Code-Behind (`X.razor` + `X.razor.cs`), Styles als
   `X.razor.css` (CSS-Isolation). Keine `@code`-Blöcke in `.razor`.
 - **Services geben `Result<T>` zurück**, keine Exceptions für erwartbare Fehlerfälle.
-- **DTOs**: `Shared/DTOs/<Bereich>/`. Lese-DTOs unter `Tasks/`, Schreib-DTOs unter `Admin/`.
+- **DTOs**: `Shared/DTOs/<Bereich>/` rein fachlich gegliedert. Lese-DTOs direkt im
+  Bereichsordner (`Tasks/TaskItemDto.cs`), Schreib-DTOs unter `<Bereich>/Requests/`
+  (`Tasks/Requests/CreateTaskItemDto.cs`).
 - **Namensschema Frontend-Seiten**: `Components/Pages/<Bereich>/<Name>.razor`.
 - **Nullable + ImplicitUsings** sind überall an — so lassen.
 
@@ -215,22 +225,22 @@ Ergebnisse erscheinen im Frontend derzeit in beliebiger Reihenfolge. Zu ergänze
 
 Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 
-### Phase 0 — Fundament & Aufräumen
-*Sauberer Boden, bevor Features draufgebaut werden. Klein, schnell erledigt.*
+### Phase 0 — Fundament & Aufräumen ✅
+*Abgeschlossen am 2026-08-15, Branch `phase-0-fundament`, 8 Commits.*
 
-- [ ] `Directory.Build.props` (TargetFramework, Nullable, ImplicitUsings zentral)
-- [ ] `Directory.Packages.props` (Central Package Management — Versionen stehen 8× dupliziert)
-- [ ] **Bug:** CORS-Origins in `Backend.API/Program.cs` haben vertauschte Schemata
-      (`https://localhost:5072` / `http://localhost:7281` statt umgekehrt)
-- [ ] HttpClient-Registrierung konsolidieren — doppelt in
-      `Frontend.Services/DependencyInjection.cs` **und** `Frontend.Web/Program.cs`;
-      BaseAddress gehört in `AddFrontendServices(apiBaseUrl)`
-- [ ] `UpdateTaskTestDto` wird als Lese-DTO missbraucht → echtes `TaskTestDto` in `DTOs/Tasks/`
-- [ ] Toter Code: `Domain/ValueObjects/Score.cs`, `DTOs/Submissions/SubmissionFileDto.cs`,
-      `ITaskItemService.GetVisibleByCategoryAsync` — nutzen oder entfernen
-- [ ] Ordner `StateManagment` → `StateManagement`
-- [ ] Connection-String mit Passwort aus `appsettings.json` → User Secrets
-- [ ] MudBlazor-Warnungen in `TaskDetail.razor` beheben (RZ10012 + MUD0002)
+- [x] `Directory.Build.props` (TargetFramework, LangVersion, Nullable, ImplicitUsings zentral)
+- [x] `Directory.Packages.props` (Central Package Management — Versionen standen 8× dupliziert)
+- [x] **Bug:** CORS-Origins hatten vertauschte Schemata; jetzt korrigiert **und** nach
+      `Cors:AllowedOrigins` in die Konfiguration verschoben (Vorarbeit Phase 7)
+- [x] HttpClient-Registrierung konsolidiert — `AddFrontendServices(apiBaseUrl)` setzt
+      die BaseAddress, die Doppelregistrierung in `Frontend.Web/Program.cs` entfällt
+- [x] `TaskTestDto` als Lese-DTO ergänzt; `UpdateTaskTestDto` ist wieder reines Schreib-DTO
+- [x] DTO-Struktur rein fachlich: `DTOs/Admin/` → `DTOs/Tasks/Requests/`
+- [x] Toter Code entfernt: `Score`, `SubmissionFileDto`, `GetVisibleByCategoryAsync`
+- [x] Ordner `StateManagment` → `StateManagement`
+- [x] Connection-String aus `appsettings.json` → User Secrets bzw. Umgebungsvariable,
+      mit klarer Fehlermeldung bei fehlendem Wert; `AppDbContextFactory` liest dieselbe Kette
+- [x] MudBlazor-Warnungen behoben — **Build ist warnungsfrei**
 
 ### Phase 1 — Projekt-Testfundament (xUnit)
 *Nur das Gerüst, keine volle Abdeckung. Absichert die Umbauten in Phase 2–3.*
@@ -289,6 +299,8 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
       unbehandelt → Snackbar + Retry statt weißer Seite
 - [ ] Lade- und Leerzustände vereinheitlichen (Skeletons statt nackter Spinner)
 - [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button, client-seitige Validierung
+      — `MudFileUpload` bringt `DragAndDrop`, `MaxFileSize`, `MaximumFileCount`,
+      `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon selbst bauen
 - [ ] `SubmissionResult`: Status `Pending`/`Running`/`Failed` unterscheiden (setzt Phase 2 voraus),
       „Erneut versuchen", Zurück-Link zur *richtigen* Aufgabe (geht aktuell nach `/`)
 - [ ] `SubmissionResult`: JUnit-Ergebnisse darstellen — Testmethode, Erwartung, Fehlermeldung
@@ -365,9 +377,15 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 
 Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
-- 2026-08-15 — `Backend.API/Program.cs` — CORS-Schemata vertauscht — Phase 0
-- 2026-08-15 — `Frontend.Services/DependencyInjection.cs` — doppelte HttpClient-Registrierung — Phase 0
-- 2026-08-15 — `Frontend.Services/StateManagment/` — Ordnername verschrieben — Phase 0
+- ~~2026-08-15 — `Backend.API/Program.cs` — CORS-Schemata vertauscht~~ — erledigt in Phase 0
+- ~~2026-08-15 — `Frontend.Services/DependencyInjection.cs` — doppelte HttpClient-Registrierung~~ — erledigt in Phase 0
+- ~~2026-08-15 — `Frontend.Services/StateManagment/` — Ordnername verschrieben~~ — erledigt in Phase 0
+- ~~2026-08-15 — `Frontend.Web/.../TaskDetail.razor` — `ActivatorContent` existiert in
+  MudBlazor 9.8 nicht; der Upload-Button war kein Activator, die Dateiauswahl liess
+  sich darueber nicht oeffnen. War als blosse Build-Warnung fehleingeschaetzt~~ — erledigt in Phase 0
+- 2026-08-15 — lokale Umgebung — der bisher eingecheckte Connection-String
+  (`Password=devpassword`) passt nicht zum lokalen PostgreSQL: `28P01 password
+  authentication failed`. Muss einmalig per User Secrets korrekt gesetzt werden — offen
 - 2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie — Phase 2
 - 2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed` — Phase 2/4
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
