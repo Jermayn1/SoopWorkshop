@@ -8,6 +8,7 @@ using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Infrastructure.Evaluation;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
+using SoopWorkshop.Backend.Infrastructure.Processes;
 
 namespace SoopWorkshop.Backend.Infrastructure
 {
@@ -36,6 +37,8 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IEvaluationResultRepository, EvaluationResultRepository>();
             services.AddScoped<ITaskTestRepository, TaskTestRepository>();
+
+            services.AddScoped<IProcessRunner, ProcessRunner>();
 
             services.AddScoped<CharacterSetChecker>();
             services.AddScoped<NamingConventionChecker>();
