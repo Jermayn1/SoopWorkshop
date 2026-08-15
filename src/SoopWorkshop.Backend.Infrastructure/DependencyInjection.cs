@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Infrastructure.Persistence;
 using SoopWorkshop.Backend.Infrastructure.Persistence.Repositories;
+using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Infrastructure.Evaluation;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
@@ -23,6 +24,9 @@ namespace SoopWorkshop.Backend.Infrastructure
                     "  dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT\" --project src/SoopWorkshop.Backend.API" + Environment.NewLine +
                     "Im Betrieb ueber die Umgebungsvariable ConnectionStrings__DefaultConnection.");
             }
+
+            services.Configure<EvaluationOptions>(
+                configuration.GetSection(EvaluationOptions.SectionName));
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
