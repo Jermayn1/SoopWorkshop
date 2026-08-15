@@ -2,7 +2,7 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-15
+> Stand: 2026-08-15 — Phase 0, 1 und 2 abgeschlossen, als Nächstes Phase 3.
 
 ---
 
@@ -111,6 +111,16 @@ Verbindung aber nicht zum Container durch — der Fehler kommt als
 `28P01 password authentication failed` zurück und sieht damit wie ein falsches
 Passwort aus, obwohl er keins ist.
 
+**Auswertung konfigurieren** (Abschnitt `Evaluation` in `appsettings.json`, im Betrieb
+über `Evaluation__MaxConcurrency` usw.):
+
+| Schlüssel | Standard | Bedeutung |
+|---|---|---|
+| `MaxConcurrency` | 2 | gleichzeitig ausgewertete Abgaben — begrenzt parallele JVM-Prozesse |
+| `CompileTimeoutSeconds` | 30 | Zeitgrenze für `javac` |
+| `RunTimeoutSeconds` | 10 | Zeitgrenze pro Testfall-Durchlauf |
+| `QueueCapacity` | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+
 Migrationen — **ohne** `--startup-project`, da `AppDbContextFactory` den Kontext
 zur Entwurfszeit selbst baut und die API das Design-Paket nicht referenziert:
 
@@ -128,7 +138,8 @@ Clean Architecture, 7 Projekte + 1 Testprojekt:
 SoopWorkshop.Shared                  DTOs, Enums, Constants — von allen referenzierbar
 SoopWorkshop.Backend.Domain          Entities, ValueObjects — kennt nur Shared
 SoopWorkshop.Backend.Application     Services, Interfaces, Result<T> — kennt Domain + Shared
-SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker — kennt Application
+SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker, ProcessRunner,
+                                     Warteschlange + Worker — kennt Application
 SoopWorkshop.Backend.API             Controller, Middleware — kennt Application + Infrastructure
 SoopWorkshop.Frontend.Services       HttpClients, State — kennt Shared
 SoopWorkshop.Frontend.Web            Blazor Server + MudBlazor — kennt Frontend.Services
@@ -144,8 +155,13 @@ tests/SoopWorkshop.Tests             xUnit (Projekt-Tests)
 
 **Kernablauf Auswertung:**
 
-`SubmissionService.CreateAsync` → Warteschlange → `EvaluationService.EvaluateAsync`
-→ `JavaAnalyzer` → Checker-Pipeline → `EvaluationResult` persistiert → Frontend pollt.
+`SubmissionService.CreateAsync` → `IEvaluationQueue` (begrenzter `Channel`) →
+`EvaluationWorker` (`BackgroundService`, `MaxConcurrency` parallel) →
+`EvaluationService.EvaluateAsync` → `JavaAnalyzer` → Checker → `EvaluationResult`
+persistiert → Frontend pollt `/status` und holt bei `Done` das `/result`.
+
+Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
+`IProcessRunner` — nicht direkt über `Process.Start`.
 
 ---
 
@@ -328,24 +344,41 @@ die Ordner `Integration/` und `Components/`. Sie werden erst dort gebraucht, ein
 DB-Frage (§10.5), und leere Ordner verfolgt Git ohnehin nicht.
 Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 
-### Phase 2 — Backend-Härtung
+### Phase 2 — Backend-Härtung ✅
 *Voraussetzung für zuverlässiges Ausführen von JUnit in Phase 3.*
+*Abgeschlossen am 2026-08-15, Branch `phase-2-backend-haertung`. 80 Tests, grün.*
 
-- [ ] **Neuer Endpunkt `GET /api/submissions/{id}/status`** — `/result` liefert derzeit
-      bei „läuft noch" und „nicht gefunden" beides 404; das Frontend kann `Failed`
-      deshalb nicht erkennen und pollt endlos
-- [ ] Auswertung von `_ = Task.Run(...)` auf `BackgroundService` + `Channel`-Queue
-      (aktuell gehen laufende Auswertungen bei Neustart verloren, keine Begrenzung
-      paralleler JVM-Prozesse)
-- [ ] Prozess-Ausführung hinter `IProcessRunner` abstrahieren — testbar **und**
-      Voraussetzung dafür, später auf Container-Ausführung umzustellen
-- [ ] `WaitForExit(int)` blockiert synchron im async-Pfad → `WaitForExitAsync` + `CancellationToken`
-- [ ] `TestCaseChecker` liest `StandardError` nicht → Deadlock-Risiko bei vollem Puffer
-- [ ] Upload-Validierung im `SubmissionsController`: Endung `.java`, Max-Größe,
-      Max-Anzahl (bisher nur clientseitig auf 1 MB begrenzt)
-- [ ] `CleanupWorkingDirectory` fängt nur `IOException` → auch `UnauthorizedAccessException`
-- [ ] `CreateTaskItemDto.TaskCategoryId` wird nicht auf Existenz geprüft
-- [ ] Strukturiertes Logging (`ILogger`) in Application-Services
+- [x] **Neuer Endpunkt `GET /api/submissions/{id}/status`** — liefert `SubmissionStatusDto`
+      (Status + `ErrorMessage`); 404 nur noch bei „nicht gefunden". `/result` bleibt
+      unverändert und wird vom Frontend erst bei `Done` abgerufen
+- [x] Auswertung von `_ = Task.Run(...)` auf `EvaluationWorker` (`BackgroundService`) +
+      begrenzte `Channel`-Queue; `Evaluation:MaxConcurrency` begrenzt parallele JVM-Prozesse.
+      Beim Start werden verwaiste `Pending`/`Running`-Abgaben auf `Failed` gesetzt
+- [x] Prozess-Ausführung hinter `IProcessRunner` abstrahiert (`Infrastructure/Processes/`);
+      beide Checker teilen sich jetzt eine Implementierung
+- [x] `WaitForExit(int)` → `WaitForExitAsync` + `CancellationToken` durch die ganze Kette
+      (`IEvaluationService`, `IJavaAnalyzer`, beide Checker)
+- [x] Beide Ausgabeströme werden gleichzeitig gelesen — Deadlock-Risiko behoben, mit
+      Gegenprobe in `ProcessRunnerTests` (500 Zeilen auf stdout **und** stderr)
+- [x] Upload-Validierung serverseitig (`API/Validation/SubmissionUploadValidator.cs`):
+      Endung, Größe, Anzahl, leere Dateien, doppelte Namen, Dateinamen mit Pfadanteilen.
+      Grenzen zentral in `Shared/Constants/SubmissionUploadLimits.cs`
+- [x] `CleanupWorkingDirectory` fängt zusätzlich `UnauthorizedAccessException`, läuft im
+      `finally` und protokolliert statt zu schweigen. Das Arbeitsverzeichnis gehört jetzt
+      dem `JavaAnalyzer`, nicht mehr dem `CompilabilityChecker`
+- [x] `taskItemId` wird beim Abgeben auf Existenz geprüft → 400 statt 500 aus der
+      Fremdschlüsselbedingung
+- [x] Strukturiertes Logging (`ILogger`) in allen Application-Services, im Worker,
+      im `ProcessRunner` und im `JavaAnalyzer`
+
+**Zusätzlich mitgenommen, weil direkt daran hängend:** Zeichensatz fest auf UTF-8
+(Upload-Lesen, `javac -encoding UTF-8`, Prozessausgabe) statt Systemabhängigkeit;
+Frontend-Polling auf `/status` umgestellt inklusive Abbruch nach ~5 Minuten;
+`SubmissionPollingState` wird injiziert statt doppelt erzeugt.
+
+**Bewusst nicht angefasst, weil Phase 3:** die 65 Gratispunkte bei `tests.Count == 0`,
+die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
+`NamingConventionChecker`. Alle drei sind als **Ist-Verhalten** durch Tests festgehalten.
 
 ### Phase 3 — Bewertungs-Engine v2
 *Der fachliche Kern. Details in §5.*
@@ -376,15 +409,19 @@ Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 - [ ] Zentrale Fehlerbehandlung: `GetFromJsonAsync` wirft bei nicht erreichbarer API
       unbehandelt → Snackbar + Retry statt weißer Seite
 - [ ] Lade- und Leerzustände vereinheitlichen (Skeletons statt nackter Spinner)
-- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button, client-seitige Validierung
-      — `MudFileUpload` bringt `DragAndDrop`, `MaxFileSize`, `MaximumFileCount`,
-      `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon selbst bauen
-- [ ] `SubmissionResult`: Status `Pending`/`Running`/`Failed` unterscheiden (setzt Phase 2 voraus),
-      „Erneut versuchen", Zurück-Link zur *richtigen* Aufgabe (geht aktuell nach `/`)
+- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button — `MudFileUpload` bringt
+      `DragAndDrop`, `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon
+      selbst bauen. `MaxFileSize`/`MaximumFileCount`/`Accept` sind seit Phase 2 gesetzt
+      und kommen aus `SubmissionUploadLimits`; die Fehlermeldung dazu fehlt noch
+- [ ] `SubmissionResult`: `Pending` und `Running` im Text unterscheiden — seit Phase 2 wird
+      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". `Failed` zeigt
+      bereits die Fehlermeldung. Offen bleiben „Erneut versuchen" und der Zurück-Link zur
+      *richtigen* Aufgabe (geht aktuell nach `/`)
 - [ ] `SubmissionResult`: JUnit-Ergebnisse darstellen — Testmethode, Erwartung, Fehlermeldung
 - [ ] Sortierte Anzeige der Kategorien und Teilprüfungen (setzt Phase 3 voraus)
-- [ ] `SubmissionPollingState` sauber verdrahten: als Scoped registriert, aber in
-      `SubmissionResult` manuell `new`'d — eine Quelle der Wahrheit; Timeout nach n Versuchen
+- [x] `SubmissionPollingState` sauber verdrahtet (injiziert statt `new`'d, Abbruch nach
+      150 Versuchen ≈ 5 Minuten) — in Phase 2 mitgenommen, weil das Status-Polling ohne
+      diesen Umbau nicht prüfbar gewesen wäre
 - [ ] Aufgabenübersicht als eigene Seite (nicht nur Sidebar)
 - [ ] Responsive-Durchgang: Mobil, Tablet, Desktop
 - [ ] Barrierefreiheit: Fokus-Reihenfolge, Kontraste in allen drei Themes
@@ -485,8 +522,19 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - 2026-08-15 — CLAUDE.md dokumentierte `dotnet ef` mit `--startup-project`; das
   schlaegt fehl, da Backend.API `EntityFrameworkCore.Design` nicht referenziert.
   Korrigiert — erledigt
-- 2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie — Phase 2
-- 2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed` — Phase 2/4
+- ~~2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed`~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/*` — jeweils nur ein Ausgabestrom
+  gelesen → Deadlock, sobald der Puffer des anderen volläuft~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Backend.API/Controllers/SubmissionsController.cs` — `file.FileName`
+  ungeprüft in `Path.Combine` mit dem Arbeitsverzeichnis~~ — erledigt in Phase 2
+- 2026-08-15 — `Infrastructure/Evaluation/JavaAnalyzer.cs` — schlägt das Speichern des
+  Ergebnisses fehl, nachdem `AddAsync` bereits committet hat, bleibt ein Ergebnis mit
+  Status `Running` zurück; ein gemeinsamer Transaktionsrahmen fehlt — Phase 6
+- 2026-08-15 — `Infrastructure/Evaluation/EvaluationWorker.cs` — Abgaben, die beim
+  Herunterfahren abgebrochen werden, bleiben auf `Running` und werden erst beim nächsten
+  Start als fehlgeschlagen markiert. Bewusst so: ein sauberes Zurückstellen in die
+  Warteschlange braucht Persistenz der Warteschlange — Phase 7
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives — Phase 3
