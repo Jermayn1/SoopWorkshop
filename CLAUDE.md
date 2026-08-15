@@ -63,6 +63,12 @@ Alles starten (Datenbank, Build, Backend, Frontend):
 .\scripts\stop-dev.ps1
 ```
 
+Datenbank-Passwort an die `.env` angleichen (siehe unten):
+
+```bash
+.\scripts\sync-db-password.ps1
+```
+
 `start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
 Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs getrennt lesbar sind.
 
@@ -114,17 +120,24 @@ Welche Werte tatsächlich gelten, steht in der ersten Logzeile des Backends:
 Konfiguration: Datenbank 127.0.0.1:5432/soopworkshop, Auswertung 10 gleichzeitig, Zeitgrenzen 30s kompilieren / 10s ausfuehren.
 ```
 
-**Passwort geändert und nichts geht mehr?** `POSTGRES_PASSWORD` wirkt nur beim ersten
-Anlegen des Volumes. Danach entweder das Volume neu aufsetzen (`docker compose down -v`)
-oder die Datenbank angleichen:
+**`POSTGRES_PASSWORD` in der `.env` geändert?** Dann muss die Datenbank angeglichen
+werden — der Wert wirkt nur beim ersten Anlegen des Volumes, danach behält sie ihr altes
+Passwort. Der Fehler kommt als `28P01` zurück und sieht aus wie ein Tippfehler, obwohl
+beide Seiten für sich stimmen:
 
 ```bash
-docker exec -it soopworkshop-db psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'NEUES_PASSWORT';"
+.\scripts\sync-db-password.ps1
 ```
 
-Achtung bei der Fehlersuche: `psql` **innerhalb** des Containers akzeptiert jedes
-Passwort (`trust` in `pg_hba.conf`) und taugt deshalb nicht zum Prüfen. Verlässlich ist
-nur eine Verbindung von aussen — etwa der Start des Backends.
+Setzt das Passwort per `ALTER USER` und prüft anschließend, ob die Anmeldung wirklich
+klappt. Ein laufendes Backend muss danach **nicht** neu gestartet werden — der
+Connection-String ändert sich nicht, nur das Passwort dahinter. Die Alternative ist
+`docker compose down -v` (löscht alle Daten).
+
+**Achtung bei der Fehlersuche:** `psql` **innerhalb** des Containers akzeptiert wegen
+`trust` in `pg_hba.conf` jedes Passwort. Eine dort „bestätigte" Übereinstimmung sagt
+nichts aus. Verlässlich ist nur eine Verbindung von aussen — das Skript oben macht genau
+das über ein kurzlebiges `postgres`-Image gegen `host.docker.internal`.
 
 **`127.0.0.1` statt `localhost`, das ist Absicht.** Unter Windows löst `localhost`
 zuerst auf IPv6 `::1` auf. Dort horcht der WSL-Relay von Docker Desktop, reicht die
