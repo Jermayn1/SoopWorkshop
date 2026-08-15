@@ -6,7 +6,10 @@ namespace SoopWorkshop.Backend.Application.Submissions.Interfaces
 {
     public interface ISubmissionService
     {
-        Task<Result<SubmissionDto>> CreateAsync(Guid taskItemId, List<(string FileName, string Content)> files);
+        Task<Result<SubmissionDto>> CreateAsync(
+            Guid taskItemId,
+            List<(string FileName, string Content)> files,
+            CancellationToken cancellationToken);
         Task<Result<EvaluationResultDto>> GetResultAsync(Guid submissionId);
     }
 }

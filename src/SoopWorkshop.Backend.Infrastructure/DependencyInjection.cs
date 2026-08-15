@@ -40,6 +40,11 @@ namespace SoopWorkshop.Backend.Infrastructure
 
             services.AddScoped<IProcessRunner, ProcessRunner>();
 
+            // Singleton, weil sich Einreihen (Request-Scope) und Abarbeiten
+            // (Hintergrunddienst) dieselbe Warteschlange teilen muessen.
+            services.AddSingleton<IEvaluationQueue, EvaluationQueue>();
+            services.AddHostedService<EvaluationWorker>();
+
             services.AddScoped<CharacterSetChecker>();
             services.AddScoped<NamingConventionChecker>();
             services.AddScoped<CompilabilityChecker>();

@@ -29,6 +29,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
+        public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _context.TaskItems.AnyAsync(t => t.Id == id, cancellationToken);
+        }
+
         public async Task AddAsync(TaskItem item)
         {
             _context.TaskItems.Add(item);

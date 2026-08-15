@@ -30,7 +30,7 @@ namespace SoopWorkshop.Backend.API.Controllers
                 fileContents.Add((file.FileName, content));
             }
 
-            var result = await _submissionService.CreateAsync(taskItemId, fileContents);
+            var result = await _submissionService.CreateAsync(taskItemId, fileContents, HttpContext.RequestAborted);
 
             return result.IsSuccess
                 ? Ok(result.Value)
