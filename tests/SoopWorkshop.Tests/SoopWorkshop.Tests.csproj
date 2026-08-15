@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -10,6 +10,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- NSubstitute wird erst ab Phase 2 gebraucht (IProcessRunner); hier schon
+         eingerichtet, damit die Paketbasis vollstaendig steht. -->
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
@@ -18,12 +22,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Shouldly" />
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SoopWorkshop.Backend.API\SoopWorkshop.Backend.API.csproj" />
     <ProjectReference Include="..\..\src\SoopWorkshop.Backend.Application\SoopWorkshop.Backend.Application.csproj" />
     <ProjectReference Include="..\..\src\SoopWorkshop.Backend.Infrastructure\SoopWorkshop.Backend.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\SoopWorkshop.Frontend.Services\SoopWorkshop.Frontend.Services.csproj" />
+    <ProjectReference Include="..\..\src\SoopWorkshop.Shared\SoopWorkshop.Shared.csproj" />
   </ItemGroup>
 
 </Project>
