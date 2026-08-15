@@ -36,11 +36,16 @@ Für **jeden** Arbeitsschritt gilt diese Reihenfolge:
 
 Zusätzlich:
 
+- **Vor jedem Merge eine Testanleitung.** Am Ende einer Phase liefert Claude eine
+  konkrete Klickanleitung mit erwartetem Ergebnis pro Schritt — inklusive der
+  nötigen Testdaten und Beispieldateien. Was Claude bereits automatisiert geprüft
+  hat, wird getrennt ausgewiesen; die Anleitung enthält nur, was menschliche Augen
+  brauchen. Der Basis-Durchlauf steht in §7, phasenspezifische Schritte kommen dazu.
 - **Struktur vor Feature.** Passt etwas nicht in die Struktur, wird die Struktur
   korrigiert — nicht das Feature reingequetscht.
 - **Keine stillen Fehler.** Kein `catch { }`, kein `return null` ohne Aussage.
 - **Fortschrittsliste pflegen.** Nach jedem abgeschlossenen Punkt Häkchen setzen und
-  neue Findings unter §8 eintragen.
+  neue Findings unter §9 eintragen.
 - **Kommentare auf Deutsch**, Code-Bezeichner auf Englisch — wie im bestehenden Code.
 - **Keine ungefragten Zusatzfeatures.** Was nicht im Plan steht, wird vorher besprochen.
 
@@ -214,7 +219,7 @@ Teilprüfungen wie Namenskonventionen, Zeichensatz und später weitere. Das pass
 bestehenden Struktur `CategoryResult → viele TestCaseResults`.
 
 Offen: ob `CharacterSet` und `NamingConventions` als eigene Kategorien bleiben oder
-als Teilprüfungen unter Clean Code wandern — siehe §9.
+als Teilprüfungen unter Clean Code wandern — siehe §10.
 
 ### 5.7 Sortierung der Anzeige
 
@@ -241,7 +246,27 @@ Ergebnisse erscheinen im Frontend derzeit in beliebiger Reihenfolge. Zu ergänze
 
 ---
 
-## 7. Roadmap
+## 7. Basis-Smoke-Test vor dem Merge
+
+Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
+
+1. `.\scripts\stop-dev.ps1`, dann `.\scripts\start-dev.ps1` — Build ohne Warnungen,
+   beide Dienste melden „bereit"
+2. `dotnet test SoopWorkshop.slnx` — grün
+3. Frontend öffnen, Theme dreimal umschalten (Light / Dark / OLED)
+4. Aufgabe aus der Sidebar öffnen — Beschreibung, Schwierigkeitsgrad, Tipps sichtbar
+5. `.java` hochladen, abgeben, Ergebnisseite abwarten — Punkte und Kategorien erscheinen
+6. Browser-Konsole (F12) auf Fehler prüfen
+7. Solution zusätzlich in Visual Studio bzw. Rider öffnen und bauen — die
+   Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` nicht ab
+8. `git status` sauber, `.env` taucht **nicht** auf
+
+**Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Dann zuerst über
+`/scalar` oder die Admin-Endpunkte eine sichtbare Kategorie mit sichtbarer Aufgabe
+und mindestens einem Testfall anlegen. Sichtbarkeit ist bei beiden nach dem Anlegen
+`false` und muss per `PATCH .../visibility` gesetzt werden.
+
+## 8. Roadmap
 
 Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 
@@ -302,7 +327,7 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 - [ ] Checker-Pipeline: `IEvaluationChecker` + `EvaluationContext`, `JavaAnalyzer` iteriert
 - [ ] Punktesystem v2: Gewichte, Gewichtsverteilung bei nicht anwendbaren Kategorien,
       Restverteilung — **behebt die 65 Gratispunkte bei Aufgaben ohne Testfälle**
-- [ ] Clean Code als Sammelkategorie ausarbeiten (siehe §9, Punkt 1)
+- [ ] Clean Code als Sammelkategorie ausarbeiten (siehe §10, Punkt 1)
 - [ ] `DisplayOrder` für Kategorien, `Order` für `TestCaseResult`
 - [ ] Admin-Endpunkte für `TaskUnitTestFile` (CRUD)
 - [ ] Projekt-Tests für Punkteberechnung und XML-Parsing (reine Funktionen, gut testbar)
@@ -393,7 +418,7 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 
 ---
 
-## 8. Findings-Log
+## 9. Findings-Log
 
 Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
@@ -428,7 +453,7 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
 ---
 
-## 9. Offene Entscheidungen
+## 10. Offene Entscheidungen
 
 1. **Clean-Code-Zuschnitt.** Bleiben `CharacterSet` und `NamingConventions` eigene
    Kategorien, oder wandern sie als Teilprüfungen unter Clean Code? Zweites ergibt
