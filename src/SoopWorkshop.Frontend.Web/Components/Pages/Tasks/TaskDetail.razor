@@ -55,8 +55,9 @@ else
             <MudText Typo="Typo.h6" GutterBottom="true">Lösung abgeben</MudText>
 
             <MudFileUpload T="IReadOnlyList<IBrowserFile>"
-                           Accept=".java"
-                           MaximumFileCount="10"
+                           Accept="@SubmissionUploadLimits.AllowedExtension"
+                           MaximumFileCount="@SubmissionUploadLimits.MaxFileCount"
+                           MaxFileSize="@SubmissionUploadLimits.MaxFileSizeBytes"
                            FilesChanged="OnFilesChanged">
                 <CustomContent Context="upload">
                     <MudButton Variant="Variant.Outlined"

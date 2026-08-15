@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.DTOs.Submissions;
 using Microsoft.AspNetCore.Components.Forms;
@@ -23,7 +24,7 @@ namespace SoopWorkshop.Frontend.Services.HttpClients
 
             foreach (var file in files)
             {
-                var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024); // Max 1MB pro Datei
+                var stream = file.OpenReadStream(SubmissionUploadLimits.MaxFileSizeBytes);
                 content.Add(new StreamContent(stream), "files", file.Name);
             }
 
@@ -35,6 +36,18 @@ namespace SoopWorkshop.Frontend.Services.HttpClients
             return await response.Content.ReadFromJsonAsync<SubmissionDto>();
         }
         
+        // Fragt den Auswertungsstand ab.
+        // null bedeutet: die Abgabe ist unbekannt oder die API nicht erreichbar.
+        public async Task<SubmissionStatusDto?> GetStatusAsync(Guid submissionId)
+        {
+            var response = await _httpClient.GetAsync($"api/submissions/{submissionId}/status");
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<SubmissionStatusDto>();
+        }
+
         // Ruft das Auswertungsergebnis einer Submission ab
         // null wenn Auswertung noch am laufen ist
         public async Task<EvaluationResultDto?> GetResultAsync(Guid submissionId)
