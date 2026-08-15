@@ -18,13 +18,6 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<List<TaskItemDto>>.Ok(dtos);
         }
 
-        public async Task<Result<List<TaskItemDto>>> GetVisibleByCategoryAsync(Guid categoryId)
-        {
-            var items = await _repository.GetVisibleByCategoryAsync(categoryId);
-            var dtos = items.Select(MapToDto).ToList();
-            return Result<List<TaskItemDto>>.Ok(dtos);
-        }
-
         public async Task<Result<TaskItemDto>> GetByIdAsync(Guid id)
         {
             var item = await _repository.GetByIdAsync(id);

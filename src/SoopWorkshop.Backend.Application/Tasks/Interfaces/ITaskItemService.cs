@@ -7,7 +7,6 @@ namespace SoopWorkshop.Backend.Application.Tasks.Interfaces
     public interface ITaskItemService
     {
         Task<Result<List<TaskItemDto>>> GetAllAsync();
-        Task<Result<List<TaskItemDto>>> GetVisibleByCategoryAsync(Guid categoryId);
         Task<Result<TaskItemDto>> GetByIdAsync(Guid id);
         Task<Result<TaskItemDto>> CreateAsync(CreateTaskItemDto dto);
         Task<Result<TaskItemDto>> UpdateAsync(UpdateTaskItemDto dto);

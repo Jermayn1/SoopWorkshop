@@ -21,15 +21,6 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<TaskItem>> GetVisibleByCategoryAsync(Guid categoryId)
-        {
-            return await _context.TaskItems
-                .Include(t => t.Hints)
-                .Where(t => t.TaskCategoryId == categoryId && t.IsVisible)
-                .OrderBy(t => t.Order)
-                .ToListAsync();
-        }
-
         public async Task<TaskItem?> GetByIdAsync(Guid id)
         {
             return await _context.TaskItems
