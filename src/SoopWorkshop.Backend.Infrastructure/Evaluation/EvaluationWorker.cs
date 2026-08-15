@@ -72,28 +72,48 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             }
         }
 
-        // Abgaben aus einem frueheren Prozesslauf koennen niemand mehr auswerten.
+        // Abgaben aus einem frueheren Prozesslauf kann niemand mehr auswerten.
         // Ohne dieses Aufraeumen wartet das Frontend endlos auf ein Ergebnis.
+        //
+        // Faengt bewusst alles ab: eine Exception aus ExecuteAsync fuehrt sonst dazu,
+        // dass .NET den kompletten Host herunterfaehrt (BackgroundServiceExceptionBehavior
+        // StopHost). Eine nicht erreichbare Datenbank wuerde dann verhindern, dass die
+        // API ueberhaupt startet — das Aufraeumen ist diesen Preis nicht wert. Bleiben
+        // die verwaisten Abgaben liegen, holt der naechste Start es nach.
         private async Task FailOrphanedSubmissionsAsync(CancellationToken cancellationToken)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var repository = scope.ServiceProvider.GetRequiredService<ISubmissionRepository>();
-
-            var orphanedIds = await repository.GetIdsByStatusAsync(
-                [SubmissionStatus.Pending, SubmissionStatus.Running],
-                cancellationToken);
-
-            if (orphanedIds.Count == 0)
-                return;
-
-            foreach (var submissionId in orphanedIds)
+            try
             {
-                await repository.UpdateStatusAsync(submissionId, SubmissionStatus.Failed, RestartMessage, cancellationToken);
-            }
+                using var scope = _scopeFactory.CreateScope();
+                var repository = scope.ServiceProvider.GetRequiredService<ISubmissionRepository>();
 
-            _logger.LogWarning(
-                "{Count} Abgabe(n) aus einem frueheren Lauf wurden als fehlgeschlagen markiert.",
-                orphanedIds.Count);
+                var orphanedIds = await repository.GetIdsByStatusAsync(
+                    [SubmissionStatus.Pending, SubmissionStatus.Running],
+                    cancellationToken);
+
+                if (orphanedIds.Count == 0)
+                    return;
+
+                foreach (var submissionId in orphanedIds)
+                {
+                    await repository.UpdateStatusAsync(submissionId, SubmissionStatus.Failed, RestartMessage, cancellationToken);
+                }
+
+                _logger.LogWarning(
+                    "{Count} Abgabe(n) aus einem frueheren Lauf wurden als fehlgeschlagen markiert.",
+                    orphanedIds.Count);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "Verwaiste Abgaben konnten beim Start nicht aufgeraeumt werden. " +
+                    "Die API laeuft weiter, der naechste Start versucht es erneut.");
+            }
         }
     }
 }

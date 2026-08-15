@@ -543,6 +543,12 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   Herunterfahren abgebrochen werden, bleiben auf `Running` und werden erst beim nächsten
   Start als fehlgeschlagen markiert. Bewusst so: ein sauberes Zurückstellen in die
   Warteschlange braucht Persistenz der Warteschlange — Phase 7
+- ~~2026-08-15 — `Infrastructure/Evaluation/EvaluationWorker.cs` — warf das Startup-
+  Recovery eine Exception (z. B. DB nicht erreichbar), fuhr .NET den **kompletten Host**
+  herunter: `BackgroundServiceExceptionBehavior` steht standardmäßig auf `StopHost`. Die
+  API startete dann gar nicht erst, obwohl sie ohne Auswertung noch nützlich wäre~~
+  — erledigt in Phase 2. **Merken für Phase 3 und 7:** jeder neue `BackgroundService`
+  muss seine Fehler selbst fangen, sonst reißt er den ganzen Server mit.
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives — Phase 3
