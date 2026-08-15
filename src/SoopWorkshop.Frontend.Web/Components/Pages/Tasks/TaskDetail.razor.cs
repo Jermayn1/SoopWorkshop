@@ -30,9 +30,9 @@ namespace SoopWorkshop.Frontend.Web.Components.Pages.Tasks
             _isLoading = false;
         }
 
-        private void OnFilesChanged(InputFileChangeEventArgs e)
+        private void OnFilesChanged(IReadOnlyList<IBrowserFile>? files)
         {
-            _selectedFiles = e.GetMultipleFiles(10).ToList();
+            _selectedFiles = files?.ToList() ?? [];
             _errorMessage = null;
         }
 

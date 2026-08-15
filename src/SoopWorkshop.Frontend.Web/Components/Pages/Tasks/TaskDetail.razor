@@ -56,14 +56,16 @@ else
 
             <MudFileUpload T="IReadOnlyList<IBrowserFile>"
                            Accept=".java"
-                           OnFilesChanged="OnFilesChanged">
-                <ActivatorContent>
+                           MaximumFileCount="10"
+                           FilesChanged="OnFilesChanged">
+                <CustomContent Context="upload">
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.UploadFile">
+                               StartIcon="@Icons.Material.Filled.UploadFile"
+                               OnClick="@(() => upload.OpenFilePickerAsync())">
                         .java Dateien auswaehlen
                     </MudButton>
-                </ActivatorContent>
+                </CustomContent>
             </MudFileUpload>
 
             @if (_selectedFiles.Count > 0)
