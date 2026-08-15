@@ -1,5 +1,6 @@
+using SoopWorkshop.Backend.Application.Evaluation.Models;
+using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 using SoopWorkshop.Tests.Helpers;
 
@@ -7,14 +8,18 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 {
     public class NamingConventionCheckerTests
     {
-        // Der Checker teilt seine Punkte auf zwei Teilpruefungen auf:
-        // PascalCase-Klassennamen und "kein snake_case".
-        private const int PointsPerCheck = EvaluationCategoryPoints.NamingConventions / 2;
-
         private readonly NamingConventionChecker _checker = new();
 
+        private Task<CheckerOutcome> CheckAsync(IReadOnlyList<SubmissionFile> files) =>
+            _checker.CheckAsync(EvaluationContextFactory.For(files: files), CancellationToken.None);
+
+        // Reihenfolge der Teilpruefungen: 0 = Klassennamen, 1 = keine snake_case-Bezeichner.
+        private static TestCaseResult ClassNames(CheckerOutcome outcome) => outcome.Results.ElementAt(0);
+
+        private static TestCaseResult CamelCase(CheckerOutcome outcome) => outcome.Results.ElementAt(1);
+
         [Fact]
-        public void Check_KorrekterCode_LiefertVollePunktzahl()
+        public async Task CheckAsync_KorrekterCode_BestehtBeideTeilpruefungen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -26,15 +31,14 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.NamingConventions);
-            result.ErrorTip.ShouldBeEmpty();
+            outcome.Results.ShouldAllBe(result => result.Passed);
+            outcome.ErrorTip.ShouldBeNull();
         }
 
         [Fact]
-        public void Check_KlasseInCamelCase_LiefertHalbePunkte()
+        public async Task CheckAsync_KlasseInCamelCase_LaesstNurDieNamenspruefungDurchfallen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -44,16 +48,15 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(PointsPerCheck);
-            result.TestCaseResults.ElementAt(0).Passed.ShouldBeFalse();
-            result.TestCaseResults.ElementAt(1).Passed.ShouldBeTrue();
+            ClassNames(outcome).Passed.ShouldBeFalse();
+            CamelCase(outcome).Passed.ShouldBeTrue();
+            outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
         [Fact]
-        public void Check_SnakeCaseBezeichner_LiefertHalbePunkte()
+        public async Task CheckAsync_SnakeCaseBezeichner_LaesstNurDieCamelCasePruefungDurchfallen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -64,16 +67,14 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(PointsPerCheck);
-            result.TestCaseResults.ElementAt(0).Passed.ShouldBeTrue();
-            result.TestCaseResults.ElementAt(1).Passed.ShouldBeFalse();
+            ClassNames(outcome).Passed.ShouldBeTrue();
+            CamelCase(outcome).Passed.ShouldBeFalse();
         }
 
         [Fact]
-        public void Check_BeideVerstoesse_LiefertNullPunkte()
+        public async Task CheckAsync_BeideVerstoesse_LaesstBeideTeilpruefungenDurchfallen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -84,17 +85,16 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(0);
-            result.ErrorTip.ShouldNotBeEmpty();
+            outcome.Results.ShouldAllBe(result => !result.Passed);
+            outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
         // Ohne Klassendeklaration gilt die PascalCase-Pruefung als bestanden,
         // weil es nichts zu pruefen gibt.
         [Fact]
-        public void Check_OhneKlassendeklaration_LiefertVollePunktzahl()
+        public async Task CheckAsync_OhneKlassendeklaration_BestehtBeideTeilpruefungen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -103,16 +103,15 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.NamingConventions);
+            outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
         // SCREAMING_SNAKE_CASE ist fuer Java-Konstanten korrekt und wird
         // vom Regex bewusst nicht erfasst.
         [Fact]
-        public void Check_ScreamingSnakeCaseKonstante_LiefertVollePunktzahl()
+        public async Task CheckAsync_ScreamingSnakeCaseKonstante_BestehtBeideTeilpruefungen()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -121,17 +120,15 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.NamingConventions);
+            outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Ist-Verhalten, kein Wunschverhalten: der Regex arbeitet auf dem rohen Text
-        // und findet "class" auch in einem Kommentar.
-        // Siehe Finding vom 2026-08-15 (False Positives), geplant fuer Phase 3.
+        // Behebt das Finding aus §9: frueher schlug der Regex hier an, obwohl der
+        // Code selbst einwandfrei war. Kommentare werden jetzt vorher entfernt.
         [Fact]
-        public void Check_KlassennameImKommentar_WirdMitgeprueft()
+        public async Task CheckAsync_KlassennameImKommentar_WirdNichtMehrBeanstandet()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -142,16 +139,31 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Points.ShouldBe(PointsPerCheck);
-            result.TestCaseResults.ElementAt(0).Passed.ShouldBeFalse();
+            ClassNames(outcome).Passed.ShouldBeTrue();
         }
 
-        // Ist-Verhalten, zweite Auspraegung desselben Findings: snake_case wird
-        // auch innerhalb eines String-Literals beanstandet.
         [Fact]
-        public void Check_SnakeCaseImStringLiteral_LiefertHalbePunkte()
+        public async Task CheckAsync_KlassennameImBlockkommentar_WirdNichtMehrBeanstandet()
+        {
+            var files = SubmissionFileFactory.CreateMany(
+                """
+                /* Beispiel:
+                   class beispiel { }
+                */
+                public class Greeter { }
+                """);
+
+            var outcome = await CheckAsync(files);
+
+            ClassNames(outcome).Passed.ShouldBeTrue();
+        }
+
+        // Zweite Auspraegung desselben Findings: snake_case in einer Ausgabe sagt
+        // nichts ueber die Benennung im Programm aus.
+        [Fact]
+        public async Task CheckAsync_SnakeCaseImStringLiteral_WirdNichtMehrBeanstandet()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -162,35 +174,59 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Points.ShouldBe(PointsPerCheck);
-            result.TestCaseResults.ElementAt(1).Passed.ShouldBeFalse();
+            CamelCase(outcome).Passed.ShouldBeTrue();
+        }
+
+        // Der Verstoss im echten Code darf durch das Entfernen der Literale
+        // natuerlich nicht verschwinden.
+        [Fact]
+        public async Task CheckAsync_SnakeCaseImCodeUndImString_WirdWeiterhinBeanstandet()
+        {
+            var files = SubmissionFileFactory.CreateMany(
+                """
+                public class Greeter {
+                    public static void main(String[] args) {
+                        int mein_wert = 1;
+                        System.out.println("mein_wert");
+                    }
+                }
+                """);
+
+            var outcome = await CheckAsync(files);
+
+            CamelCase(outcome).Passed.ShouldBeFalse();
         }
 
         [Fact]
-        public void Check_MehrereDateien_WertetAlleAus()
+        public async Task CheckAsync_MehrereDateien_WertetAlleAus()
         {
             var files = SubmissionFileFactory.CreateMany(
                 "public class Greeter { }",
                 "public class helper { }");
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Points.ShouldBe(PointsPerCheck);
-            result.TestCaseResults.ElementAt(0).Passed.ShouldBeFalse();
+            ClassNames(outcome).Passed.ShouldBeFalse();
         }
 
         [Fact]
-        public void Check_Immer_LiefertKategorieUndZweiTeilergebnisse()
+        public async Task CheckAsync_Immer_LiefertZweiTeilpruefungen()
         {
             var files = SubmissionFileFactory.CreateMany("public class Greeter { }");
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Category.ShouldBe(EvaluationCategory.NamingConventions);
-            result.MaxPoints.ShouldBe(EvaluationCategoryPoints.NamingConventions);
-            result.TestCaseResults.Count.ShouldBe(2);
+            outcome.Results.Count.ShouldBe(2);
+        }
+
+        // Namenskonventionen sind seit der Bewertungs-Engine v2 eine Teilpruefung
+        // unter Clean Code und keine eigene Kategorie mehr.
+        [Fact]
+        public void Category_IstCleanCode()
+        {
+            _checker.Category.ShouldBe(EvaluationCategory.CleanCode);
         }
     }
 }

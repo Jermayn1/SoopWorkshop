@@ -1,39 +1,43 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
+using SoopWorkshop.Backend.Application.Evaluation;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    // Prüft, ob die eingereichten Dateien Umlaute oder ß beinhalten
-    public class CharacterSetChecker
+    // Prüft, ob die eingereichten Dateien Umlaute oder ß beinhalten.
+    // Teilpruefung der Sammelkategorie Clean Code.
+    public class CharacterSetChecker : IEvaluationChecker
     {
         private static readonly Regex ForbiddenCharacters = new(@"[äöüÄÖÜß]", RegexOptions.Compiled);
 
-        public CategoryResult Check(List<SubmissionFile> files)
+        public EvaluationCategory Category => EvaluationCategory.CleanCode;
+
+        public int Order => EvaluationCheckerOrder.CharacterSet;
+
+        // Gilt fuer jede Aufgabe - Clean Code wird immer bewertet.
+        public bool IsApplicable(EvaluationContext context) => true;
+
+        public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
-            var hasForbiddenCharacters = files.Any(file => ForbiddenCharacters.IsMatch(file.Content));
+            var hasForbiddenCharacters = context.Files.Any(file => ForbiddenCharacters.IsMatch(file.Content));
 
-            var result = new CategoryResult
-            {
-                Id = Guid.NewGuid(),
-                Category = EvaluationCategory.CharacterSet,
-                MaxPoints = EvaluationCategoryPoints.CharacterSet,
-                Points = hasForbiddenCharacters ? 0 : EvaluationCategoryPoints.CharacterSet,
-                Passed = !hasForbiddenCharacters,
-                ErrorTip = hasForbiddenCharacters
-                    ? "Vermeide Umlaute (ä, ö, ü) und das ß-Zeichen im Code. Nutze stattdessen z.B. 'ae', 'oe', 'ue', 'ss'."
-                    : string.Empty
-            };
-
-            result.TestCaseResults.Add(new TestCaseResult
+            var result = new TestCaseResult
             {
                 Id = Guid.NewGuid(),
                 Description = "Kein Umlaut oder Sonderzeichen gefunden",
                 Passed = !hasForbiddenCharacters
-            });
+            };
 
-            return result;
+            var outcome = hasForbiddenCharacters
+                ? CheckerOutcome.WithTip(
+                    "Vermeide Umlaute (ä, ö, ü) und das ß-Zeichen im Code. Nutze stattdessen z.B. 'ae', 'oe', 'ue', 'ss'.",
+                    result)
+                : CheckerOutcome.Of(result);
+
+            return Task.FromResult(outcome);
         }
     }
 }

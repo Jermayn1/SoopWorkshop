@@ -4,6 +4,7 @@ using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Submissions.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
+using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.DTOs.Submissions;
 using SoopWorkshop.Shared.Enums;
@@ -107,22 +108,29 @@ public class SubmissionService(
         SubmissionId = result.SubmissionId,
         TotalScore = result.TotalScore,
         MaxScore = result.MaxScore,
-        CategoryResults = result.CategoryResults.Select(c => new CategoryResultDto
-        {
-            Id = c.Id,
-            Category = c.Category,
-            Passed = c.Passed,
-            Points = c.Points,
-            MaxPoints = c.MaxPoints,
-            ErrorTip = c.ErrorTip,
-            TestCaseResults = c.TestCaseResults.Select(t => new TestCaseResultDto
+        // Sortiert ausliefern: die Datenbank gibt die Zeilen sonst in beliebiger
+        // Reihenfolge zurueck und die Ergebnisseite sieht bei jedem Aufruf anders aus.
+        CategoryResults = result.CategoryResults
+            .OrderBy(c => EvaluationCategoryOrder.Of(c.Category))
+            .Select(c => new CategoryResultDto
             {
-                Id = t.Id,
-                Description = t.Description,
-                ExpectedOutput = t.ExpectedOutput,
-                ActualOutput = t.ActualOutput,
-                Passed = t.Passed
+                Id = c.Id,
+                Category = c.Category,
+                Passed = c.Passed,
+                Points = c.Points,
+                MaxPoints = c.MaxPoints,
+                ErrorTip = c.ErrorTip,
+                TestCaseResults = c.TestCaseResults
+                    .OrderBy(t => t.Order)
+                    .Select(t => new TestCaseResultDto
+                    {
+                        Id = t.Id,
+                        Description = t.Description,
+                        ExpectedOutput = t.ExpectedOutput,
+                        ActualOutput = t.ActualOutput,
+                        Passed = t.Passed,
+                        Order = t.Order
+                    }).ToList()
             }).ToList()
-        }).ToList()
     };
 }

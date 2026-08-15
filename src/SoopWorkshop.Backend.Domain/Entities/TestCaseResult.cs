@@ -9,6 +9,10 @@
         public string ActualOutput { get; set; } = string.Empty;
         public bool Passed { get; set; }
 
+        // Anzeigereihenfolge innerhalb der Kategorie. Ohne sie bestimmt die
+        // Datenbank, in welcher Reihenfolge die Teilpruefungen zurueckkommen.
+        public int Order { get; set; }
+
         public CategoryResult CategoryResult { get; set; } = null!;
     }
 }

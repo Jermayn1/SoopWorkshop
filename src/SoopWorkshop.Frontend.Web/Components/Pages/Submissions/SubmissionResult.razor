@@ -40,7 +40,7 @@ else
 
         <MudText Typo="Typo.h6">Auswertung nach Kategorien</MudText>
 
-        @foreach (var category in _result.CategoryResults)
+        @foreach (var category in SortedCategories(_result))
         {
             <MudPaper Elevation="2" Class="pa-4">
                 <MudStack Spacing="2">
@@ -67,7 +67,7 @@ else
                     @if (category.TestCaseResults.Count > 0)
                     {
                         <MudList T="string" Dense="true">
-                            @foreach (var test in category.TestCaseResults)
+                            @foreach (var test in SortedTestCases(category))
                             {
                                 <MudListItem Icon="@(test.Passed ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
                                              IconColor="@(test.Passed ? Color.Success : Color.Error)">

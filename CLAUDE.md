@@ -154,6 +154,15 @@ Unterstrich trennt die Ebenen), Standardwerte in `appsettings.json`:
 | `CompileTimeoutSeconds` | 30 | 30 | Zeitgrenze für `javac` |
 | `RunTimeoutSeconds` | 10 | 10 | Zeitgrenze pro Testfall-Durchlauf |
 | `QueueCapacity` | 100 | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+| `CategoryWeights:*` | 15/20/65/65 | — | Standardgewichte der Bewertungskategorien (siehe unten) |
+
+**Gewichte sind keine Punkte.** `CategoryWeights` gibt nur das Verhältnis der
+Kategorien zueinander an; die erreichbaren Punkte entstehen erst durch die Normierung
+auf 100. Nutzt eine Aufgabe eine Kategorie nicht — etwa Testfälle bei einer Aufgabe
+ohne Testfälle —, fällt sie komplett aus der Wertung und ihr Gewicht verteilt sich auf
+die übrigen. Eine reine Konsolenaufgabe behält damit die frühere Verteilung
+15/20/65, eine Aufgabe ohne Testfälle wird zu 43/57. Einzelne Aufgaben überschreiben
+Gewichte über `TaskCategoryWeight` (Admin-Endpunkt `api/admin/tasks/{id}/weights`).
 
 Die Zeitgrenzen messen **Wanduhrzeit**. Bei hoher Parallelität auf wenigen Kernen
 konkurrieren die Prozesse und brauchen länger — dann eher die Grenzen anheben als die

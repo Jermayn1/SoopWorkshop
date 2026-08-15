@@ -1,3 +1,5 @@
+using SoopWorkshop.Shared.Enums;
+
 namespace SoopWorkshop.Backend.Application.Evaluation
 {
     // Stellschrauben der Auswertung. Gebunden an den Konfigurationsabschnitt "Evaluation",
@@ -17,5 +19,20 @@ namespace SoopWorkshop.Backend.Application.Evaluation
         // Obergrenze der Warteschlange. Ist sie voll, wartet das Einreihen,
         // statt unbegrenzt Arbeit anzusammeln.
         public int QueueCapacity { get; set; } = 100;
+
+        // Standardgewichte der Bewertungskategorien. Nicht in Punkten, sondern
+        // relativ zueinander - erst die Normierung im EvaluationScorer macht
+        // daraus die erreichbaren Punkte. Eine Aufgabe kann einzelne Gewichte
+        // ueber TaskCategoryWeight ueberschreiben.
+        //
+        // Die Werte sind so gewaehlt, dass eine reine Konsolenaufgabe genau die
+        // Verteilung von vorher behaelt (15 = 5 Zeichensatz + 10 Namenskonventionen).
+        public Dictionary<EvaluationCategory, double> CategoryWeights { get; set; } = new()
+        {
+            [EvaluationCategory.CleanCode] = 15,
+            [EvaluationCategory.Compilability] = 20,
+            [EvaluationCategory.TestCases] = 65,
+            [EvaluationCategory.UnitTests] = 65
+        };
     }
 }

@@ -1,6 +1,8 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
+using SoopWorkshop.Backend.Application.Evaluation;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
@@ -8,54 +10,55 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
     // Prüft auf Nameconventions
     // Klassennamen in PascalCase
     // Variablen und Methodennamen in lowerCamelCase
-    public class NamingConventionChecker
+    // Teilpruefung der Sammelkategorie Clean Code.
+    public class NamingConventionChecker : IEvaluationChecker
     {
-        private const int PointsPerCheck = EvaluationCategoryPoints.NamingConventions / 2;
-
-        private static readonly Regex ClassDeclaration = new(@"class\s+([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
+        private static readonly Regex ClassDeclaration = new(@"\bclass\s+([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
 
         // Erkennt Identifier wie "mein_wert". SCREAMING_SNAKE_CASE Konstanten (z.B. MAX_VALUE)
         // werden bewusst nicht erfasst, da diese in Java üblich und korrekt sind.
         private static readonly Regex SnakeCaseIdentifier = new(@"\b[a-z][a-z0-9]*_[a-z0-9_]*\b", RegexOptions.Compiled);
 
-        public CategoryResult Check(List<SubmissionFile> files)
+        public EvaluationCategory Category => EvaluationCategory.CleanCode;
+
+        public int Order => EvaluationCheckerOrder.NamingConventions;
+
+        public bool IsApplicable(EvaluationContext context) => true;
+
+        public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
-            var allContent = string.Join("\n", files.Select(f => f.Content));
+            // Nur echter Code wird geprueft. Was in Kommentaren oder in Ausgaben
+            // steht, sagt nichts ueber die Benennung im Programm aus.
+            var code = string.Join(
+                "\n",
+                context.Files.Select(file => JavaSourceText.StripCommentsAndLiterals(file.Content)));
 
-            var classNamesValid = CheckClassNames(allContent);
-            var noSnakeCase = !SnakeCaseIdentifier.IsMatch(allContent);
+            var classNamesValid = CheckClassNames(code);
+            var noSnakeCase = !SnakeCaseIdentifier.IsMatch(code);
 
-            var points = 0;
-            if (classNamesValid) points += PointsPerCheck;
-            if (noSnakeCase) points += PointsPerCheck;
-
-            var result = new CategoryResult
+            var results = new[]
             {
-                Id = Guid.NewGuid(),
-                Category = EvaluationCategory.NamingConventions,
-                MaxPoints = EvaluationCategoryPoints.NamingConventions,
-                Points = points,
-                Passed = points == EvaluationCategoryPoints.NamingConventions,
-                ErrorTip = points < EvaluationCategoryPoints.NamingConventions
-                    ? "Klassen werden in PascalCase benannt (z.B. 'MeineKlasse'), Variablen und Methoden in camelCase (z.B. 'meineVariable')."
-                    : string.Empty
+                new TestCaseResult
+                {
+                    Id = Guid.NewGuid(),
+                    Description = "Klassennamen in PascalCase",
+                    Passed = classNamesValid
+                },
+                new TestCaseResult
+                {
+                    Id = Guid.NewGuid(),
+                    Description = "Variablen- und Methodennamen in camelCase",
+                    Passed = noSnakeCase
+                }
             };
 
-            result.TestCaseResults.Add(new TestCaseResult
-            {
-                Id = Guid.NewGuid(),
-                Description = "Klassennamen in PascalCase",
-                Passed = classNamesValid
-            });
+            var outcome = classNamesValid && noSnakeCase
+                ? CheckerOutcome.Of(results)
+                : CheckerOutcome.WithTip(
+                    "Klassen werden in PascalCase benannt (z.B. 'MeineKlasse'), Variablen und Methoden in camelCase (z.B. 'meineVariable').",
+                    results);
 
-            result.TestCaseResults.Add(new TestCaseResult
-            {
-                Id = Guid.NewGuid(),
-                Description = "Variablen- und Methodennamen in camelCase",
-                Passed = noSnakeCase
-            });
-
-            return result;
+            return Task.FromResult(outcome);
         }
 
         private static bool CheckClassNames(string content)

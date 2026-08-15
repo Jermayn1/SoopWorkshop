@@ -3,14 +3,13 @@ using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Backend.Infrastructure.Evaluation.Models;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    // Führt das kompilierte Programm für jeden Testfall aus und vergleicht es mit dem erwareteten Ergebnis
-    public class TestCaseChecker
+    // Führt das kompilierte Programm für jeden Konsolen-Testfall aus und
+    // vergleicht die Ausgabe mit der erwarteten.
+    public class TestCaseChecker : IEvaluationChecker
     {
         private readonly IProcessRunner _processRunner;
         private readonly EvaluationOptions _options;
@@ -21,71 +20,60 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _options = options.Value;
         }
 
-        public async Task<CategoryResult> CheckAsync(
-            CompilationResult compilation,
-            List<TaskTest> tests,
-            CancellationToken cancellationToken)
+        public EvaluationCategory Category => EvaluationCategory.TestCases;
+
+        public int Order => EvaluationCheckerOrder.TestCases;
+
+        // Ohne hinterlegte Testfaelle gibt es nichts zu pruefen - dann faellt die
+        // Kategorie aus der Wertung und ihr Gewicht verteilt sich auf die uebrigen.
+        // Frueher gab es hier stattdessen die volle Punktzahl geschenkt.
+        public bool IsApplicable(EvaluationContext context) => context.Task.Tests.Count > 0;
+
+        public async Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
-            var result = new CategoryResult
-            {
-                Id = Guid.NewGuid(),
-                Category = EvaluationCategory.TestCases,
-                MaxPoints = EvaluationCategoryPoints.TestCases
-            };
+            var tests = context.Task.Tests.OrderBy(test => test.Order).ToList();
+            var compilation = context.Compilation;
 
-            if (tests.Count == 0)
+            // Kompiliert die Abgabe nicht, gelten alle Testfaelle als nicht
+            // bestanden. Die Kategorie faellt bewusst nicht weg - sonst wuerde
+            // ihr Gewicht umverteilt und kaputter Code besser bewertet.
+            if (compilation is null || !compilation.Success || compilation.MainClassName is null)
             {
-                result.Passed = true;
-                result.Points = EvaluationCategoryPoints.TestCases;
-                return result;
-            }
-
-            if (!compilation.Success || compilation.MainClassName is null)
-            {
-                result.ErrorTip = "Da der Code nicht kompiliert, konnten keine Testfaelle ausgefuehrt werden.";
-
-                foreach (var test in tests)
+                var failed = tests.Select(test => new TestCaseResult
                 {
-                    result.TestCaseResults.Add(new TestCaseResult
-                    {
-                        Id = Guid.NewGuid(),
-                        Description = test.Description,
-                        ExpectedOutput = test.ExpectedOutput,
-                        ActualOutput = string.Empty,
-                        Passed = false
-                    });
-                }
+                    Id = Guid.NewGuid(),
+                    Description = test.Description,
+                    ExpectedOutput = test.ExpectedOutput,
+                    ActualOutput = string.Empty,
+                    Passed = false
+                }).ToArray();
 
-                return result;
+                return CheckerOutcome.WithTip(
+                    "Da der Code nicht kompiliert, konnten keine Testfaelle ausgefuehrt werden.",
+                    failed);
             }
+
+            var results = new List<TestCaseResult>();
 
             foreach (var test in tests)
             {
                 var actualOutput = await RunProgramAsync(compilation, test.Input, cancellationToken);
-                var passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput);
 
-                result.TestCaseResults.Add(new TestCaseResult
+                results.Add(new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
                     Description = test.Description,
                     ExpectedOutput = test.ExpectedOutput,
                     ActualOutput = actualOutput,
-                    Passed = passed
+                    Passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput)
                 });
             }
 
-            var allPassed = result.TestCaseResults.All(t => t.Passed);
-            var pointsPerTest = EvaluationCategoryPoints.TestCases / tests.Count;
-            var passedCount = result.TestCaseResults.Count(t => t.Passed);
-
-            // Rundungsverlust (z.B. 65 / 3 = 21) bekommt man bei bestandenen Tests trotzdem die volle Punktzahl
-            result.Points = allPassed ? EvaluationCategoryPoints.TestCases : passedCount * pointsPerTest;
-            result.Passed = allPassed;
-
-            if (!allPassed)
-                result.ErrorTip = "Pruefe deine Ausgabe genau gegen die erwartete Ausgabe - achte auf Gross-/Kleinschreibung, Leerzeichen und Zeilenumbrueche.";
-
-            return result;
+            return results.All(result => result.Passed)
+                ? CheckerOutcome.Of([.. results])
+                : CheckerOutcome.WithTip(
+                    "Pruefe deine Ausgabe genau gegen die erwartete Ausgabe - achte auf Gross-/Kleinschreibung, Leerzeichen und Zeilenumbrueche.",
+                    [.. results]);
         }
 
         // Entfernt führende und abschließende Leerzeichen und vereinheitlicht Zeilenumbrueche,

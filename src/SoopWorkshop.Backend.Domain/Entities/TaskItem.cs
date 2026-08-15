@@ -16,4 +16,7 @@ public class TaskItem
     public ICollection<TaskHint> Hints { get; set; } = [];
     public ICollection<TaskTest> Tests { get; set; } = [];
     public ICollection<Submission> Submissions { get; set; } = [];
+
+    // Leer, solange die Standardgewichte aus der Konfiguration gelten sollen.
+    public ICollection<TaskCategoryWeight> CategoryWeights { get; set; } = [];
 }

@@ -32,6 +32,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .WithOne(s => s.Task)
                 .HasForeignKey(s => s.TaskItemId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(t => t.CategoryWeights)
+                .WithOne(weight => weight.Task)
+                .HasForeignKey(weight => weight.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

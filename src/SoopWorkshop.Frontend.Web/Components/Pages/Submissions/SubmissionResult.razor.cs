@@ -76,8 +76,18 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
         EvaluationCategory.Compilability => EvaluationCategoryNames.Compilability,
         EvaluationCategory.CleanCode => EvaluationCategoryNames.CleanCode,
         EvaluationCategory.TestCases => EvaluationCategoryNames.TestCases,
+        EvaluationCategory.UnitTests => EvaluationCategoryNames.UnitTests,
         _ => category.ToString()
     };
+
+    // Die API liefert bereits sortiert. Hier wird es trotzdem angewendet, damit
+    // die Anzeige nicht davon abhaengt, dass niemand die Reihenfolge unterwegs
+    // verliert — Sortierung ist billig, eine wechselnde Anzeige verwirrt.
+    private static IEnumerable<CategoryResultDto> SortedCategories(EvaluationResultDto result) =>
+        result.CategoryResults.OrderBy(category => EvaluationCategoryOrder.Of(category.Category));
+
+    private static IEnumerable<TestCaseResultDto> SortedTestCases(CategoryResultDto category) =>
+        category.TestCaseResults.OrderBy(testCase => testCase.Order);
 
     // Nur abmelden und stoppen: den Lebenszyklus des Dienstes verwaltet die DI.
     public async ValueTask DisposeAsync()
