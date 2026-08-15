@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using SoopWorkshop.Backend.Infrastructure.Configuration;
 
 namespace SoopWorkshop.Backend.Infrastructure.Persistence
 {
     // Wird ausschliesslich von den EF-Core-Tools benutzt (dotnet ef migrations / database update).
     // Liest denselben Connection-String wie Backend.API: appsettings.json, User Secrets,
-    // Umgebungsvariablen - in dieser Reihenfolge, spaetere gewinnen.
+    // Umgebungsvariablen, zuletzt die .env - spaetere gewinnen.
     public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
         // Muss mit der UserSecretsId in SoopWorkshop.Backend.API.csproj uebereinstimmen
@@ -14,13 +15,15 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
 
         public AppDbContext CreateDbContext(string[] args)
         {
-            var apiProjectPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "SoopWorkshop.Backend.API");
+            var currentDirectory = Directory.GetCurrentDirectory();
+            var apiProjectPath = Path.Combine(currentDirectory, "..", "SoopWorkshop.Backend.API");
 
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(apiProjectPath)
                 .AddJsonFile("appsettings.json", optional: true)
                 .AddUserSecrets(UserSecretsId)
                 .AddEnvironmentVariables()
+                .AddDotEnv(currentDirectory)
                 .Build();
 
             var connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -28,8 +31,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Es ist kein Connection-String gesetzt. Lokal ueber User Secrets setzen:" + Environment.NewLine +
-                    "  dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT\" --project src/SoopWorkshop.Backend.API");
+                    "Es ist kein Connection-String gesetzt. Lokal die .env im Repository-Wurzelverzeichnis" + Environment.NewLine +
+                    "anlegen (Vorlage: .env.example) und POSTGRES_PASSWORD setzen.");
             }
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();

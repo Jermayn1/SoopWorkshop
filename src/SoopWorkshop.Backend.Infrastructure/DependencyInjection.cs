@@ -21,8 +21,9 @@ namespace SoopWorkshop.Backend.Infrastructure
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Es ist kein Connection-String gesetzt. Lokal ueber User Secrets setzen:" + Environment.NewLine +
-                    "  dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT\" --project src/SoopWorkshop.Backend.API" + Environment.NewLine +
+                    "Es ist kein Connection-String gesetzt." + Environment.NewLine +
+                    "Lokal: .env im Repository-Wurzelverzeichnis anlegen (Vorlage: .env.example) und" + Environment.NewLine +
+                    "POSTGRES_PASSWORD setzen - der Connection-String wird daraus gebaut." + Environment.NewLine +
                     "Im Betrieb ueber die Umgebungsvariable ConnectionStrings__DefaultConnection.");
             }
 

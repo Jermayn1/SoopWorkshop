@@ -90,20 +90,41 @@ docker compose up -d
 (`javac`/`java` werden als Prozess aufgerufen).
 
 Die Datenbank läuft über `docker-compose.yml` (Service `db`, Container
-`soopworkshop-db`). Zugangsdaten stehen in `.env` — gitignoriert, Vorlage ist
-`.env.example`. In Phase 7 kommen Backend und Frontend als weitere Services dazu.
+`soopworkshop-db`). In Phase 7 kommen Backend und Frontend als weitere Services dazu.
 
-Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, Werte setzen,
+### `.env` ist in der Entwicklung die eine Wahrheit
+
+Gitignoriert, Vorlage ist `.env.example`. Aus derselben Datei setzt docker-compose die
+Datenbank auf **und** das Backend liest seine Konfiguration. Den Connection-String baut
+es aus den `POSTGRES_`-Werten, das Passwort steht also nur an einer Stelle. User Secrets
+werden nicht mehr gebraucht.
+
+Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, `POSTGRES_PASSWORD` setzen,
 `docker compose up -d`, dann Migrationen anwenden (siehe unten).
 
-Connection-String einmalig setzen (steht **nicht** im Repository, muss zum
-Passwort in `.env` passen):
+**Die `.env` wird bewusst als letzte Quelle geladen und schlägt damit auch
+Umgebungsvariablen.** Grund: eine vergessene `$env:ConnectionStrings__DefaultConnection`
+in der Shell vererbt sich an jedes daraus gestartete Fenster und bewirkt still etwas
+anderes, als in der Datei steht — das hat einmal einen Abend gekostet. Ausserhalb von
+Development wird sie nicht geladen; im Betrieb gelten echte Umgebungsvariablen.
 
-```bash
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=127.0.0.1;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
+Welche Werte tatsächlich gelten, steht in der ersten Logzeile des Backends:
+
+```
+Konfiguration: Datenbank 127.0.0.1:5432/soopworkshop, Auswertung 10 gleichzeitig, Zeitgrenzen 30s kompilieren / 10s ausfuehren.
 ```
 
-Im Betrieb stattdessen die Umgebungsvariable `ConnectionStrings__DefaultConnection`.
+**Passwort geändert und nichts geht mehr?** `POSTGRES_PASSWORD` wirkt nur beim ersten
+Anlegen des Volumes. Danach entweder das Volume neu aufsetzen (`docker compose down -v`)
+oder die Datenbank angleichen:
+
+```bash
+docker exec -it soopworkshop-db psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'NEUES_PASSWORT';"
+```
+
+Achtung bei der Fehlersuche: `psql` **innerhalb** des Containers akzeptiert jedes
+Passwort (`trust` in `pg_hba.conf`) und taugt deshalb nicht zum Prüfen. Verlässlich ist
+nur eine Verbindung von aussen — etwa der Start des Backends.
 
 **`127.0.0.1` statt `localhost`, das ist Absicht.** Unter Windows löst `localhost`
 zuerst auf IPv6 `::1` auf. Dort horcht der WSL-Relay von Docker Desktop, reicht die
@@ -111,15 +132,19 @@ Verbindung aber nicht zum Container durch — der Fehler kommt als
 `28P01 password authentication failed` zurück und sieht damit wie ein falsches
 Passwort aus, obwohl er keins ist.
 
-**Auswertung konfigurieren** (Abschnitt `Evaluation` in `appsettings.json`, im Betrieb
-über `Evaluation__MaxConcurrency` usw.):
+**Auswertung konfigurieren** — in `.env` als `Evaluation__MaxConcurrency` usw. (doppelter
+Unterstrich trennt die Ebenen), Standardwerte in `appsettings.json`:
 
-| Schlüssel | Standard | Bedeutung |
-|---|---|---|
-| `MaxConcurrency` | 2 | gleichzeitig ausgewertete Abgaben — begrenzt parallele JVM-Prozesse |
-| `CompileTimeoutSeconds` | 30 | Zeitgrenze für `javac` |
-| `RunTimeoutSeconds` | 10 | Zeitgrenze pro Testfall-Durchlauf |
-| `QueueCapacity` | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+| Schlüssel | Standard | Lokal | Bedeutung |
+|---|---|---|---|
+| `MaxConcurrency` | 2 | 10 | gleichzeitig ausgewertete Abgaben — begrenzt parallele JVM-Prozesse |
+| `CompileTimeoutSeconds` | 30 | 30 | Zeitgrenze für `javac` |
+| `RunTimeoutSeconds` | 10 | 10 | Zeitgrenze pro Testfall-Durchlauf |
+| `QueueCapacity` | 100 | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+
+Die Zeitgrenzen messen **Wanduhrzeit**. Bei hoher Parallelität auf wenigen Kernen
+konkurrieren die Prozesse und brauchen länger — dann eher die Grenzen anheben als die
+Parallelität senken.
 
 Migrationen — **ohne** `--startup-project`, da `AppDbContextFactory` den Kontext
 zur Entwurfszeit selbst baut und die API das Design-Paket nicht referenziert:
@@ -522,6 +547,16 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   loeschende Migration erzeugt. Behoben durch Neuaufsetzen der DB auf `InitialCreate`~~
   — erledigt. **Fuer Phase 3 relevant:** dieser verworfene Entwurf legte den JUnit-Code
   direkt auf `TaskItem` statt in eine eigene Entitaet und gab `TaskTest` eigene Punkte.
+- ~~2026-08-15 — lokale Umgebung — `28P01` beim Start über `start-dev.ps1`, obwohl User
+  Secrets, `appsettings` und Umgebungsvariablen alle korrekt aussahen. Ursache: eine
+  Prozess-Umgebungsvariable in der aufrufenden PowerShell vererbte sich an jedes daraus
+  gestartete Fenster und schlug die User Secrets. Behoben durch die Umstellung auf `.env`
+  als letzte Konfigurationsquelle plus eine Startzeile, die die effektiven Werte nennt~~
+  — erledigt. **Lehre:** wenn Konfiguration aus mehreren Quellen kommt, muss der effektive
+  Wert protokolliert werden, sonst sucht man im Stacktrace statt in der Konfiguration.
+- 2026-08-15 — lokale Umgebung — `psql` **innerhalb** des Containers akzeptiert wegen
+  `trust` in `pg_hba.conf` jedes Passwort. Eine damit „bestätigte" Übereinstimmung sagt
+  nichts aus; geprüft werden kann nur von aussen
 - ~~2026-08-15 — lokale Umgebung — nach einem Neustart schlug die DB-Verbindung mit
   `28P01` fehl, obwohl das Passwort stimmte. `Host=localhost` loest unter Windows
   zuerst auf `::1` auf; dort horcht Dockers WSL-Relay, ohne zum Container
