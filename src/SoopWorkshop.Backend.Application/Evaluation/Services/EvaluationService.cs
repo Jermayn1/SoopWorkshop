@@ -24,7 +24,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Services
             _javaAnalyzer = javaAnalyzer;
         }
 
-        public async Task EvaluateAsync(Guid submissionId)
+        public async Task EvaluateAsync(Guid submissionId, CancellationToken cancellationToken)
         {
             var submission = await _submissionRepository.GetByIdAsync(submissionId);
             if (submission is null)
@@ -36,7 +36,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Services
             try
             {
                 var expectedTests = submission.Task.Tests.ToList();
-                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, expectedTests);
+                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, expectedTests, cancellationToken);
 
                 await _evaluationResultRepository.AddAsync(evaluationResult);
 

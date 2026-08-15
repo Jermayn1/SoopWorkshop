@@ -44,7 +44,7 @@ public class SubmissionService(
         {
             using var scope = _scopeFactory.CreateScope();
             var evaluationService = scope.ServiceProvider.GetRequiredService<IEvaluationService>();
-            await evaluationService.EvaluateAsync(submissionId);
+            await evaluationService.EvaluateAsync(submissionId, CancellationToken.None);
         });
 
         return Result<SubmissionDto>.Ok(MapToDto(submission));

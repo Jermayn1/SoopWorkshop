@@ -1,4 +1,5 @@
-﻿using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using Microsoft.Extensions.Logging;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
 
@@ -10,68 +11,86 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
         private readonly NamingConventionChecker _namingConventionChecker;
         private readonly CompilabilityChecker _compilabilityChecker;
         private readonly TestCaseChecker _testCaseChecker;
+        private readonly ILogger<JavaAnalyzer> _logger;
 
         public JavaAnalyzer(
             CharacterSetChecker characterSetChecker,
             NamingConventionChecker namingConventionChecker,
             CompilabilityChecker compilabilityChecker,
-            TestCaseChecker testCaseChecker)
+            TestCaseChecker testCaseChecker,
+            ILogger<JavaAnalyzer> logger)
         {
             _characterSetChecker = characterSetChecker;
             _namingConventionChecker = namingConventionChecker;
             _compilabilityChecker = compilabilityChecker;
             _testCaseChecker = testCaseChecker;
+            _logger = logger;
         }
 
-        public async Task<EvaluationResult> AnalyzeAsync(Submission submission, List<TaskTest> expectedTests)
+        public async Task<EvaluationResult> AnalyzeAsync(
+            Submission submission,
+            List<TaskTest> expectedTests,
+            CancellationToken cancellationToken)
         {
             var files = submission.Files.ToList();
 
-            var characterSetResult = _characterSetChecker.Check(files);
-            var namingConventionResult = _namingConventionChecker.Check(files);
-            var (compilabilityResult, compilation) = await _compilabilityChecker.CheckAsync(files);
-            var testCaseResult = await _testCaseChecker.CheckAsync(compilation, expectedTests);
+            // Das Arbeitsverzeichnis gehoert dem Analyzer, damit das finally unten es
+            // auch dann loescht, wenn ein Checker eine Exception wirft.
+            var workingDirectory = Path.Combine(Path.GetTempPath(), "soopworkshop", Guid.NewGuid().ToString());
+            Directory.CreateDirectory(workingDirectory);
 
-            CleanupWorkingDirectory(compilation.WorkingDirectory);
-
-            var categoryResults = new List<CategoryResult>
-        {
-            characterSetResult,
-            namingConventionResult,
-            compilabilityResult,
-            testCaseResult
-        };
-
-            var evaluationResult = new EvaluationResult
+            try
             {
-                Id = Guid.NewGuid(),
-                SubmissionId = submission.Id,
-                TotalScore = categoryResults.Sum(c => c.Points),
-                MaxScore = categoryResults.Sum(c => c.MaxPoints),
-                CategoryResults = categoryResults
-            };
+                var characterSetResult = _characterSetChecker.Check(files);
+                var namingConventionResult = _namingConventionChecker.Check(files);
+                var (compilabilityResult, compilation) = await _compilabilityChecker.CheckAsync(files, workingDirectory, cancellationToken);
+                var testCaseResult = await _testCaseChecker.CheckAsync(compilation, expectedTests, cancellationToken);
 
-            foreach (var categoryResult in categoryResults)
-            {
-                categoryResult.EvaluationResultId = evaluationResult.Id;
+                var categoryResults = new List<CategoryResult>
+                {
+                    characterSetResult,
+                    namingConventionResult,
+                    compilabilityResult,
+                    testCaseResult
+                };
+
+                var evaluationResult = new EvaluationResult
+                {
+                    Id = Guid.NewGuid(),
+                    SubmissionId = submission.Id,
+                    TotalScore = categoryResults.Sum(c => c.Points),
+                    MaxScore = categoryResults.Sum(c => c.MaxPoints),
+                    CategoryResults = categoryResults
+                };
+
+                foreach (var categoryResult in categoryResults)
+                {
+                    categoryResult.EvaluationResultId = evaluationResult.Id;
+                }
+
+                return evaluationResult;
             }
-
-            return evaluationResult;
+            finally
+            {
+                CleanupWorkingDirectory(workingDirectory);
+            }
         }
 
         // Löscht das temporäre Verzeichnis mit dem kompilierten Dateien damit der Speicher nicht unnötig voll wird
-        private static void CleanupWorkingDirectory(string workingDirectory)
+        private void CleanupWorkingDirectory(string workingDirectory)
         {
-            if (string.IsNullOrEmpty(workingDirectory) || !Directory.Exists(workingDirectory))
+            if (!Directory.Exists(workingDirectory))
                 return;
 
             try
             {
                 Directory.Delete(workingDirectory, recursive: true);
             }
-            catch (IOException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
-                // Aufräumfehler sollen die Auswertung nicht fehlschlagen lassen
+                // Aufräumfehler sollen die Auswertung nicht fehlschlagen lassen — stumm
+                // bleiben duerfen sie trotzdem nicht, sonst laeuft die Platte unbemerkt voll.
+                _logger.LogWarning(exception, "Arbeitsverzeichnis {WorkingDirectory} konnte nicht geloescht werden.", workingDirectory);
             }
         }
     }

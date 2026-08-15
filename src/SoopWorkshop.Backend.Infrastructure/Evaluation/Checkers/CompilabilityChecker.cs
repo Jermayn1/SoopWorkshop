@@ -1,5 +1,7 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+using Microsoft.Extensions.Options;
+using SoopWorkshop.Backend.Application.Evaluation;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Models;
 using SoopWorkshop.Shared.Constants;
@@ -9,24 +11,49 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
     public class CompilabilityChecker
     {
-        private const int TimeoutMilliseconds = 30_000;
+        private readonly IProcessRunner _processRunner;
+        private readonly EvaluationOptions _options;
 
-        public async Task<(CategoryResult Result, CompilationResult Compilation)> CheckAsync(List<SubmissionFile> files)
+        public CompilabilityChecker(IProcessRunner processRunner, IOptions<EvaluationOptions> options)
         {
-            var workingDirectory = Path.Combine(Path.GetTempPath(), "soopworkshop", Guid.NewGuid().ToString());
-            Directory.CreateDirectory(workingDirectory);
+            _processRunner = processRunner;
+            _options = options.Value;
+        }
+
+        // Das Arbeitsverzeichnis wird vom JavaAnalyzer angelegt und uebergeben, damit
+        // dieser es auch dann aufraeumen kann, wenn hier etwas schiefgeht.
+        public async Task<(CategoryResult Result, CompilationResult Compilation)> CheckAsync(
+            List<SubmissionFile> files,
+            string workingDirectory,
+            CancellationToken cancellationToken)
+        {
+            var filePaths = new List<string>();
 
             foreach (var file in files)
             {
-                var filePath = Path.Combine(workingDirectory, file.FileName);
-                await File.WriteAllTextAsync(filePath, file.Content);
+                // Zweite Verteidigungslinie hinter der Upload-Pruefung: nur der reine
+                // Dateiname darf ins Arbeitsverzeichnis, niemals ein Pfad.
+                var filePath = Path.Combine(workingDirectory, Path.GetFileName(file.FileName));
+                await File.WriteAllTextAsync(filePath, file.Content, cancellationToken);
+                filePaths.Add(filePath);
             }
 
-            var filePaths = files.Select(f => Path.Combine(workingDirectory, f.FileName));
-            var arguments = string.Join(' ', filePaths.Select(p => $"\"{p}\""));
+            // Die Dateien werden als UTF-8 geschrieben; ohne diese Angabe wuerde javac
+            // unter Windows mit der Plattform-Codepage lesen und Umlaute zerlegen.
+            var arguments = new List<string> { "-encoding", "UTF-8" };
+            arguments.AddRange(filePaths);
 
-            var (exitCode, errorOutput) = await RunProcessAsync("javac", arguments, workingDirectory);
-            var success = exitCode == 0;
+            var process = await _processRunner.RunAsync(
+                new ProcessRequest(
+                    "javac",
+                    arguments,
+                    workingDirectory,
+                    StandardInput: null,
+                    TimeSpan.FromSeconds(_options.CompileTimeoutSeconds)),
+                cancellationToken);
+
+            var success = process.Success;
+            var errorOutput = success ? string.Empty : DescribeFailure(process);
             var mainClassName = success ? FindMainClassName(files) : null;
 
             var result = new CategoryResult
@@ -46,7 +73,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 Id = Guid.NewGuid(),
                 Description = "Code kompiliert fehlerfrei",
                 Passed = success,
-                ActualOutput = success ? string.Empty : errorOutput
+                ActualOutput = errorOutput
             });
 
             var compilation = new CompilationResult
@@ -60,46 +87,27 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             return (result, compilation);
         }
 
+        // Uebersetzt das Prozessergebnis in eine Meldung, die dem Teilnehmer sagt,
+        // was schiefgelaufen ist — ein leerer Text waere hier wertlos.
+        private string DescribeFailure(ProcessResult process)
+        {
+            if (process.ExecutableNotFound)
+                return "'javac' wurde nicht gefunden. Ist das JDK installiert und im PATH?";
+
+            if (process.TimedOut)
+                return $"Zeitueberschreitung beim Kompilieren (Grenze: {_options.CompileTimeoutSeconds} Sekunden).";
+
+            return string.IsNullOrWhiteSpace(process.StandardError)
+                ? process.StandardOutput
+                : process.StandardError;
+        }
+
         // Sucht die Datei mit "public static void main" und gibt den dazugehoerigen
         // Klassennamen zurueck. In Java muss der Dateiname mit dem Klassennamen uebereinstimmen.
         private static string? FindMainClassName(List<SubmissionFile> files)
         {
             var mainFile = files.FirstOrDefault(f => f.Content.Contains("public static void main"));
             return mainFile is null ? null : Path.GetFileNameWithoutExtension(mainFile.FileName);
-        }
-
-        private static async Task<(int ExitCode, string ErrorOutput)> RunProcessAsync(string fileName, string arguments, string workingDirectory)
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = fileName,
-                Arguments = arguments,
-                WorkingDirectory = workingDirectory,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            };
-
-            try
-            {
-                using var process = Process.Start(startInfo)!;
-
-                var errorTask = process.StandardError.ReadToEndAsync();
-                var completed = process.WaitForExit(TimeoutMilliseconds);
-
-                if (!completed)
-                {
-                    process.Kill(entireProcessTree: true);
-                    return (-1, "Zeitueberschreitung beim Kompilieren.");
-                }
-
-                var errorOutput = await errorTask;
-                return (process.ExitCode, errorOutput);
-            }
-            catch (Win32Exception)
-            {
-                return (-1, $"'{fileName}' wurde nicht gefunden. Ist das JDK installiert und im PATH?");
-            }
         }
     }
 }

@@ -3,6 +3,6 @@
     public interface IEvaluationService
     {
         // Beginnt die Auswertung einer Submission und speichert das Ergebnis
-        Task EvaluateAsync(Guid submissionId);
+        Task EvaluateAsync(Guid submissionId, CancellationToken cancellationToken);
     }
 }
