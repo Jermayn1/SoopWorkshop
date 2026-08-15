@@ -4,6 +4,7 @@ using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Submissions.Services;
 using SoopWorkshop.Backend.Domain.Entities;
+using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Tests.Unit.Application.Submissions
 {
@@ -60,6 +61,52 @@ namespace SoopWorkshop.Tests.Unit.Application.Submissions
 
             await _submissionRepository.DidNotReceive().AddAsync(Arg.Any<Submission>());
             await _evaluationQueue.DidNotReceive().EnqueueAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetStatusAsync_AbgabeFehlgeschlagen_LiefertStatusUndFehlermeldung()
+        {
+            var submission = new Submission
+            {
+                Id = Guid.NewGuid(),
+                Status = SubmissionStatus.Failed,
+                ErrorMessage = "Neustart des Servers",
+                SubmittedAt = new DateTime(2026, 8, 15, 12, 0, 0, DateTimeKind.Utc)
+            };
+
+            _submissionRepository.GetSummaryByIdAsync(submission.Id, Arg.Any<CancellationToken>()).Returns(submission);
+
+            var result = await CreateService().GetStatusAsync(submission.Id, CancellationToken.None);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value!.Status.ShouldBe(SubmissionStatus.Failed);
+            result.Value.ErrorMessage.ShouldBe("Neustart des Servers");
+            result.Value.SubmittedAt.ShouldBe(submission.SubmittedAt);
+        }
+
+        // "Laeuft noch" ist eine gueltige Antwort, kein Fehler — genau daran
+        // scheiterte das Frontend beim alten /result-Endpunkt.
+        [Fact]
+        public async Task GetStatusAsync_AuswertungLaeuftNoch_LiefertErfolgMitStatusRunning()
+        {
+            var submission = new Submission { Id = Guid.NewGuid(), Status = SubmissionStatus.Running };
+            _submissionRepository.GetSummaryByIdAsync(submission.Id, Arg.Any<CancellationToken>()).Returns(submission);
+
+            var result = await CreateService().GetStatusAsync(submission.Id, CancellationToken.None);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value!.Status.ShouldBe(SubmissionStatus.Running);
+        }
+
+        [Fact]
+        public async Task GetStatusAsync_AbgabeUnbekannt_LiefertFehler()
+        {
+            var submissionId = Guid.NewGuid();
+            _submissionRepository.GetSummaryByIdAsync(submissionId, Arg.Any<CancellationToken>()).Returns((Submission?)null);
+
+            var result = await CreateService().GetStatusAsync(submissionId, CancellationToken.None);
+
+            result.IsSuccess.ShouldBeFalse();
         }
 
         [Fact]

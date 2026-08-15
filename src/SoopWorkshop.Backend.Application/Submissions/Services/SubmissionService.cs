@@ -78,6 +78,21 @@ public class SubmissionService(
         return Result<EvaluationResultDto>.Ok(MapResultToDto(result));
     }
 
+    public async Task<Result<SubmissionStatusDto>> GetStatusAsync(Guid submissionId, CancellationToken cancellationToken)
+    {
+        var submission = await _submissionRepository.GetSummaryByIdAsync(submissionId, cancellationToken);
+        if (submission is null)
+            return Result<SubmissionStatusDto>.Fail("Einreichung nicht gefunden.");
+
+        return Result<SubmissionStatusDto>.Ok(new SubmissionStatusDto
+        {
+            Id = submission.Id,
+            Status = submission.Status,
+            SubmittedAt = submission.SubmittedAt,
+            ErrorMessage = submission.ErrorMessage
+        });
+    }
+
     private static SubmissionDto MapToDto(Submission submission) => new()
     {
         Id = submission.Id,
