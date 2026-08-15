@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Domain.Entities;
+using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
 {
@@ -40,6 +41,40 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
         {
             _context.Submissions.Update(submission);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<Submission?> GetSummaryByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _context.Submissions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        }
+
+        public async Task<List<Guid>> GetIdsByStatusAsync(
+            IReadOnlyList<SubmissionStatus> statuses,
+            CancellationToken cancellationToken)
+        {
+            return await _context.Submissions
+                .AsNoTracking()
+                .Where(s => statuses.Contains(s.Status))
+                .OrderBy(s => s.SubmittedAt)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task UpdateStatusAsync(
+            Guid id,
+            SubmissionStatus status,
+            string errorMessage,
+            CancellationToken cancellationToken)
+        {
+            await _context.Submissions
+                .Where(s => s.Id == id)
+                .ExecuteUpdateAsync(
+                    setters => setters
+                        .SetProperty(s => s.Status, status)
+                        .SetProperty(s => s.ErrorMessage, errorMessage),
+                    cancellationToken);
         }
     }
 }
