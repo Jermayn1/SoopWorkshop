@@ -48,6 +48,21 @@ Zusätzlich:
 
 ## 3. Befehle
 
+Alles starten (Datenbank, Build, Backend, Frontend):
+
+```bash
+.\scripts\start-dev.ps1
+```
+
+```bash
+.\scripts\stop-dev.ps1
+```
+
+`start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
+Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs getrennt lesbar sind.
+
+Einzeln:
+
 ```bash
 dotnet build SoopWorkshop.slnx
 ```
@@ -57,11 +72,7 @@ dotnet test SoopWorkshop.slnx
 ```
 
 ```bash
-dotnet run --project src/SoopWorkshop.Backend.API
-```
-
-```bash
-dotnet run --project src/SoopWorkshop.Frontend.Web
+docker compose up -d
 ```
 
 | Dienst | HTTP | HTTPS |
@@ -70,10 +81,18 @@ dotnet run --project src/SoopWorkshop.Frontend.Web
 | Frontend Web | `http://localhost:5072` | `https://localhost:7281` |
 | Scalar (API-Doku, nur Development) | `http://localhost:5120/scalar` | — |
 
-**Voraussetzungen (lokal):** .NET 10 SDK, PostgreSQL, JDK im `PATH`
-(`javac`/`java` werden als Prozess aufgerufen). Ab Phase 7 läuft alles in Docker Compose.
+**Voraussetzungen (lokal):** .NET 10 SDK, Docker, JDK im `PATH`
+(`javac`/`java` werden als Prozess aufgerufen).
 
-Connection-String einmalig setzen (steht **nicht** im Repository):
+Die Datenbank läuft über `docker-compose.yml` (Service `db`, Container
+`soopworkshop-db`). Zugangsdaten stehen in `.env` — gitignoriert, Vorlage ist
+`.env.example`. In Phase 7 kommen Backend und Frontend als weitere Services dazu.
+
+Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, Werte setzen,
+`docker compose up -d`, dann Migrationen anwenden (siehe unten).
+
+Connection-String einmalig setzen (steht **nicht** im Repository, muss zum
+Passwort in `.env` passen):
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
@@ -81,10 +100,11 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 
 Im Betrieb stattdessen die Umgebungsvariable `ConnectionStrings__DefaultConnection`.
 
-Migrationen:
+Migrationen — **ohne** `--startup-project`, da `AppDbContextFactory` den Kontext
+zur Entwurfszeit selbst baut und die API das Design-Paket nicht referenziert:
 
 ```bash
-dotnet ef database update --project src/SoopWorkshop.Backend.Infrastructure --startup-project src/SoopWorkshop.Backend.API
+dotnet ef database update --project src/SoopWorkshop.Backend.Infrastructure
 ```
 
 ---
@@ -383,9 +403,21 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - ~~2026-08-15 — `Frontend.Web/.../TaskDetail.razor` — `ActivatorContent` existiert in
   MudBlazor 9.8 nicht; der Upload-Button war kein Activator, die Dateiauswahl liess
   sich darueber nicht oeffnen. War als blosse Build-Warnung fehleingeschaetzt~~ — erledigt in Phase 0
-- 2026-08-15 — lokale Umgebung — der bisher eingecheckte Connection-String
-  (`Password=devpassword`) passt nicht zum lokalen PostgreSQL: `28P01 password
-  authentication failed`. Muss einmalig per User Secrets korrekt gesetzt werden — offen
+- ~~2026-08-15 — lokale Umgebung — Passwort-Fehlschlag `28P01`: Der Container war neu
+  erstellt worden, das Volume stammte vom Vortag. `POSTGRES_PASSWORD` wirkt nur beim
+  ersten Initialisieren des Datenverzeichnisses, deshalb galt weiter das alte Passwort.
+  Behoben durch Neuaufsetzen per `docker-compose.yml`~~ — erledigt
+- ~~2026-08-15 — Datenbank — Schema war dem Code voraus: Migration
+  `20260815112648_AddUnitTestingSupport` war angewendet, die Datei existierte weder im
+  Repo noch in der Git-Historie. Sie hatte `TestMode`, `TestCode`, `TestFileName`,
+  `TemplateCode`, `SolutionCode` auf `TaskItems` sowie `MethodName`, `Points`,
+  `IsHidden` auf `TaskTests` angelegt. Ein `migrations add` haette daraus eine
+  loeschende Migration erzeugt. Behoben durch Neuaufsetzen der DB auf `InitialCreate`~~
+  — erledigt. **Fuer Phase 3 relevant:** dieser verworfene Entwurf legte den JUnit-Code
+  direkt auf `TaskItem` statt in eine eigene Entitaet und gab `TaskTest` eigene Punkte.
+- 2026-08-15 — CLAUDE.md dokumentierte `dotnet ef` mit `--startup-project`; das
+  schlaegt fehl, da Backend.API `EntityFrameworkCore.Design` nicht referenziert.
+  Korrigiert — erledigt
 - 2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie — Phase 2
 - 2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed` — Phase 2/4
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
