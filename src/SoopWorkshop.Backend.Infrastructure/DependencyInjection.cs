@@ -14,8 +14,18 @@ namespace SoopWorkshop.Backend.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Es ist kein Connection-String gesetzt. Lokal ueber User Secrets setzen:" + Environment.NewLine +
+                    "  dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT\" --project src/SoopWorkshop.Backend.API" + Environment.NewLine +
+                    "Im Betrieb ueber die Umgebungsvariable ConnectionStrings__DefaultConnection.");
+            }
+
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(connectionString));
 
             services.AddScoped<ITaskCategoryRepository, TaskCategoryRepository>();
             services.AddScoped<ITaskItemRepository, TaskItemRepository>();
