@@ -77,6 +77,7 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
         EvaluationCategory.CleanCode => EvaluationCategoryNames.CleanCode,
         EvaluationCategory.TestCases => EvaluationCategoryNames.TestCases,
         EvaluationCategory.UnitTests => EvaluationCategoryNames.UnitTests,
+        EvaluationCategory.Functionality => EvaluationCategoryNames.Functionality,
         _ => category.ToString()
     };
 

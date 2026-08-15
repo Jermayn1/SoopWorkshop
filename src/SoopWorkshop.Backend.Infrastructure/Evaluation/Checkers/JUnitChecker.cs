@@ -29,7 +29,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _logger = logger;
         }
 
-        public EvaluationCategory Category => EvaluationCategory.UnitTests;
+        // Dieselbe Kategorie wie die Konsolen-Testfaelle: beide pruefen, ob das
+        // Programm die Aufgabe erfuellt, nur auf unterschiedlichem Weg.
+        public EvaluationCategory Category => EvaluationCategory.Functionality;
 
         public int Order => EvaluationCheckerOrder.UnitTests;
 

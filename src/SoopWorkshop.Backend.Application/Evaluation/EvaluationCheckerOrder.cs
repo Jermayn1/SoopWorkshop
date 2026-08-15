@@ -8,6 +8,10 @@ namespace SoopWorkshop.Backend.Application.Evaluation
     // Die Anzeigereihenfolge ist eine andere und steht in EvaluationCategoryOrder.
     public static class EvaluationCheckerOrder
     {
+        // Vor dem Kompilieren: sagt "die Klasse muss Main heissen" verstaendlicher,
+        // als javac es je koennte, und braucht dafuer nur den Quelltext.
+        public const int Contract = 5;
+
         public const int Compilability = 10;
         public const int CharacterSet = 20;
         public const int NamingConventions = 30;

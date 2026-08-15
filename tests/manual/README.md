@@ -76,13 +76,15 @@ Stolpersteine, über die man sonst zweimal fällt.
 ### `junit/loesungen/`
 
 Beispielabgaben zu den Aufgaben aus dem Seed-Skript. Jede liegt in einem eigenen
-Ordner als `Main.java`, weil Java den Dateinamen an den Klassennamen bindet.
+Ordner als `Main.java`, weil Java den Dateinamen an den Klassennamen bindet — die
+Ausnahme ist `rechner-falscher-klassenname`, genau darum geht es dort.
 
 | Ordner | Erwartetes Ergebnis |
 |---|---|
 | `hallo-soop` | Musterlösung für Aufgabe 1 und 2 — 100 / 100 |
 | `hallo-soop-tippfehler` | Unit-Test fällt durch, Meldung nennt erwartet gegen erhalten |
-| `rechner` | Musterlösung für Aufgabe 3 — 100 / 100 über alle vier Kategorien |
+| `rechner` | Musterlösung für Aufgabe 3 — 100 / 100 über alle drei Kategorien |
+| `rechner-falscher-klassenname` | heißt `Rechner` statt `Main` und liegt deshalb als `Rechner.java` vor — kompiliert und rechnet richtig, muss aber unter Kompilierbarkeit an „Klasse `Main` vorhanden" scheitern |
 | `rechner-falscher-methodenname` | Testdatei kompiliert nicht — die Meldung muss die **erwartete Signatur** nennen, nicht nur „cannot find symbol" |
 | `rechner-falscher-rueckgabewert` | kompiliert, fällt inhaltlich durch — Konsolen- **und** Unit-Tests rot |
 | `rechner-umlaute` | prüft die UTF-8-Kette bis in die Anzeige; Clean Code beanstandet die Umlaute, die Meldung selbst muss lesbar sein |

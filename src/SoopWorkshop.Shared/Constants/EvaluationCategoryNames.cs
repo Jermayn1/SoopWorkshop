@@ -7,10 +7,11 @@ namespace SoopWorkshop.Shared.Constants
         // und brauchen deshalb weiterhin einen Anzeigenamen.
         public const string CharacterSet = "Zeichensatz";
         public const string NamingConventions = "Namenskonventionen";
+        public const string TestCases = "Testfälle";
+        public const string UnitTests = "Unit-Tests";
 
         public const string Compilability = "Kompilierbarkeit";
         public const string CleanCode = "Clean Code";
-        public const string TestCases = "Testfälle";
-        public const string UnitTests = "Unit-Tests";
+        public const string Functionality = "Funktionalität";
     }
 }

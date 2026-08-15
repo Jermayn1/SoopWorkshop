@@ -24,7 +24,10 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 
         public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
 
-        public string? ExpectedSignatures { get; set; }
+        [MaxLength(200, ErrorMessage = "Der Klassenname darf maximal 200 Zeichen lang sein.")]
+        public string? ExpectedClassName { get; set; }
+
+        public List<string> ExpectedMethods { get; set; } = [];
 
         public List<string> Hints { get; set; } = [];
     }

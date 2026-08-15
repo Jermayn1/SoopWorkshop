@@ -12,12 +12,12 @@ namespace SoopWorkshop.Shared.Constants
         [
             EvaluationCategory.CleanCode,
             EvaluationCategory.Compilability,
-            EvaluationCategory.TestCases,
-            EvaluationCategory.UnitTests
+            EvaluationCategory.Functionality
         ];
 
-        // Kategorien, die nicht mehr vergeben werden (Zeichensatz, Namenskonventionen
-        // aus frueheren Auswertungen), landen hinten statt zu verschwinden.
+        // Kategorien, die nicht mehr vergeben werden (Zeichensatz, Namenskonventionen,
+        // Testfaelle und Unit-Tests aus frueheren Auswertungen), landen hinten statt
+        // zu verschwinden.
         public static int Of(EvaluationCategory category)
         {
             var index = Array.IndexOf(DisplayOrder, category);

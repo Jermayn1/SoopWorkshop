@@ -34,14 +34,13 @@ namespace SoopWorkshop.Backend.Application.Evaluation
         // daraus die erreichbaren Punkte. Eine Aufgabe kann einzelne Gewichte
         // ueber TaskCategoryWeight ueberschreiben.
         //
-        // Die Werte sind so gewaehlt, dass eine reine Konsolenaufgabe genau die
-        // Verteilung von vorher behaelt (15 = 5 Zeichensatz + 10 Namenskonventionen).
+        // Die Werte sind so gewaehlt, dass eine Aufgabe genau die Verteilung von
+        // vorher behaelt (15 = 5 Zeichensatz + 10 Namenskonventionen).
         public Dictionary<EvaluationCategory, double> CategoryWeights { get; set; } = new()
         {
             [EvaluationCategory.CleanCode] = 15,
             [EvaluationCategory.Compilability] = 20,
-            [EvaluationCategory.TestCases] = 65,
-            [EvaluationCategory.UnitTests] = 65
+            [EvaluationCategory.Functionality] = 65
         };
     }
 }

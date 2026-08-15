@@ -20,14 +20,20 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _options = options.Value;
         }
 
-        public EvaluationCategory Category => EvaluationCategory.TestCases;
+        // Konsolen-Testfaelle und JUnit-Tests beantworten dieselbe Frage - tut das
+        // Programm, was die Aufgabe verlangt. Sie zahlen deshalb auf dieselbe
+        // Kategorie ein und unterscheiden sich nur im Aufwand fuer den Admin.
+        public EvaluationCategory Category => EvaluationCategory.Functionality;
 
         public int Order => EvaluationCheckerOrder.TestCases;
 
-        // Ohne hinterlegte Testfaelle gibt es nichts zu pruefen - dann faellt die
-        // Kategorie aus der Wertung und ihr Gewicht verteilt sich auf die uebrigen.
-        // Frueher gab es hier stattdessen die volle Punktzahl geschenkt.
-        public bool IsApplicable(EvaluationContext context) => context.Task.Tests.Count > 0;
+        // Ohne hinterlegte Testfaelle gibt es nichts zu pruefen. Nutzt die Aufgabe
+        // zusaetzlich JUnit, traegt der JUnitChecker die Kategorie; sonst faellt sie
+        // aus der Wertung und ihr Gewicht verteilt sich auf die uebrigen. Frueher
+        // gab es hier stattdessen die volle Punktzahl geschenkt.
+        public bool IsApplicable(EvaluationContext context) =>
+            context.Task.EvaluationMode is EvaluationMode.ConsoleOnly or EvaluationMode.Both
+            && context.Task.Tests.Count > 0;
 
         public async Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {

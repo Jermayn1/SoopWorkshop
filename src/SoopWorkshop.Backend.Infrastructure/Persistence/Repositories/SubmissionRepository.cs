@@ -26,6 +26,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                     .ThenInclude(t => t.CategoryWeights)
                 .Include(s => s.Task)
                     .ThenInclude(t => t.UnitTestFiles)
+                .Include(s => s.Task)
+                    .ThenInclude(t => t.ExpectedMethods)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 

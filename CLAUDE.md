@@ -156,14 +156,13 @@ Unterstrich trennt die Ebenen), Standardwerte in `appsettings.json`:
 | `QueueCapacity` | 100 | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
 | `JUnitRunTimeoutSeconds` | 30 | 30 | Zeitgrenze für den JUnit-Lauf (deckt alle Testmethoden einer Aufgabe ab) |
 | `JUnitJarPath` | `lib/junit-platform-console-standalone-6.1.3.jar` | — | relative Pfade lösen gegen `AppContext.BaseDirectory` auf |
-| `CategoryWeights:*` | 15/20/65/65 | — | Standardgewichte der Bewertungskategorien (siehe unten) |
+| `CategoryWeights:*` | 15/20/65 | — | Standardgewichte Clean Code / Kompilierbarkeit / Funktionalität (siehe unten) |
 
 **Gewichte sind keine Punkte.** `CategoryWeights` gibt nur das Verhältnis der
 Kategorien zueinander an; die erreichbaren Punkte entstehen erst durch die Normierung
-auf 100. Nutzt eine Aufgabe eine Kategorie nicht — etwa Testfälle bei einer Aufgabe
-ohne Testfälle —, fällt sie komplett aus der Wertung und ihr Gewicht verteilt sich auf
-die übrigen. Eine reine Konsolenaufgabe behält damit die frühere Verteilung
-15/20/65, eine Aufgabe ohne Testfälle wird zu 43/57. Einzelne Aufgaben überschreiben
+auf 100. Nutzt eine Aufgabe eine Kategorie nicht — etwa Funktionalität bei einer
+Aufgabe ganz ohne Tests —, fällt sie komplett aus der Wertung und ihr Gewicht verteilt
+sich auf die übrigen; aus 15/20/65 wird dann 43/57. Einzelne Aufgaben überschreiben
 Gewichte über `TaskCategoryWeight` (Admin-Endpunkt `api/admin/tasks/{id}/weights`).
 
 Die Zeitgrenzen messen **Wanduhrzeit**. Bei hoher Parallelität auf wenigen Kernen
@@ -218,7 +217,12 @@ Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
 
 Der fachliche Kern des Projekts. Alles in diesem Abschnitt beschreibt den **Ist-Stand**.
 
-### 5.1 Zwei Prüfarten pro Aufgabe
+### 5.1 Zwei Prüfarten, eine Kategorie
+
+Beide Prüfarten beantworten dieselbe Frage — tut das Programm, was die Aufgabe
+verlangt — und zahlen deshalb gemeinsam auf die Kategorie **Funktionalität** ein.
+Sie unterscheiden sich nur im Aufwand für den Admin. Zwei getrennte Kategorien
+nebeneinander waren eine Doppelung in Anzeige und Gewichtung.
 
 Eine Aufgabe kann Konsolen-Testfälle, Aufgaben-Unittests oder beides nutzen:
 
@@ -247,13 +251,27 @@ Bewusst dort und nicht beim Anlegen — beim Anlegen existieren die Testfälle n
 ```
 TaskItem
   ├─ EvaluationMode          ConsoleOnly | UnitTestOnly | Both
-  ├─ ExpectedSignatures      Freitext: erwartete Klassen und Methoden (Anzeige: Phase 4)
+  ├─ ExpectedClassName       wie die Klasse heißen muss (nullable)
+  ├─ ExpectedMethods         → erwartete Methoden: Signatur zur Anzeige,
+  │                            daraus abgeleiteter Name zur Prüfung
   ├─ Hints
   ├─ Tests                   → Konsolen-Testfälle
   ├─ UnitTestFiles           → JUnit-Quelldateien: FileName, Content, Order,
   │                            IsVisibleToParticipant (Standard false)
   └─ CategoryWeights         → aufgabenspezifische Gewichte, überschreiben den Standard
 ```
+
+**Der Aufgaben-Vertrag wird geprüft, nicht nur angezeigt** (`ContractChecker`, läuft
+vor dem Kompilieren auf dem bereinigten Quelltext). Grund: Java erzwingt nur, dass
+Dateiname und Klassenname zusammenpassen — nicht, dass sie heißen wie gefordert.
+Verlangt die Aufgabe `Main` und jemand gibt `Rechner.java` mit `class Rechner` ab,
+kompiliert das, die Konsolen-Testfälle laufen durch, und die Abgabe bestand früher
+klaglos mit voller Punktzahl.
+
+Geprüft wird die **Anwesenheit** der Namen, nicht die vollständige Signatur: die
+prüft der Compiler beim Übersetzen der JUnit-Datei ohnehin exakt, und ein Regex über
+Java-Quelltext würde daran nur unzuverlässig scheitern. Bekannte Folge davon: ein
+bloßer Aufruf `addiere(1, 2)` zählt bereits als Treffer — als Ist-Verhalten getestet.
 
 ### 5.3 Ausführung der JUnit-Tests
 
@@ -336,10 +354,9 @@ in `EvaluationCategoryOrder` — kompiliert wird zuerst, angezeigt wird mit Clea
    `MaxPoints - 1` gedeckelt, sonst stünde 65/65 neben einem roten Testfall.
 5. `Passed` je Kategorie = alle Teilprüfungen bestanden.
 
-Standardgewichte in `Evaluation:CategoryWeights` (15/20/65/65), pro Aufgabe über
-`TaskCategoryWeight` überschreibbar. Eine reine Konsolenaufgabe behält damit die
-frühere Verteilung 15/20/65; bei `Both` normalisiert sich 15/20/65/65 auf 9/12/40/39;
-ohne Konsolen-Testfälle werden aus 15/20 die Werte 43/57.
+Standardgewichte in `Evaluation:CategoryWeights` — Clean Code 15, Kompilierbarkeit 20,
+Funktionalität 65 —, pro Aufgabe über `TaskCategoryWeight` überschreibbar. Eine Aufgabe
+ohne jede Prüfung der Funktionalität wird zu 43/57.
 
 Ein Gewicht ≤ 0 oder eine anwendbare Kategorie ohne Teilprüfung wirft — beides sind
 Konfigurationsfehler und dürfen nicht still die Note verschieben.
@@ -357,7 +374,7 @@ sobald `mein_wert` in einem Kommentar oder in einer Ausgabe stand.
 
 ### 5.7 Sortierung der Anzeige
 
-- `EvaluationCategoryOrder` in `Shared`: CleanCode → Kompilierbarkeit → Testfälle → Unit-Tests
+- `EvaluationCategoryOrder` in `Shared`: CleanCode → Kompilierbarkeit → Funktionalität
 - `Order` auf `TestCaseResult`, vom Scorer fortlaufend vergeben
 - API liefert sortiert aus, das Frontend sortiert zusätzlich — Sortierung ist billig,
   eine wechselnde Anzeige verwirrt
@@ -549,9 +566,18 @@ die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
       aufgabenspezifischen Gewichte
 - [x] Projekt-Tests für Punkteberechnung, XML-Parsing und Signatur-Übersetzung
 
-**Zusätzlich mitgenommen:** `ExpectedSignatures` auf `TaskItem` (Anzeige erst Phase 4),
-`tests/manual/seed-phase3.ps1` mit drei Beispielaufgaben über alle drei Modi, zwei
-erprobte JUnit-Vorlagen und sieben Beispielabgaben unter `tests/manual/junit/`.
+**Zusätzlich mitgenommen:** `tests/manual/seed-phase3.ps1` mit drei Beispielaufgaben
+über alle drei Modi, zwei erprobte JUnit-Vorlagen und acht Beispielabgaben unter
+`tests/manual/junit/`.
+
+**Nachtrag (Phase 3.1), nach Rückfrage aus dem Review:**
+
+- [x] Konsolen-Testfälle und Unit-Tests zahlen auf **eine** Kategorie „Funktionalität"
+      ein. Zwei Kategorien nebeneinander waren eine Doppelung: beide beantworten
+      dieselbe Frage, sie unterscheiden sich nur im Aufwand für den Admin
+- [x] Der Aufgaben-Vertrag ist strukturiert (`ExpectedClassName`, `ExpectedMethods`)
+      und wird vom `ContractChecker` geprüft, statt nur als Freitext dazustehen —
+      schließt die Lücke, dass eine Abgabe mit falschem Klassennamen klaglos bestand
 
 **Bewusst anders als geplant:** Die Modus-Validierung greift beim *Sichtbarschalten*
 statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —
@@ -715,6 +741,10 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte~~ — erledigt in Phase 3
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte~~ — erledigt in Phase 3
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives~~ — erledigt in Phase 3
+- 2026-08-16 — `Domain/Entities/TaskItem.cs` — eine Abgabe mit falschem Klassennamen
+  bestand klaglos: Java erzwingt nur, dass Dateiname und Klassenname zusammenpassen,
+  nicht dass sie heißen wie die Aufgabe verlangt. Bei reinen Konsolenaufgaben fiel das
+  nirgends auf. Behoben in Phase 3.1 durch den `ContractChecker`
 - 2026-08-16 — `Backend.API/Controllers/Admin/*` — die älteren Admin-Endpunkte verlangen
   nach dem Anlegen einen separaten `PATCH .../visibility` und kennen keine
   Block-Speicherung. Die neuen Endpunkte für JUnit-Dateien und Gewichte sind bereits
@@ -750,8 +780,9 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 2. ~~**JUnit-Dateien für Teilnehmer sichtbar?**~~ **Entschieden in Phase 3:** pro Datei
    über `IsVisibleToParticipant` schaltbar, Standard `false`. Die öffentliche API liefert
    nur freigeschaltete Dateien aus; die Darstellung im Frontend fehlt noch — Phase 4.
-3. ~~**Aufgaben-Vertrag.**~~ **Entschieden in Phase 3:** Feld `ExpectedSignatures` auf
-   `TaskItem`, wird über die Task-DTOs ausgeliefert. Hervorgehobene Darstellung
+3. ~~**Aufgaben-Vertrag.**~~ **Entschieden in Phase 3.1:** strukturiert als
+   `ExpectedClassName` und `ExpectedMethods` auf `TaskItem`, geprüft vom
+   `ContractChecker` als Teilprüfung der Kompilierbarkeit. Hervorgehobene Darstellung
    (Phase 4) und das Eingabefeld im Admin-Panel (Phase 5) fehlen noch.
 4. **Sandbox-Tiefe.** Docker Compose containerisiert die *Anwendung*, isoliert aber
    nicht die einzelne Abgabe — `javac`/`java` laufen im Backend-Container.

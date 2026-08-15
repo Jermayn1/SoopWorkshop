@@ -34,25 +34,29 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         private static CategoryScoreInput Compilability(bool passed) =>
             Category(EvaluationCategory.Compilability, 20, passed ? 1 : 0, 1);
 
-        private static CategoryScoreInput TestCases(int passed, int total) =>
-            Category(EvaluationCategory.TestCases, 65, passed, total);
-
-        private static CategoryScoreInput UnitTests(int passed, int total) =>
-            Category(EvaluationCategory.UnitTests, 65, passed, total);
+        // Konsolen-Testfaelle und JUnit-Tests zahlen beide hierauf ein.
+        private static CategoryScoreInput Functionality(int passed, int total) =>
+            Category(EvaluationCategory.Functionality, 65, passed, total);
 
         [Fact]
         public void Score_DreiKategorien_ErreichbarePunkteSindExaktDieGesamtpunktzahl()
         {
-            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), TestCases(1, 2)]);
+            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), Functionality(1, 2)]);
 
             result.Sum(category => category.MaxPoints).ShouldBe(EvaluationScoring.TotalPoints);
         }
 
+        // Gewichte, die sich nicht glatt auf 100 aufteilen lassen - hier muss die
+        // Restverteilung greifen.
         [Fact]
-        public void Score_VierKategorien_ErreichbarePunkteSindExaktDieGesamtpunktzahl()
+        public void Score_KrummeGewichte_ErreichbarePunkteSindExaktDieGesamtpunktzahl()
         {
             var result = EvaluationScorer.Score(
-                [CleanCode(3), Compilability(true), TestCases(1, 2), UnitTests(1, 3)]);
+            [
+                Category(EvaluationCategory.CleanCode, 7, 3, 3),
+                Category(EvaluationCategory.Compilability, 11, 1, 1),
+                Category(EvaluationCategory.Functionality, 13, 1, 2)
+            ]);
 
             result.Sum(category => category.MaxPoints).ShouldBe(EvaluationScoring.TotalPoints);
         }
@@ -66,7 +70,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
             [
                 Category(EvaluationCategory.CleanCode, 1, 1, 1),
                 Category(EvaluationCategory.Compilability, 1, 1, 1),
-                Category(EvaluationCategory.TestCases, 1, 1, 1)
+                Category(EvaluationCategory.Functionality, 1, 1, 1)
             ]);
 
             result.Sum(category => category.MaxPoints).ShouldBe(100);
@@ -78,9 +82,9 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_ZweiVonDreiTestfaellen_VerliertKeinePunkteMehrDurchGanzzahlDivision()
         {
-            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), TestCases(2, 3)]);
+            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), Functionality(2, 3)]);
 
-            var testCases = result.Single(category => category.Category == EvaluationCategory.TestCases);
+            var testCases = result.Single(category => category.Category == EvaluationCategory.Functionality);
             testCases.Points.ShouldBe(43);
             testCases.MaxPoints.ShouldBe(65);
         }
@@ -93,7 +97,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         {
             var result = EvaluationScorer.Score([CleanCode(0, 3), Compilability(true)]);
 
-            result.ShouldNotContain(category => category.Category == EvaluationCategory.TestCases);
+            result.ShouldNotContain(category => category.Category == EvaluationCategory.Functionality);
             result.Sum(category => category.MaxPoints).ShouldBe(EvaluationScoring.TotalPoints);
 
             // Clean Code komplett durchgefallen, nur die Kompilierbarkeit zaehlt.
@@ -104,7 +108,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_NichtAnwendbareKategorie_VerteiltIhrGewichtAufDieUebrigen()
         {
-            var mitTestfaellen = EvaluationScorer.Score([CleanCode(3), Compilability(true), TestCases(2, 2)]);
+            var mitTestfaellen = EvaluationScorer.Score([CleanCode(3), Compilability(true), Functionality(2, 2)]);
             var ohneTestfaelle = EvaluationScorer.Score([CleanCode(3), Compilability(true)]);
 
             var cleanCodeMit = mitTestfaellen.Single(c => c.Category == EvaluationCategory.CleanCode).MaxPoints;
@@ -117,7 +121,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_AllesBestanden_LiefertDieVollePunktzahl()
         {
-            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), TestCases(4, 4)]);
+            var result = EvaluationScorer.Score([CleanCode(3), Compilability(true), Functionality(4, 4)]);
 
             result.Sum(category => category.Points).ShouldBe(EvaluationScoring.TotalPoints);
             result.ShouldAllBe(category => category.Passed);
@@ -126,7 +130,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_NichtsBestanden_LiefertNullPunkte()
         {
-            var result = EvaluationScorer.Score([CleanCode(0), Compilability(false), TestCases(0, 4)]);
+            var result = EvaluationScorer.Score([CleanCode(0), Compilability(false), Functionality(0, 4)]);
 
             result.Sum(category => category.Points).ShouldBe(0);
             result.ShouldAllBe(category => !category.Passed);
@@ -137,7 +141,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_FastAllesBestanden_ErreichtNichtDieVollePunktzahlDerKategorie()
         {
-            var result = EvaluationScorer.Score([Category(EvaluationCategory.TestCases, 100, 199, 200)]);
+            var result = EvaluationScorer.Score([Category(EvaluationCategory.Functionality, 100, 199, 200)]);
 
             var testCases = result.ShouldHaveSingleItem();
             testCases.Points.ShouldBeLessThan(testCases.MaxPoints);
@@ -155,15 +159,15 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_Kategorien_KommenInAnzeigereihenfolge()
         {
+            // Bewusst in falscher Reihenfolge uebergeben.
             var result = EvaluationScorer.Score(
-                [UnitTests(1, 1), TestCases(1, 1), Compilability(true), CleanCode(3)]);
+                [Functionality(1, 1), Compilability(true), CleanCode(3)]);
 
             result.Select(category => category.Category).ShouldBe(
             [
                 EvaluationCategory.CleanCode,
                 EvaluationCategory.Compilability,
-                EvaluationCategory.TestCases,
-                EvaluationCategory.UnitTests
+                EvaluationCategory.Functionality
             ]);
         }
 
@@ -233,7 +237,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
             [
                 Category(EvaluationCategory.CleanCode, 15, cleanCodePassed, cleanCodeTotal),
                 Compilability(true),
-                TestCases(testsPassed, testsTotal)
+                Functionality(testsPassed, testsTotal)
             ]);
 
             result.Sum(category => category.MaxPoints).ShouldBe(EvaluationScoring.TotalPoints);

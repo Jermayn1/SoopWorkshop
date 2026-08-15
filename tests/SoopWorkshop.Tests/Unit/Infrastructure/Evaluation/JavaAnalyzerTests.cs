@@ -93,7 +93,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
         [Fact]
         public async Task AnalyzeAsync_NichtAnwendbarerChecker_TauchtNichtInDerWertungAuf()
         {
-            var nichtAnwendbar = Checker(EvaluationCategory.TestCases, 40, applicable: false);
+            var nichtAnwendbar = Checker(EvaluationCategory.Functionality, 40, applicable: false);
 
             var analyzer = CreateAnalyzer(
                 Checker(EvaluationCategory.CleanCode, 20),
@@ -102,7 +102,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
 
             var result = await analyzer.AnalyzeAsync(CreateSubmission(), CancellationToken.None);
 
-            result.CategoryResults.ShouldNotContain(c => c.Category == EvaluationCategory.TestCases);
+            result.CategoryResults.ShouldNotContain(c => c.Category == EvaluationCategory.Functionality);
             await nichtAnwendbar.DidNotReceive().CheckAsync(Arg.Any<EvaluationContext>(), Arg.Any<CancellationToken>());
         }
 
@@ -110,7 +110,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
         public async Task AnalyzeAsync_CheckerLaufenInDerReihenfolgeVonOrder()
         {
             var zuerst = Checker(EvaluationCategory.Compilability, 10);
-            var danach = Checker(EvaluationCategory.TestCases, 40);
+            var danach = Checker(EvaluationCategory.Functionality, 40);
 
             // Bewusst in falscher Reihenfolge uebergeben.
             var analyzer = CreateAnalyzer(danach, zuerst);

@@ -107,13 +107,15 @@ Write-Host "Kategorie angelegt: $($category.id)"
 
 # ── 1. ConsoleOnly ──────────────────────────────────────────────
 $konsole = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
-    taskCategoryId = $category.id
-    title          = 'Hallo Soop (Konsole)'
-    description    = 'Gib genau "Hallo Soop" auf der Konsole aus. Geprueft wird die Ausgabe deines Programms.'
-    difficulty     = 0
-    order          = 1
-    evaluationMode = 0
-    hints          = @('System.out.println gibt eine Zeile aus.')
+    taskCategoryId    = $category.id
+    title             = 'Hallo Soop (Konsole)'
+    description       = 'Schreibe die Klasse Main und gib genau "Hallo Soop" auf der Konsole aus.'
+    difficulty        = 0
+    order             = 1
+    evaluationMode    = 0
+    expectedClassName = 'Main'
+    expectedMethods   = @('public static void main(String[] args)')
+    hints             = @('System.out.println gibt eine Zeile aus.')
 }
 
 Invoke-Api -Method Post -Path "/api/admin/tasks/$($konsole.id)/tests" -Body @{
@@ -129,14 +131,15 @@ Write-Host "Aufgabe 1 (ConsoleOnly): $($konsole.id)"
 
 # ── 2. UnitTestOnly, ohne dass der Teilnehmer eine Methode schreibt ──
 $unitOnly = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
-    taskCategoryId      = $category.id
-    title               = 'Hallo Soop (Unit-Test)'
-    description         = 'Dieselbe Aufgabe wie zuvor, geprueft ueber einen Unit-Test statt ueber Konsolen-Testfaelle.'
-    difficulty          = 0
-    order               = 2
-    evaluationMode      = 1
-    expectedSignatures  = "public class Main`npublic static void main(String[] args)"
-    hints               = @('Der Test ruft deine main auf und liest mit, was du ausgibst.')
+    taskCategoryId    = $category.id
+    title             = 'Hallo Soop (Unit-Test)'
+    description       = 'Dieselbe Aufgabe wie zuvor, geprueft ueber einen Unit-Test statt ueber Konsolen-Testfaelle.'
+    difficulty        = 0
+    order             = 2
+    evaluationMode    = 1
+    expectedClassName = 'Main'
+    expectedMethods   = @('public static void main(String[] args)')
+    hints             = @('Der Test ruft deine main auf und liest mit, was du ausgibst.')
 }
 
 Invoke-Api -Method Put -Path "/api/admin/tasks/$($unitOnly.id)/unittests" -Body @{
@@ -156,14 +159,18 @@ Write-Host "Aufgabe 2 (UnitTestOnly): $($unitOnly.id)"
 
 # ── 3. Both ─────────────────────────────────────────────────────
 $both = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
-    taskCategoryId     = $category.id
-    title              = 'Rechner'
-    description        = 'Lies zwei ganze Zahlen ein und gib ihre Summe aus. Die Addition gehoert in eine eigene Methode.'
-    difficulty         = 1
-    order              = 3
-    evaluationMode     = 2
-    expectedSignatures = "public class Main`npublic static int addiere(int ersteZahl, int zweiteZahl)`npublic static void main(String[] args)"
-    hints              = @('Scanner liest Zahlen mit nextInt().', 'Die Methode muss static sein, damit der Test sie ohne Objekt aufrufen kann.')
+    taskCategoryId    = $category.id
+    title             = 'Rechner'
+    description       = 'Schreibe die Klasse Main. Lies zwei ganze Zahlen ein und gib ihre Summe aus. Die Addition gehoert in eine eigene Methode addiere.'
+    difficulty        = 1
+    order             = 3
+    evaluationMode    = 2
+    expectedClassName = 'Main'
+    expectedMethods   = @(
+        'public static int addiere(int ersteZahl, int zweiteZahl)',
+        'public static void main(String[] args)'
+    )
+    hints             = @('Scanner liest Zahlen mit nextInt().', 'Die Methode muss static sein, damit der Test sie ohne Objekt aufrufen kann.')
 }
 
 Invoke-Api -Method Post -Path "/api/admin/tasks/$($both.id)/tests" -Body @{
@@ -202,6 +209,7 @@ Write-Host 'Fertig. Passende Abgaben liegen unter tests/manual/junit/loesungen/:
 Write-Host '  hallo-soop                        Musterloesung fuer Aufgabe 1 und 2'
 Write-Host '  hallo-soop-tippfehler             faellt in Aufgabe 2 durch, zeigt erwartet gegen erhalten'
 Write-Host '  rechner                           Musterloesung fuer Aufgabe 3'
+Write-Host '  rechner-falscher-klassenname      Rechner.java statt Main.java - kompiliert, verletzt aber die Vorgabe'
 Write-Host '  rechner-falscher-methodenname     Testdatei kompiliert nicht - nennt die erwartete Signatur'
 Write-Host '  rechner-falscher-rueckgabewert    kompiliert, faellt inhaltlich durch'
 Write-Host '  rechner-umlaute                   prueft die UTF-8-Kette bis in die Anzeige'

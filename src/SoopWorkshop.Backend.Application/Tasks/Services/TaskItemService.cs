@@ -44,7 +44,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 Order = dto.Order,
                 IsVisible = dto.IsVisible,
                 EvaluationMode = dto.EvaluationMode,
-                ExpectedSignatures = dto.ExpectedSignatures,
+                ExpectedClassName = dto.ExpectedClassName,
+                ExpectedMethods = BuildExpectedMethods(dto.ExpectedMethods),
                 Hints = dto.Hints.Select((content, index) => new TaskHint
                 {
                     Id = Guid.NewGuid(),
@@ -72,7 +73,14 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             item.Order = dto.Order;
             item.IsVisible = dto.IsVisible;
             item.EvaluationMode = dto.EvaluationMode;
-            item.ExpectedSignatures = dto.ExpectedSignatures;
+            item.ExpectedClassName = dto.ExpectedClassName;
+
+            item.ExpectedMethods.Clear();
+            foreach (var method in BuildExpectedMethods(dto.ExpectedMethods))
+            {
+                method.TaskItemId = item.Id;
+                item.ExpectedMethods.Add(method);
+            }
 
 
             item.Hints.Clear();
@@ -131,6 +139,19 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<bool>.Ok(item.IsVisible);
         }
 
+        // Der geprüfte Name wird aus der Signatur abgeleitet, damit der Admin nur
+        // einmal aufschreiben muss, was ohnehin in der Aufgabenstellung steht.
+        private static List<TaskExpectedMethod> BuildExpectedMethods(List<string> signatures) =>
+            [.. signatures
+                .Where(signature => !string.IsNullOrWhiteSpace(signature))
+                .Select((signature, index) => new TaskExpectedMethod
+                {
+                    Id = Guid.NewGuid(),
+                    Signature = signature.Trim(),
+                    Name = JavaSignature.ExtractMethodName(signature),
+                    Order = index + 1
+                })];
+
         // Eine sichtbare Aufgabe muss auch pruefbar sein. Geprueft wird erst beim
         // Sichtbarschalten und nicht beim Anlegen: beim Anlegen gibt es die
         // Testfaelle noch gar nicht, die Aufgabe entsteht ja erst.
@@ -163,7 +184,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             Order = item.Order,
             IsVisible = item.IsVisible,
             EvaluationMode = item.EvaluationMode,
-            ExpectedSignatures = item.ExpectedSignatures,
+            ExpectedClassName = item.ExpectedClassName,
+            ExpectedMethods = [.. item.ExpectedMethods
+                .OrderBy(method => method.Order)
+                .Select(method => method.Signature)],
             Hints = item.Hints
                 .OrderBy(h => h.Order)
                 .Select(h => new TaskHintDto

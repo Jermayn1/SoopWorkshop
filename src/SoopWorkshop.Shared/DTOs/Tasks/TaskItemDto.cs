@@ -13,9 +13,13 @@ namespace SoopWorkshop.Shared.DTOs.Tasks
         public bool IsVisible { get; set; }
         public EvaluationMode EvaluationMode { get; set; }
 
-        // Welche Klassen und Methoden erwartet werden, damit die hinterlegten
-        // JUnit-Tests gegen die Abgabe kompilieren.
-        public string? ExpectedSignatures { get; set; }
+        // Der Vertrag: wie die Klasse heissen muss und welche Methoden erwartet
+        // werden. Wird geprueft und dem Teilnehmer angezeigt.
+        public string? ExpectedClassName { get; set; }
+
+        // Vollstaendige Signaturen zur Anzeige, z. B.
+        // "public static int addiere(int ersteZahl, int zweiteZahl)".
+        public List<string> ExpectedMethods { get; set; } = [];
 
         public List<TaskHintDto> Hints { get; set; } = [];
 

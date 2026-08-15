@@ -50,6 +50,7 @@ namespace SoopWorkshop.Backend.Infrastructure
 
             // Reihenfolge hier ist egal - der JavaAnalyzer sortiert nach
             // IEvaluationChecker.Order. Eine neue Pruefung wird nur ergaenzt.
+            services.AddScoped<IEvaluationChecker, ContractChecker>();
             services.AddScoped<IEvaluationChecker, CompilabilityChecker>();
             services.AddScoped<IEvaluationChecker, CharacterSetChecker>();
             services.AddScoped<IEvaluationChecker, NamingConventionChecker>();
