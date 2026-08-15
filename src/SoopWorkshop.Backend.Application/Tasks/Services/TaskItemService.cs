@@ -2,8 +2,8 @@
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Shared.DTOs.Admin;
 using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Services
 {

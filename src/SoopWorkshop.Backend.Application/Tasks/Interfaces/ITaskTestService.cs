@@ -1,13 +1,14 @@
-﻿using SoopWorkshop.Backend.Application.Common;
-using SoopWorkshop.Shared.DTOs.Admin;
+using SoopWorkshop.Backend.Application.Common;
+using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Interfaces
 {
     public interface ITaskTestService
     {
-        Task<Result<List<UpdateTaskTestDto>>> GetByTaskItemIdAsync(Guid taskItemId);
-        Task<Result<UpdateTaskTestDto>> CreateAsync(CreateTaskTestDto dto);
-        Task<Result<UpdateTaskTestDto>> UpdateAsync(UpdateTaskTestDto dto);
+        Task<Result<List<TaskTestDto>>> GetByTaskItemIdAsync(Guid taskItemId);
+        Task<Result<TaskTestDto>> CreateAsync(CreateTaskTestDto dto);
+        Task<Result<TaskTestDto>> UpdateAsync(UpdateTaskTestDto dto);
         Task<Result<bool>> DeleteAsync(Guid id);
     }
 }

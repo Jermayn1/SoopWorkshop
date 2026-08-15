@@ -1,6 +1,6 @@
 ﻿using SoopWorkshop.Backend.Application.Common;
-using SoopWorkshop.Shared.DTOs.Admin;
 using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Interfaces
 {

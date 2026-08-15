@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
-using SoopWorkshop.Shared.DTOs.Admin;
 using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 
 namespace SoopWorkshop.Frontend.Services.HttpClients
@@ -94,26 +94,26 @@ namespace SoopWorkshop.Frontend.Services.HttpClients
 
         // ────── Testfälle ────────────
 
-        public async Task<List<UpdateTaskTestDto>> GetTestsByTaskIdAsync(Guid taskItemId)
+        public async Task<List<TaskTestDto>> GetTestsByTaskIdAsync(Guid taskItemId)
         {
             var result =
-                await _httpClient.GetFromJsonAsync<List<UpdateTaskTestDto>>($"api/admin/tasks/{taskItemId}/tests");
+                await _httpClient.GetFromJsonAsync<List<TaskTestDto>>($"api/admin/tasks/{taskItemId}/tests");
             return result ?? [];
         }
 
-        public async Task<UpdateTaskTestDto?> CreateTestAsync(CreateTaskTestDto dto)
+        public async Task<TaskTestDto?> CreateTestAsync(CreateTaskTestDto dto)
         {
             var response = await _httpClient.PostAsJsonAsync($"api/admin/tasks/{dto.TaskItemId}/tests", dto);
             return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<UpdateTaskTestDto>()
+                ? await response.Content.ReadFromJsonAsync<TaskTestDto>()
                 : null;
         }
 
-        public async Task<UpdateTaskTestDto?> UpdateTestAsync(Guid taskItemId, UpdateTaskTestDto dto)
+        public async Task<TaskTestDto?> UpdateTestAsync(Guid taskItemId, UpdateTaskTestDto dto)
         {
             var response = await _httpClient.PutAsJsonAsync($"api/admin/tasks/{taskItemId}/tests/{dto.Id}", dto);
             return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<UpdateTaskTestDto>()
+                ? await response.Content.ReadFromJsonAsync<TaskTestDto>()
                 : null;
         }
 
