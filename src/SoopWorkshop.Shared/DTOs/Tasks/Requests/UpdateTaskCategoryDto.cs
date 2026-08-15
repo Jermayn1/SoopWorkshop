@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SoopWorkshop.Shared.DTOs.Admin
+namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 {
     public class UpdateTaskCategoryDto
     {

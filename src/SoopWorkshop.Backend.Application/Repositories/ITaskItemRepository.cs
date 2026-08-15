@@ -5,7 +5,6 @@ namespace SoopWorkshop.Backend.Application.Repositories
     public interface ITaskItemRepository
     {
         Task<List<TaskItem>> GetAllAsync();
-        Task<List<TaskItem>> GetVisibleByCategoryAsync(Guid categoryId);
         Task<TaskItem?> GetByIdAsync(Guid id);
         Task AddAsync(TaskItem item);
         Task UpdateAsync(TaskItem item);

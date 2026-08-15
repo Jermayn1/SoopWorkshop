@@ -1,7 +1,7 @@
 using SoopWorkshop.Frontend.Services.HttpClients;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 
-namespace SoopWorkshop.Frontend.Services.StateManagment
+namespace SoopWorkshop.Frontend.Services.StateManagement
 {
     // Fragt alle 2 Sekunden nach dem Auswertungsstatus einer Submission
     public class SubmissionPollingState : IAsyncDisposable

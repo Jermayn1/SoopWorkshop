@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using SoopWorkshop.Shared.Enums;
 
-namespace SoopWorkshop.Shared.DTOs.Admin
+namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 {
     public class UpdateTaskItemDto
     {

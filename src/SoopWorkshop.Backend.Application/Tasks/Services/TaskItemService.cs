@@ -2,8 +2,8 @@
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Shared.DTOs.Admin;
 using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Services
 {
@@ -14,13 +14,6 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
         public async Task<Result<List<TaskItemDto>>> GetAllAsync()
         {
             var items = await _repository.GetAllAsync();
-            var dtos = items.Select(MapToDto).ToList();
-            return Result<List<TaskItemDto>>.Ok(dtos);
-        }
-
-        public async Task<Result<List<TaskItemDto>>> GetVisibleByCategoryAsync(Guid categoryId)
-        {
-            var items = await _repository.GetVisibleByCategoryAsync(categoryId);
             var dtos = items.Select(MapToDto).ToList();
             return Result<List<TaskItemDto>>.Ok(dtos);
         }

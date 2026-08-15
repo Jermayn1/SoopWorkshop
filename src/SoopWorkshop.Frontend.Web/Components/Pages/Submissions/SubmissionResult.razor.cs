@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoopWorkshop.Frontend.Services.HttpClients;
-using SoopWorkshop.Frontend.Services.StateManagment;
+using SoopWorkshop.Frontend.Services.StateManagement;
 using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.Enums;

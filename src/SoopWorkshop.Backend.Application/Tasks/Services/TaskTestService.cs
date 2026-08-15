@@ -2,7 +2,8 @@
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Shared.DTOs.Admin;
+using SoopWorkshop.Shared.DTOs.Tasks;
+using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Services
 {
@@ -15,13 +16,13 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             _repository = repository;
         }
 
-        public async Task<Result<List<UpdateTaskTestDto>>> GetByTaskItemIdAsync(Guid taskItemId)
+        public async Task<Result<List<TaskTestDto>>> GetByTaskItemIdAsync(Guid taskItemId)
         {
             var tests = await _repository.GetByTaskItemIdAsync(taskItemId);
-            return Result<List<UpdateTaskTestDto>>.Ok(tests.Select(MapToDto).ToList());
+            return Result<List<TaskTestDto>>.Ok(tests.Select(MapToDto).ToList());
         }
 
-        public async Task<Result<UpdateTaskTestDto>> CreateAsync(CreateTaskTestDto dto)
+        public async Task<Result<TaskTestDto>> CreateAsync(CreateTaskTestDto dto)
         {
             var test = new TaskTest
             {
@@ -34,14 +35,14 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             };
 
             await _repository.AddAsync(test);
-            return Result<UpdateTaskTestDto>.Ok(MapToDto(test));
+            return Result<TaskTestDto>.Ok(MapToDto(test));
         }
 
-        public async Task<Result<UpdateTaskTestDto>> UpdateAsync(UpdateTaskTestDto dto)
+        public async Task<Result<TaskTestDto>> UpdateAsync(UpdateTaskTestDto dto)
         {
             var test = await _repository.GetByIdAsync(dto.Id);
             if (test is null)
-                return Result<UpdateTaskTestDto>.Fail("Testfall nicht gefunden.");
+                return Result<TaskTestDto>.Fail("Testfall nicht gefunden.");
 
             test.Input = dto.Input;
             test.ExpectedOutput = dto.ExpectedOutput;
@@ -49,7 +50,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             test.Order = dto.Order;
 
             await _repository.UpdateAsync(test);
-            return Result<UpdateTaskTestDto>.Ok(MapToDto(test));
+            return Result<TaskTestDto>.Ok(MapToDto(test));
         }
 
         public async Task<Result<bool>> DeleteAsync(Guid id)
@@ -62,9 +63,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<bool>.Ok(true);
         }
 
-        private static UpdateTaskTestDto MapToDto(TaskTest test) => new()
+        private static TaskTestDto MapToDto(TaskTest test) => new()
         {
             Id = test.Id,
+            TaskItemId = test.TaskItemId,
             Input = test.Input,
             ExpectedOutput = test.ExpectedOutput,
             Description = test.Description,
