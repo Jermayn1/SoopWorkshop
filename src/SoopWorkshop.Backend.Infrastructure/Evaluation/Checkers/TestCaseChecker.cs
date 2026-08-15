@@ -101,7 +101,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var process = await _processRunner.RunAsync(
                 new ProcessRequest(
                     "java",
-                    [compilation.MainClassName!],
+                    // Ohne diese beiden Angaben schreibt die JVM unter Windows in der
+                    // Codepage des Systems (Cp1252) — Umlaute in der Programmausgabe
+                    // kaemen dann zerlegt beim Teilnehmer an.
+                    ["-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", compilation.MainClassName!],
                     compilation.WorkingDirectory,
                     input,
                     TimeSpan.FromSeconds(_options.RunTimeoutSeconds)),

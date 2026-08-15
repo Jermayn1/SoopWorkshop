@@ -112,6 +112,24 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             File.Exists(Path.Combine(_workingDirectory, "File2.java")).ShouldBeTrue();
         }
 
+        // javac stellt den uebergebenen Pfad seinen Fehlermeldungen voran. Mit
+        // absoluten Pfaden las der Teilnehmer das Temp-Verzeichnis des Servers.
+        [Fact]
+        public async Task CheckAsync_UebergibtJavacNurDateinamenOhnePfad()
+        {
+            JavacReturns(ProcessResultFactory.Success());
+
+            var files = new List<Backend.Domain.Entities.SubmissionFile> { SubmissionFileFactory.Create("public class Main {}") };
+
+            await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+
+            await _processRunner.Received(1).RunAsync(
+                Arg.Is<ProcessRequest>(r => r.Arguments.Contains("Main.java")
+                                            && r.Arguments.All(a => !a.Contains(_workingDirectory))
+                                            && r.WorkingDirectory == _workingDirectory),
+                Arg.Any<CancellationToken>());
+        }
+
         // Zweite Verteidigungslinie hinter der Upload-Pruefung: ein Dateiname mit
         // Pfadanteilen darf nicht ausserhalb des Arbeitsverzeichnisses landen.
         [Theory]

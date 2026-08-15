@@ -27,21 +27,33 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             string workingDirectory,
             CancellationToken cancellationToken)
         {
-            var filePaths = new List<string>();
+            var fileNames = new List<string>();
 
             foreach (var file in files)
             {
                 // Zweite Verteidigungslinie hinter der Upload-Pruefung: nur der reine
                 // Dateiname darf ins Arbeitsverzeichnis, niemals ein Pfad.
-                var filePath = Path.Combine(workingDirectory, Path.GetFileName(file.FileName));
-                await File.WriteAllTextAsync(filePath, file.Content, cancellationToken);
-                filePaths.Add(filePath);
+                var fileName = Path.GetFileName(file.FileName);
+                await File.WriteAllTextAsync(Path.Combine(workingDirectory, fileName), file.Content, cancellationToken);
+                fileNames.Add(fileName);
             }
 
-            // Die Dateien werden als UTF-8 geschrieben; ohne diese Angabe wuerde javac
-            // unter Windows mit der Plattform-Codepage lesen und Umlaute zerlegen.
-            var arguments = new List<string> { "-encoding", "UTF-8" };
-            arguments.AddRange(filePaths);
+            var arguments = new List<string>
+            {
+                // Die Dateien werden als UTF-8 geschrieben; ohne diese Angabe wuerde javac
+                // unter Windows mit der Plattform-Codepage lesen und Umlaute zerlegen.
+                "-encoding", "UTF-8",
+
+                // Auch die Fehlermeldungen des Compilers als UTF-8 ausgeben — sonst
+                // haengt ihre Lesbarkeit von der Codepage des Servers ab.
+                "-J-Dstdout.encoding=UTF-8",
+                "-J-Dstderr.encoding=UTF-8"
+            };
+
+            // Bewusst nur die Dateinamen, nicht die vollen Pfade: javac stellt sie den
+            // Fehlermeldungen voran, und der Teilnehmer soll "Main.java:3: error" lesen
+            // und nicht das Temp-Verzeichnis des Servers.
+            arguments.AddRange(fileNames);
 
             var process = await _processRunner.RunAsync(
                 new ProcessRequest(

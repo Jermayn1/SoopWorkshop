@@ -141,6 +141,21 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Arg.Any<CancellationToken>());
         }
 
+        // Ohne diese Angaben schreibt die JVM unter Windows in Cp1252, waehrend der
+        // ProcessRunner UTF-8 erwartet — Umlaute kaemen zerlegt beim Teilnehmer an.
+        [Fact]
+        public async Task CheckAsync_StartetJavaMitUtf8Ausgabe()
+        {
+            ProgramReturns(ProcessResultFactory.Success("Hallo Soop"));
+
+            await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+
+            await _processRunner.Received(1).RunAsync(
+                Arg.Is<ProcessRequest>(r => r.Arguments.Contains("-Dstdout.encoding=UTF-8")
+                                            && r.Arguments.Contains("-Dstderr.encoding=UTF-8")),
+                Arg.Any<CancellationToken>());
+        }
+
         // Ist-Verhalten, bekannte Schwaeche: Aufgaben ohne Testfaelle geben die volle
         // Punktzahl geschenkt. Wird in Phase 3 mit dem Punktesystem v2 behoben (§9).
         [Fact]
