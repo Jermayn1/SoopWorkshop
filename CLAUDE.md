@@ -335,6 +335,8 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 ### Phase 4 — Frontend Teilnehmer-Sicht
 
 - [ ] `app.css` entrümpeln — enthält noch Bootstrap-Boilerplate aus der Projektvorlage
+- [ ] Favicon ergänzen — `wwwroot/` enthält nur `app.css`, `App.razor` verweist auf
+      keins; jeder Seitenaufruf erzeugt einen 404 in der Browser-Konsole
 - [ ] `NotFound.razor` und `Error.razor` auf MudBlazor umstellen (aktuell rohes HTML)
 - [ ] `ThemeService`: Auswahl in `localStorage` persistieren; Service startet mit `Light`,
       `MainLayout` initialisiert aber `Dark` → Flackern beim ersten Render
