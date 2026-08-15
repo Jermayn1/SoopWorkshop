@@ -333,6 +333,18 @@ Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
 und mindestens einem Testfall anlegen. Sichtbarkeit ist bei beiden nach dem Anlegen
 `false` und muss per `PATCH .../visibility` gesetzt werden.
 
+**Hilfsmittel liegen in `tests/manual/`** (eigene README dort):
+
+```bash
+.\tests\manual\pruefe-uploads.ps1
+```
+
+Prüft die Upload-Validierung und den Status-Endpunkt gegen die laufende API —
+inklusive der Fälle, die das Frontend clientseitig blockt und die deshalb im Browser
+nicht auslösbar sind. Die Beispielabgaben unter `tests/manual/java/` decken die Fälle
+ab, die menschliche Augen brauchen: Zeitüberschreitung, viel Ausgabe auf beiden
+Strömen, Laufzeitfehler, Umlaute, Compilerfehler.
+
 ## 8. Roadmap
 
 Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
