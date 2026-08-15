@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Infrastructure.Persistence;
 using SoopWorkshop.Backend.Infrastructure.Persistence.Repositories;
+using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Infrastructure.Evaluation;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
+using SoopWorkshop.Backend.Infrastructure.Processes;
 
 namespace SoopWorkshop.Backend.Infrastructure
 {
@@ -19,10 +21,14 @@ namespace SoopWorkshop.Backend.Infrastructure
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Es ist kein Connection-String gesetzt. Lokal ueber User Secrets setzen:" + Environment.NewLine +
-                    "  dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT\" --project src/SoopWorkshop.Backend.API" + Environment.NewLine +
+                    "Es ist kein Connection-String gesetzt." + Environment.NewLine +
+                    "Lokal: .env im Repository-Wurzelverzeichnis anlegen (Vorlage: .env.example) und" + Environment.NewLine +
+                    "POSTGRES_PASSWORD setzen - der Connection-String wird daraus gebaut." + Environment.NewLine +
                     "Im Betrieb ueber die Umgebungsvariable ConnectionStrings__DefaultConnection.");
             }
+
+            services.Configure<EvaluationOptions>(
+                configuration.GetSection(EvaluationOptions.SectionName));
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
@@ -32,6 +38,13 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IEvaluationResultRepository, EvaluationResultRepository>();
             services.AddScoped<ITaskTestRepository, TaskTestRepository>();
+
+            services.AddScoped<IProcessRunner, ProcessRunner>();
+
+            // Singleton, weil sich Einreihen (Request-Scope) und Abarbeiten
+            // (Hintergrunddienst) dieselbe Warteschlange teilen muessen.
+            services.AddSingleton<IEvaluationQueue, EvaluationQueue>();
+            services.AddHostedService<EvaluationWorker>();
 
             services.AddScoped<CharacterSetChecker>();
             services.AddScoped<NamingConventionChecker>();

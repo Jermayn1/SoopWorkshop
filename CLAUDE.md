@@ -2,7 +2,7 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-15
+> Stand: 2026-08-15 — Phase 0, 1 und 2 abgeschlossen, als Nächstes Phase 3.
 
 ---
 
@@ -63,6 +63,12 @@ Alles starten (Datenbank, Build, Backend, Frontend):
 .\scripts\stop-dev.ps1
 ```
 
+Datenbank-Passwort an die `.env` angleichen (siehe unten):
+
+```bash
+.\scripts\sync-db-password.ps1
+```
+
 `start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
 Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs getrennt lesbar sind.
 
@@ -90,26 +96,68 @@ docker compose up -d
 (`javac`/`java` werden als Prozess aufgerufen).
 
 Die Datenbank läuft über `docker-compose.yml` (Service `db`, Container
-`soopworkshop-db`). Zugangsdaten stehen in `.env` — gitignoriert, Vorlage ist
-`.env.example`. In Phase 7 kommen Backend und Frontend als weitere Services dazu.
+`soopworkshop-db`). In Phase 7 kommen Backend und Frontend als weitere Services dazu.
 
-Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, Werte setzen,
+### `.env` ist in der Entwicklung die eine Wahrheit
+
+Gitignoriert, Vorlage ist `.env.example`. Aus derselben Datei setzt docker-compose die
+Datenbank auf **und** das Backend liest seine Konfiguration. Den Connection-String baut
+es aus den `POSTGRES_`-Werten, das Passwort steht also nur an einer Stelle. User Secrets
+werden nicht mehr gebraucht.
+
+Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, `POSTGRES_PASSWORD` setzen,
 `docker compose up -d`, dann Migrationen anwenden (siehe unten).
 
-Connection-String einmalig setzen (steht **nicht** im Repository, muss zum
-Passwort in `.env` passen):
+**Die `.env` wird bewusst als letzte Quelle geladen und schlägt damit auch
+Umgebungsvariablen.** Grund: eine vergessene `$env:ConnectionStrings__DefaultConnection`
+in der Shell vererbt sich an jedes daraus gestartete Fenster und bewirkt still etwas
+anderes, als in der Datei steht — das hat einmal einen Abend gekostet. Ausserhalb von
+Development wird sie nicht geladen; im Betrieb gelten echte Umgebungsvariablen.
 
-```bash
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=127.0.0.1;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
+Welche Werte tatsächlich gelten, steht in der ersten Logzeile des Backends:
+
+```
+Konfiguration: Datenbank 127.0.0.1:5432/soopworkshop, Auswertung 10 gleichzeitig, Zeitgrenzen 30s kompilieren / 10s ausfuehren.
 ```
 
-Im Betrieb stattdessen die Umgebungsvariable `ConnectionStrings__DefaultConnection`.
+**`POSTGRES_PASSWORD` in der `.env` geändert?** Dann muss die Datenbank angeglichen
+werden — der Wert wirkt nur beim ersten Anlegen des Volumes, danach behält sie ihr altes
+Passwort. Der Fehler kommt als `28P01` zurück und sieht aus wie ein Tippfehler, obwohl
+beide Seiten für sich stimmen:
+
+```bash
+.\scripts\sync-db-password.ps1
+```
+
+Setzt das Passwort per `ALTER USER` und prüft anschließend, ob die Anmeldung wirklich
+klappt. Ein laufendes Backend muss danach **nicht** neu gestartet werden — der
+Connection-String ändert sich nicht, nur das Passwort dahinter. Die Alternative ist
+`docker compose down -v` (löscht alle Daten).
+
+**Achtung bei der Fehlersuche:** `psql` **innerhalb** des Containers akzeptiert wegen
+`trust` in `pg_hba.conf` jedes Passwort. Eine dort „bestätigte" Übereinstimmung sagt
+nichts aus. Verlässlich ist nur eine Verbindung von aussen — das Skript oben macht genau
+das über ein kurzlebiges `postgres`-Image gegen `host.docker.internal`.
 
 **`127.0.0.1` statt `localhost`, das ist Absicht.** Unter Windows löst `localhost`
 zuerst auf IPv6 `::1` auf. Dort horcht der WSL-Relay von Docker Desktop, reicht die
 Verbindung aber nicht zum Container durch — der Fehler kommt als
 `28P01 password authentication failed` zurück und sieht damit wie ein falsches
 Passwort aus, obwohl er keins ist.
+
+**Auswertung konfigurieren** — in `.env` als `Evaluation__MaxConcurrency` usw. (doppelter
+Unterstrich trennt die Ebenen), Standardwerte in `appsettings.json`:
+
+| Schlüssel | Standard | Lokal | Bedeutung |
+|---|---|---|---|
+| `MaxConcurrency` | 2 | 10 | gleichzeitig ausgewertete Abgaben — begrenzt parallele JVM-Prozesse |
+| `CompileTimeoutSeconds` | 30 | 30 | Zeitgrenze für `javac` |
+| `RunTimeoutSeconds` | 10 | 10 | Zeitgrenze pro Testfall-Durchlauf |
+| `QueueCapacity` | 100 | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+
+Die Zeitgrenzen messen **Wanduhrzeit**. Bei hoher Parallelität auf wenigen Kernen
+konkurrieren die Prozesse und brauchen länger — dann eher die Grenzen anheben als die
+Parallelität senken.
 
 Migrationen — **ohne** `--startup-project`, da `AppDbContextFactory` den Kontext
 zur Entwurfszeit selbst baut und die API das Design-Paket nicht referenziert:
@@ -128,7 +176,8 @@ Clean Architecture, 7 Projekte + 1 Testprojekt:
 SoopWorkshop.Shared                  DTOs, Enums, Constants — von allen referenzierbar
 SoopWorkshop.Backend.Domain          Entities, ValueObjects — kennt nur Shared
 SoopWorkshop.Backend.Application     Services, Interfaces, Result<T> — kennt Domain + Shared
-SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker — kennt Application
+SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker, ProcessRunner,
+                                     Warteschlange + Worker — kennt Application
 SoopWorkshop.Backend.API             Controller, Middleware — kennt Application + Infrastructure
 SoopWorkshop.Frontend.Services       HttpClients, State — kennt Shared
 SoopWorkshop.Frontend.Web            Blazor Server + MudBlazor — kennt Frontend.Services
@@ -144,8 +193,13 @@ tests/SoopWorkshop.Tests             xUnit (Projekt-Tests)
 
 **Kernablauf Auswertung:**
 
-`SubmissionService.CreateAsync` → Warteschlange → `EvaluationService.EvaluateAsync`
-→ `JavaAnalyzer` → Checker-Pipeline → `EvaluationResult` persistiert → Frontend pollt.
+`SubmissionService.CreateAsync` → `IEvaluationQueue` (begrenzter `Channel`) →
+`EvaluationWorker` (`BackgroundService`, `MaxConcurrency` parallel) →
+`EvaluationService.EvaluateAsync` → `JavaAnalyzer` → Checker → `EvaluationResult`
+persistiert → Frontend pollt `/status` und holt bei `Done` das `/result`.
+
+Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
+`IProcessRunner` — nicht direkt über `Process.Start`.
 
 ---
 
@@ -328,24 +382,49 @@ die Ordner `Integration/` und `Components/`. Sie werden erst dort gebraucht, ein
 DB-Frage (§10.5), und leere Ordner verfolgt Git ohnehin nicht.
 Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 
-### Phase 2 — Backend-Härtung
+### Phase 2 — Backend-Härtung ✅
 *Voraussetzung für zuverlässiges Ausführen von JUnit in Phase 3.*
+*Abgeschlossen am 2026-08-15, Branch `phase-2-backend-haertung`. 80 Tests, grün.*
 
-- [ ] **Neuer Endpunkt `GET /api/submissions/{id}/status`** — `/result` liefert derzeit
-      bei „läuft noch" und „nicht gefunden" beides 404; das Frontend kann `Failed`
-      deshalb nicht erkennen und pollt endlos
-- [ ] Auswertung von `_ = Task.Run(...)` auf `BackgroundService` + `Channel`-Queue
-      (aktuell gehen laufende Auswertungen bei Neustart verloren, keine Begrenzung
-      paralleler JVM-Prozesse)
-- [ ] Prozess-Ausführung hinter `IProcessRunner` abstrahieren — testbar **und**
-      Voraussetzung dafür, später auf Container-Ausführung umzustellen
-- [ ] `WaitForExit(int)` blockiert synchron im async-Pfad → `WaitForExitAsync` + `CancellationToken`
-- [ ] `TestCaseChecker` liest `StandardError` nicht → Deadlock-Risiko bei vollem Puffer
-- [ ] Upload-Validierung im `SubmissionsController`: Endung `.java`, Max-Größe,
-      Max-Anzahl (bisher nur clientseitig auf 1 MB begrenzt)
-- [ ] `CleanupWorkingDirectory` fängt nur `IOException` → auch `UnauthorizedAccessException`
-- [ ] `CreateTaskItemDto.TaskCategoryId` wird nicht auf Existenz geprüft
-- [ ] Strukturiertes Logging (`ILogger`) in Application-Services
+- [x] **Neuer Endpunkt `GET /api/submissions/{id}/status`** — liefert `SubmissionStatusDto`
+      (Status + `ErrorMessage`); 404 nur noch bei „nicht gefunden". `/result` bleibt
+      unverändert und wird vom Frontend erst bei `Done` abgerufen
+- [x] Auswertung von `_ = Task.Run(...)` auf `EvaluationWorker` (`BackgroundService`) +
+      begrenzte `Channel`-Queue; `Evaluation:MaxConcurrency` begrenzt parallele JVM-Prozesse.
+      Beim Start werden verwaiste `Pending`/`Running`-Abgaben auf `Failed` gesetzt
+- [x] Prozess-Ausführung hinter `IProcessRunner` abstrahiert (`Infrastructure/Processes/`);
+      beide Checker teilen sich jetzt eine Implementierung
+- [x] `WaitForExit(int)` → `WaitForExitAsync` + `CancellationToken` durch die ganze Kette
+      (`IEvaluationService`, `IJavaAnalyzer`, beide Checker)
+- [x] Beide Ausgabeströme werden gleichzeitig gelesen — Deadlock-Risiko behoben, mit
+      Gegenprobe in `ProcessRunnerTests` (500 Zeilen auf stdout **und** stderr)
+- [x] Upload-Validierung serverseitig (`API/Validation/SubmissionUploadValidator.cs`):
+      Endung, Größe, Anzahl, leere Dateien, doppelte Namen, Dateinamen mit Pfadanteilen.
+      Grenzen zentral in `Shared/Constants/SubmissionUploadLimits.cs`
+- [x] `CleanupWorkingDirectory` fängt zusätzlich `UnauthorizedAccessException`, läuft im
+      `finally` und protokolliert statt zu schweigen. Das Arbeitsverzeichnis gehört jetzt
+      dem `JavaAnalyzer`, nicht mehr dem `CompilabilityChecker`
+- [x] `taskItemId` wird beim Abgeben auf Existenz geprüft → 400 statt 500 aus der
+      Fremdschlüsselbedingung
+- [x] Strukturiertes Logging (`ILogger`) in allen Application-Services, im Worker,
+      im `ProcessRunner` und im `JavaAnalyzer`
+
+**Zusätzlich mitgenommen, weil direkt daran hängend:** Zeichensatz durchgängig auf
+UTF-8 statt Systemabhängigkeit — Upload-Lesen, `javac -encoding UTF-8`,
+`java -Dstdout.encoding=UTF-8` und die Dekodierung im `ProcessRunner`; javac bekommt
+nur noch Dateinamen statt voller Pfade, damit im Feedback `Main.java:3: error` steht
+und nicht das Temp-Verzeichnis des Servers; Frontend-Polling auf `/status` umgestellt
+inklusive Abbruch nach ~5 Minuten; `SubmissionPollingState` wird injiziert statt
+doppelt erzeugt.
+
+> **Wichtig für Phase 3 und 7:** Die JVM setzt `stdout.encoding` unter Windows auf die
+> Codepage des Systems (`Cp1252`), **auch wenn die Ausgabe umgeleitet ist** —
+> `file.encoding=UTF-8` allein reicht nicht. Jeder neue `java`-Aufruf (auch der
+> JUnit-Launcher) braucht deshalb `-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8`.
+
+**Bewusst nicht angefasst, weil Phase 3:** die 65 Gratispunkte bei `tests.Count == 0`,
+die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
+`NamingConventionChecker`. Alle drei sind als **Ist-Verhalten** durch Tests festgehalten.
 
 ### Phase 3 — Bewertungs-Engine v2
 *Der fachliche Kern. Details in §5.*
@@ -376,15 +455,19 @@ Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 - [ ] Zentrale Fehlerbehandlung: `GetFromJsonAsync` wirft bei nicht erreichbarer API
       unbehandelt → Snackbar + Retry statt weißer Seite
 - [ ] Lade- und Leerzustände vereinheitlichen (Skeletons statt nackter Spinner)
-- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button, client-seitige Validierung
-      — `MudFileUpload` bringt `DragAndDrop`, `MaxFileSize`, `MaximumFileCount`,
-      `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon selbst bauen
-- [ ] `SubmissionResult`: Status `Pending`/`Running`/`Failed` unterscheiden (setzt Phase 2 voraus),
-      „Erneut versuchen", Zurück-Link zur *richtigen* Aufgabe (geht aktuell nach `/`)
+- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button — `MudFileUpload` bringt
+      `DragAndDrop`, `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon
+      selbst bauen. `MaxFileSize`/`MaximumFileCount`/`Accept` sind seit Phase 2 gesetzt
+      und kommen aus `SubmissionUploadLimits`; die Fehlermeldung dazu fehlt noch
+- [ ] `SubmissionResult`: `Pending` und `Running` im Text unterscheiden — seit Phase 2 wird
+      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". `Failed` zeigt
+      bereits die Fehlermeldung. Offen bleiben „Erneut versuchen" und der Zurück-Link zur
+      *richtigen* Aufgabe (geht aktuell nach `/`)
 - [ ] `SubmissionResult`: JUnit-Ergebnisse darstellen — Testmethode, Erwartung, Fehlermeldung
 - [ ] Sortierte Anzeige der Kategorien und Teilprüfungen (setzt Phase 3 voraus)
-- [ ] `SubmissionPollingState` sauber verdrahten: als Scoped registriert, aber in
-      `SubmissionResult` manuell `new`'d — eine Quelle der Wahrheit; Timeout nach n Versuchen
+- [x] `SubmissionPollingState` sauber verdrahtet (injiziert statt `new`'d, Abbruch nach
+      150 Versuchen ≈ 5 Minuten) — in Phase 2 mitgenommen, weil das Status-Polling ohne
+      diesen Umbau nicht prüfbar gewesen wäre
 - [ ] Aufgabenübersicht als eigene Seite (nicht nur Sidebar)
 - [ ] Responsive-Durchgang: Mobil, Tablet, Desktop
 - [ ] Barrierefreiheit: Fokus-Reihenfolge, Kontraste in allen drei Themes
@@ -477,6 +560,16 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   loeschende Migration erzeugt. Behoben durch Neuaufsetzen der DB auf `InitialCreate`~~
   — erledigt. **Fuer Phase 3 relevant:** dieser verworfene Entwurf legte den JUnit-Code
   direkt auf `TaskItem` statt in eine eigene Entitaet und gab `TaskTest` eigene Punkte.
+- ~~2026-08-15 — lokale Umgebung — `28P01` beim Start über `start-dev.ps1`, obwohl User
+  Secrets, `appsettings` und Umgebungsvariablen alle korrekt aussahen. Ursache: eine
+  Prozess-Umgebungsvariable in der aufrufenden PowerShell vererbte sich an jedes daraus
+  gestartete Fenster und schlug die User Secrets. Behoben durch die Umstellung auf `.env`
+  als letzte Konfigurationsquelle plus eine Startzeile, die die effektiven Werte nennt~~
+  — erledigt. **Lehre:** wenn Konfiguration aus mehreren Quellen kommt, muss der effektive
+  Wert protokolliert werden, sonst sucht man im Stacktrace statt in der Konfiguration.
+- 2026-08-15 — lokale Umgebung — `psql` **innerhalb** des Containers akzeptiert wegen
+  `trust` in `pg_hba.conf` jedes Passwort. Eine damit „bestätigte" Übereinstimmung sagt
+  nichts aus; geprüft werden kann nur von aussen
 - ~~2026-08-15 — lokale Umgebung — nach einem Neustart schlug die DB-Verbindung mit
   `28P01` fehl, obwohl das Passwort stimmte. `Host=localhost` loest unter Windows
   zuerst auf `::1` auf; dort horcht Dockers WSL-Relay, ohne zum Container
@@ -485,8 +578,25 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - 2026-08-15 — CLAUDE.md dokumentierte `dotnet ef` mit `--startup-project`; das
   schlaegt fehl, da Backend.API `EntityFrameworkCore.Design` nicht referenziert.
   Korrigiert — erledigt
-- 2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie — Phase 2
-- 2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed` — Phase 2/4
+- ~~2026-08-15 — `Application/Submissions/Services/SubmissionService.cs` — Fire-and-Forget-Auswertung ohne Persistenz-Garantie~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Frontend.Services/.../SubmissionPollingState.cs` — Endlos-Polling bei `SubmissionStatus.Failed`~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/*` — jeweils nur ein Ausgabestrom
+  gelesen → Deadlock, sobald der Puffer des anderen volläuft~~ — erledigt in Phase 2
+- ~~2026-08-15 — `Backend.API/Controllers/SubmissionsController.cs` — `file.FileName`
+  ungeprüft in `Path.Combine` mit dem Arbeitsverzeichnis~~ — erledigt in Phase 2
+- 2026-08-15 — `Infrastructure/Evaluation/JavaAnalyzer.cs` — schlägt das Speichern des
+  Ergebnisses fehl, nachdem `AddAsync` bereits committet hat, bleibt ein Ergebnis mit
+  Status `Running` zurück; ein gemeinsamer Transaktionsrahmen fehlt — Phase 6
+- 2026-08-15 — `Infrastructure/Evaluation/EvaluationWorker.cs` — Abgaben, die beim
+  Herunterfahren abgebrochen werden, bleiben auf `Running` und werden erst beim nächsten
+  Start als fehlgeschlagen markiert. Bewusst so: ein sauberes Zurückstellen in die
+  Warteschlange braucht Persistenz der Warteschlange — Phase 7
+- ~~2026-08-15 — `Infrastructure/Evaluation/EvaluationWorker.cs` — warf das Startup-
+  Recovery eine Exception (z. B. DB nicht erreichbar), fuhr .NET den **kompletten Host**
+  herunter: `BackgroundServiceExceptionBehavior` steht standardmäßig auf `StopHost`. Die
+  API startete dann gar nicht erst, obwohl sie ohne Auswertung noch nützlich wäre~~
+  — erledigt in Phase 2. **Merken für Phase 3 und 7:** jeder neue `BackgroundService`
+  muss seine Fehler selbst fangen, sonst reißt er den ganzen Server mit.
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte — Phase 3
 - 2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives — Phase 3

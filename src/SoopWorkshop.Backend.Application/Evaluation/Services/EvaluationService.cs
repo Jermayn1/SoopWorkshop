@@ -1,4 +1,5 @@
-﻿using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using Microsoft.Extensions.Logging;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Shared.Enums;
 
@@ -10,44 +11,74 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Services
     // 3. speichert das Ergebnis und aktualisiert den Status
     public class EvaluationService : IEvaluationService
     {
+        private const string FailureMessage =
+            "Bei der Auswertung ist ein unerwarteter Fehler aufgetreten. Bitte versuche es erneut " +
+            "oder melde dich beim Kursleiter, wenn es wieder passiert.";
+
         private readonly ISubmissionRepository _submissionRepository;
         private readonly IEvaluationResultRepository _evaluationResultRepository;
         private readonly IJavaAnalyzer _javaAnalyzer;
+        private readonly ILogger<EvaluationService> _logger;
 
         public EvaluationService(
             ISubmissionRepository submissionRepository,
             IEvaluationResultRepository evaluationResultRepository,
-            IJavaAnalyzer javaAnalyzer)
+            IJavaAnalyzer javaAnalyzer,
+            ILogger<EvaluationService> logger)
         {
             _submissionRepository = submissionRepository;
             _evaluationResultRepository = evaluationResultRepository;
             _javaAnalyzer = javaAnalyzer;
+            _logger = logger;
         }
 
-        public async Task EvaluateAsync(Guid submissionId)
+        public async Task EvaluateAsync(Guid submissionId, CancellationToken cancellationToken)
         {
             var submission = await _submissionRepository.GetByIdAsync(submissionId);
             if (submission is null)
+            {
+                _logger.LogWarning("Abgabe {SubmissionId} existiert nicht mehr, Auswertung uebersprungen.", submissionId);
                 return;
+            }
 
-            submission.Status = SubmissionStatus.Running;
-            await _submissionRepository.UpdateAsync(submission);
+            await _submissionRepository.UpdateStatusAsync(
+                submissionId, SubmissionStatus.Running, string.Empty, cancellationToken);
+
+            _logger.LogInformation(
+                "Auswertung von {SubmissionId} gestartet ({FileCount} Datei(en)).",
+                submissionId,
+                submission.Files.Count);
 
             try
             {
                 var expectedTests = submission.Task.Tests.ToList();
-                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, expectedTests);
+                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, expectedTests, cancellationToken);
 
                 await _evaluationResultRepository.AddAsync(evaluationResult);
 
-                submission.Status = SubmissionStatus.Done;
-            }
-            catch (Exception)
-            {
-                submission.Status = SubmissionStatus.Failed;
-            }
+                await _submissionRepository.UpdateStatusAsync(
+                    submissionId, SubmissionStatus.Done, string.Empty, cancellationToken);
 
-            await _submissionRepository.UpdateAsync(submission);
+                _logger.LogInformation(
+                    "Auswertung von {SubmissionId} abgeschlossen: {TotalScore} von {MaxScore} Punkten.",
+                    submissionId,
+                    evaluationResult.TotalScore,
+                    evaluationResult.MaxScore);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Herunterfahren ist kein Fehler der Abgabe. Der Status bleibt auf
+                // Running und wird beim naechsten Start vom Worker aufgeraeumt.
+                _logger.LogInformation("Auswertung von {SubmissionId} wurde abgebrochen.", submissionId);
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Auswertung von {SubmissionId} ist fehlgeschlagen.", submissionId);
+
+                await _submissionRepository.UpdateStatusAsync(
+                    submissionId, SubmissionStatus.Failed, FailureMessage, CancellationToken.None);
+            }
         }
     }
 }

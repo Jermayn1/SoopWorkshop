@@ -1,9 +1,21 @@
+using Microsoft.Extensions.Options;
 using SoopWorkshop.Backend.API.Middleware;
 using SoopWorkshop.Backend.Application;
+using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Infrastructure;
+using SoopWorkshop.Backend.Infrastructure.Configuration;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// In der Entwicklung ist die .env im Repository-Wurzelverzeichnis die eine Wahrheit —
+// dieselbe Datei, aus der docker-compose die Datenbank aufsetzt. Sie wird zuletzt
+// hinzugefuegt und schlaegt damit auch Umgebungsvariablen, damit eine vergessene
+// Variable in der Shell nicht still etwas anderes bewirkt als in der Datei steht.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddDotEnv(builder.Environment.ContentRootPath);
+}
 
 // Add services to the container.
 
@@ -31,6 +43,19 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Welche Werte wirklich gelten, gehoert in die erste Logzeile und nicht in den
+// Stacktrace einer fehlgeschlagenen Abfrage. Das Passwort bleibt aussen vor.
+var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("SoopWorkshop.Start");
+var evaluationOptions = app.Services.GetRequiredService<IOptions<EvaluationOptions>>().Value;
+
+startupLogger.LogInformation(
+    "Konfiguration: Datenbank {Database}, Auswertung {MaxConcurrency} gleichzeitig, " +
+    "Zeitgrenzen {CompileTimeout}s kompilieren / {RunTimeout}s ausfuehren.",
+    ConnectionStringSummary.Describe(app.Configuration.GetConnectionString("DefaultConnection")),
+    evaluationOptions.MaxConcurrency,
+    evaluationOptions.CompileTimeoutSeconds,
+    evaluationOptions.RunTimeoutSeconds);
 
 // Exception Middleware einbinden
 app.UseMiddleware<ExceptionMiddleware>();

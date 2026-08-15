@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Logging;
 using SoopWorkshop.Backend.Application.Common;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Repositories;
@@ -13,14 +13,26 @@ namespace SoopWorkshop.Backend.Application.Submissions.Services;
 public class SubmissionService(
     ISubmissionRepository submissionRepository,
     IEvaluationResultRepository evaluationResultRepository,
-    IServiceScopeFactory scopeFactory) : ISubmissionService
+    ITaskItemRepository taskItemRepository,
+    IEvaluationQueue evaluationQueue,
+    ILogger<SubmissionService> logger) : ISubmissionService
 {
     private readonly ISubmissionRepository _submissionRepository = submissionRepository;
     private readonly IEvaluationResultRepository _evaluationResultRepository = evaluationResultRepository;
-    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly ITaskItemRepository _taskItemRepository = taskItemRepository;
+    private readonly IEvaluationQueue _evaluationQueue = evaluationQueue;
+    private readonly ILogger<SubmissionService> _logger = logger;
 
-    public async Task<Result<SubmissionDto>> CreateAsync(Guid taskItemId, List<(string FileName, string Content)> files)
+    public async Task<Result<SubmissionDto>> CreateAsync(
+        Guid taskItemId,
+        List<(string FileName, string Content)> files,
+        CancellationToken cancellationToken)
     {
+        // Ohne diese Pruefung schlaegt erst die Fremdschluesselbedingung zu und
+        // der Teilnehmer bekommt einen 500er statt einer Erklaerung.
+        if (!await _taskItemRepository.ExistsAsync(taskItemId, cancellationToken))
+            return Result<SubmissionDto>.Fail("Aufgabe nicht gefunden.");
+
         var submission = new Submission
         {
             Id = Guid.NewGuid(),
@@ -37,15 +49,15 @@ public class SubmissionService(
 
         await _submissionRepository.AddAsync(submission);
 
-        // Eigener Scope, da dieser Task ausserhalb des HTTP-Request-Lebenszyklus laeuft
-        // und sonst auf einen bereits entsorgten DbContext zugreifen wuerde.
-        var submissionId = submission.Id;
-        _ = Task.Run(async () =>
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var evaluationService = scope.ServiceProvider.GetRequiredService<IEvaluationService>();
-            await evaluationService.EvaluateAsync(submissionId);
-        });
+        // Die Auswertung uebernimmt der EvaluationWorker. Bleibt eine Abgabe hier
+        // haengen, faengt das Aufraeumen beim naechsten Start sie ab.
+        await _evaluationQueue.EnqueueAsync(submission.Id, cancellationToken);
+
+        _logger.LogInformation(
+            "Abgabe {SubmissionId} zu Aufgabe {TaskItemId} eingereiht ({FileCount} Datei(en)).",
+            submission.Id,
+            taskItemId,
+            files.Count);
 
         return Result<SubmissionDto>.Ok(MapToDto(submission));
     }
@@ -64,6 +76,21 @@ public class SubmissionService(
             return Result<EvaluationResultDto>.Fail("Kein Ergebnis gefunden.");
 
         return Result<EvaluationResultDto>.Ok(MapResultToDto(result));
+    }
+
+    public async Task<Result<SubmissionStatusDto>> GetStatusAsync(Guid submissionId, CancellationToken cancellationToken)
+    {
+        var submission = await _submissionRepository.GetSummaryByIdAsync(submissionId, cancellationToken);
+        if (submission is null)
+            return Result<SubmissionStatusDto>.Fail("Einreichung nicht gefunden.");
+
+        return Result<SubmissionStatusDto>.Ok(new SubmissionStatusDto
+        {
+            Id = submission.Id,
+            Status = submission.Status,
+            SubmittedAt = submission.SubmittedAt,
+            ErrorMessage = submission.ErrorMessage
+        });
     }
 
     private static SubmissionDto MapToDto(Submission submission) => new()

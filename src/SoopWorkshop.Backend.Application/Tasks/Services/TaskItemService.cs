@@ -1,4 +1,5 @@
-﻿using SoopWorkshop.Backend.Application.Common;
+﻿using Microsoft.Extensions.Logging;
+using SoopWorkshop.Backend.Application.Common;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
@@ -7,9 +8,12 @@ using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Services
 {
-    public class TaskItemService(ITaskItemRepository repository) : ITaskItemService
+    public class TaskItemService(
+        ITaskItemRepository repository,
+        ILogger<TaskItemService> logger) : ITaskItemService
     {
         private readonly ITaskItemRepository _repository = repository;
+        private readonly ILogger<TaskItemService> _logger = logger;
 
         public async Task<Result<List<TaskItemDto>>> GetAllAsync()
         {
@@ -47,6 +51,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             };
 
             await _repository.AddAsync(item);
+
+            _logger.LogInformation("Aufgabe {TaskItemId} '{Title}' angelegt.", item.Id, item.Title);
+
             return Result<TaskItemDto>.Ok(MapToDto(item));
         }
 
@@ -75,6 +82,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             }
 
             await _repository.UpdateAsync(item);
+
+            _logger.LogInformation("Aufgabe {TaskItemId} geaendert.", item.Id);
+
             return Result<TaskItemDto>.Ok(MapToDto(item));
         }
 
@@ -85,6 +95,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 return Result<bool>.Fail("Aufgabe nicht gefunden.");
 
             await _repository.DeleteAsync(id);
+
+            _logger.LogInformation("Aufgabe {TaskItemId} '{Title}' geloescht.", id, item.Title);
+
             return Result<bool>.Ok(true);
         }
 
@@ -96,6 +109,12 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             item.IsVisible = !item.IsVisible;
             await _repository.UpdateAsync(item);
+
+            _logger.LogInformation(
+                "Aufgabe {TaskItemId} ist jetzt {Visibility}.",
+                id,
+                item.IsVisible ? "sichtbar" : "verborgen");
+
             return Result<bool>.Ok(item.IsVisible);
         }
 

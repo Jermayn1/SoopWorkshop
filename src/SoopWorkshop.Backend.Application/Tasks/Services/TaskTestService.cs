@@ -1,4 +1,5 @@
-﻿using SoopWorkshop.Backend.Application.Common;
+﻿using Microsoft.Extensions.Logging;
+using SoopWorkshop.Backend.Application.Common;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
@@ -10,10 +11,12 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
     public class TaskTestService : ITaskTestService
     {
         private readonly ITaskTestRepository _repository;
+        private readonly ILogger<TaskTestService> _logger;
 
-        public TaskTestService(ITaskTestRepository repository)
+        public TaskTestService(ITaskTestRepository repository, ILogger<TaskTestService> logger)
         {
             _repository = repository;
+            _logger = logger;
         }
 
         public async Task<Result<List<TaskTestDto>>> GetByTaskItemIdAsync(Guid taskItemId)
@@ -35,6 +38,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             };
 
             await _repository.AddAsync(test);
+
+            _logger.LogInformation(
+                "Testfall {TaskTestId} zu Aufgabe {TaskItemId} angelegt.", test.Id, test.TaskItemId);
+
             return Result<TaskTestDto>.Ok(MapToDto(test));
         }
 
@@ -50,6 +57,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             test.Order = dto.Order;
 
             await _repository.UpdateAsync(test);
+
+            _logger.LogInformation("Testfall {TaskTestId} geaendert.", test.Id);
+
             return Result<TaskTestDto>.Ok(MapToDto(test));
         }
 
@@ -60,6 +70,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 return Result<bool>.Fail("Testfall nicht gefunden.");
 
             await _repository.DeleteAsync(id);
+
+            _logger.LogInformation("Testfall {TaskTestId} geloescht.", id);
+
             return Result<bool>.Ok(true);
         }
 

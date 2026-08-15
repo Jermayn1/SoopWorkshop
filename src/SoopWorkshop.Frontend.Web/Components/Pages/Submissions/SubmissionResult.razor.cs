@@ -12,19 +12,20 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
 {
     [Parameter] public Guid Id { get; set; }
 
-    [Inject] private SubmissionApiClient SubmissionApiClient { get; set; } = default!;
+    // Der Dienst ist als Scoped registriert und gehoert damit dem Circuit —
+    // deshalb injiziert und nicht selbst erzeugt.
+    [Inject] private SubmissionPollingState PollingState { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     private EvaluationResultDto? _result;
     private bool _isPolling = true;
-    private SubmissionPollingState? _pollingState;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        _pollingState = new SubmissionPollingState(SubmissionApiClient);
-        _pollingState.OnResultReceived += OnResultReceived;
-        _pollingState.OnError += OnError;
-        _pollingState.StartPolling(Id);
+        PollingState.OnResultReceived += OnResultReceived;
+        PollingState.OnError += OnError;
+        PollingState.StartPolling(Id);
         await Task.CompletedTask;
     }
 
@@ -37,6 +38,7 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
 
     private void OnError(string error)
     {
+        _errorMessage = error;
         _isPolling = false;
         InvokeAsync(StateHasChanged);
     }
@@ -77,13 +79,13 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
         _ => category.ToString()
     };
 
+    // Nur abmelden und stoppen: den Lebenszyklus des Dienstes verwaltet die DI.
     public async ValueTask DisposeAsync()
     {
-        if (_pollingState is not null)
-        {
-            _pollingState.OnResultReceived -= OnResultReceived;
-            _pollingState.OnError -= OnError;
-            await _pollingState.DisposeAsync();
-        }
+        PollingState.OnResultReceived -= OnResultReceived;
+        PollingState.OnError -= OnError;
+        PollingState.StopPolling();
+
+        await ValueTask.CompletedTask;
     }
 }

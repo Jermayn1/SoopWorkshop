@@ -10,6 +10,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
         {
             builder.HasKey(s => s.Id);
 
+            builder.Property(s => s.ErrorMessage)
+                .HasMaxLength(1000);
+
             builder.HasMany(s => s.Files)
                 .WithOne(f => f.Submission)
                 .HasForeignKey(f => f.SubmissionId)

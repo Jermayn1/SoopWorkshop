@@ -15,7 +15,7 @@
 else if (_result is null)
 {
     <MudAlert Severity="Severity.Error">
-        Ergebnis konnte nicht geladen werden.
+        @(_errorMessage ?? "Ergebnis konnte nicht geladen werden.")
     </MudAlert>
 }
 else

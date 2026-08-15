@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+using Microsoft.Extensions.Options;
+using SoopWorkshop.Backend.Application.Evaluation;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Models;
 using SoopWorkshop.Shared.Constants;
@@ -9,9 +12,19 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
     // Führt das kompilierte Programm für jeden Testfall aus und vergleicht es mit dem erwareteten Ergebnis
     public class TestCaseChecker
     {
-        private const int TimeoutMilliseconds = 10_000;
+        private readonly IProcessRunner _processRunner;
+        private readonly EvaluationOptions _options;
 
-        public async Task<CategoryResult> CheckAsync(CompilationResult compilation, List<TaskTest> tests)
+        public TestCaseChecker(IProcessRunner processRunner, IOptions<EvaluationOptions> options)
+        {
+            _processRunner = processRunner;
+            _options = options.Value;
+        }
+
+        public async Task<CategoryResult> CheckAsync(
+            CompilationResult compilation,
+            List<TaskTest> tests,
+            CancellationToken cancellationToken)
         {
             var result = new CategoryResult
             {
@@ -48,7 +61,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             foreach (var test in tests)
             {
-                var actualOutput = await RunProgramAsync(compilation, test.Input);
+                var actualOutput = await RunProgramAsync(compilation, test.Input, cancellationToken);
                 var passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput);
 
                 result.TestCaseResults.Add(new TestCaseResult
@@ -80,37 +93,36 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
         private static string NormalizeOutput(string output) =>
             output.Replace("\r\n", "\n").Trim();
 
-        private static async Task<string> RunProgramAsync(CompilationResult compilation, string input)
+        private async Task<string> RunProgramAsync(
+            CompilationResult compilation,
+            string input,
+            CancellationToken cancellationToken)
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "java",
-                Arguments = compilation.MainClassName!,
-                WorkingDirectory = compilation.WorkingDirectory,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false
-            };
+            var process = await _processRunner.RunAsync(
+                new ProcessRequest(
+                    "java",
+                    // Ohne diese beiden Angaben schreibt die JVM unter Windows in der
+                    // Codepage des Systems (Cp1252) — Umlaute in der Programmausgabe
+                    // kaemen dann zerlegt beim Teilnehmer an.
+                    ["-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", compilation.MainClassName!],
+                    compilation.WorkingDirectory,
+                    input,
+                    TimeSpan.FromSeconds(_options.RunTimeoutSeconds)),
+                cancellationToken);
 
-            using var process = Process.Start(startInfo)!;
+            if (process.ExecutableNotFound)
+                return "'java' wurde nicht gefunden. Ist das JDK installiert und im PATH?";
 
-            if (!string.IsNullOrEmpty(input))
-            {
-                await process.StandardInput.WriteAsync(input);
-            }
-            process.StandardInput.Close();
+            if (process.TimedOut)
+                return $"Zeitueberschreitung: Das Programm hat laenger als {_options.RunTimeoutSeconds} Sekunden gebraucht. " +
+                       "Pruefe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.";
 
-            var outputTask = process.StandardOutput.ReadToEndAsync();
-            var completed = process.WaitForExit(TimeoutMilliseconds);
+            // Bricht das Programm ab, ohne etwas auszugeben, ist der Stacktrace die
+            // einzige Information, die dem Teilnehmer weiterhilft.
+            if (string.IsNullOrWhiteSpace(process.StandardOutput) && !string.IsNullOrWhiteSpace(process.StandardError))
+                return process.StandardError;
 
-            if (!completed)
-            {
-                process.Kill(entireProcessTree: true);
-                return string.Empty;
-            }
-
-            return await outputTask;
+            return process.StandardOutput;
         }
     }
 }
