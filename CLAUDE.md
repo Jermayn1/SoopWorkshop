@@ -100,10 +100,16 @@ Connection-String einmalig setzen (steht **nicht** im Repository, muss zum
 Passwort in `.env` passen):
 
 ```bash
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=127.0.0.1;Port=5432;Database=soopworkshop;Username=postgres;Password=DEIN_PASSWORT" --project src/SoopWorkshop.Backend.API
 ```
 
 Im Betrieb stattdessen die Umgebungsvariable `ConnectionStrings__DefaultConnection`.
+
+**`127.0.0.1` statt `localhost`, das ist Absicht.** Unter Windows löst `localhost`
+zuerst auf IPv6 `::1` auf. Dort horcht der WSL-Relay von Docker Desktop, reicht die
+Verbindung aber nicht zum Container durch — der Fehler kommt als
+`28P01 password authentication failed` zurück und sieht damit wie ein falsches
+Passwort aus, obwohl er keins ist.
 
 Migrationen — **ohne** `--startup-project`, da `AppDbContextFactory` den Kontext
 zur Entwurfszeit selbst baut und die API das Design-Paket nicht referenziert:
@@ -471,6 +477,11 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   loeschende Migration erzeugt. Behoben durch Neuaufsetzen der DB auf `InitialCreate`~~
   — erledigt. **Fuer Phase 3 relevant:** dieser verworfene Entwurf legte den JUnit-Code
   direkt auf `TaskItem` statt in eine eigene Entitaet und gab `TaskTest` eigene Punkte.
+- ~~2026-08-15 — lokale Umgebung — nach einem Neustart schlug die DB-Verbindung mit
+  `28P01` fehl, obwohl das Passwort stimmte. `Host=localhost` loest unter Windows
+  zuerst auf `::1` auf; dort horcht Dockers WSL-Relay, ohne zum Container
+  durchzureichen. Behoben: Connection-String auf `127.0.0.1`, und der Compose-Port
+  bindet jetzt explizit `127.0.0.1:5432:5432` statt an alle Schnittstellen~~ — erledigt
 - 2026-08-15 — CLAUDE.md dokumentierte `dotnet ef` mit `--startup-project`; das
   schlaegt fehl, da Backend.API `EntityFrameworkCore.Design` nicht referenziert.
   Korrigiert — erledigt
