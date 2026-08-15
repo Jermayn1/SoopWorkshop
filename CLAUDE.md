@@ -719,6 +719,13 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   nach dem Anlegen einen separaten `PATCH .../visibility` und kennen keine
   Block-Speicherung. Die neuen Endpunkte für JUnit-Dateien und Gewichte sind bereits
   bequemer geschnitten; der Bestand wird beim Bau des Admin-Panels nachgezogen — Phase 5
+- 2026-08-16 — `tests/manual/seed-phase3.ps1` — die Aufräumschleife löschte **jede**
+  Kategorie statt nur der eigenen. Unter Windows PowerShell 5.1 kommt eine Liste durch
+  eine eigene Funktion hindurch als *ein* Objekt an und wird in der Pipeline nicht
+  aufgeblättert. `$_.name` liefert dann alle Namen auf einmal, `-eq` filtert das Array
+  statt zu vergleichen, und das nicht leere Ergebnis gilt als wahr. Behoben durch eine
+  indexbasierte Schleife. **Lehre:** bei löschenden Skripten nie darauf vertrauen, dass
+  ein Filter greift — erst mit einem fremden Datensatz gegenprüfen, dass er überlebt
 - 2026-08-16 — `tests/manual/seed-phase3.ps1` — `Get-Content` hängt an jeden
   zurückgegebenen String Provider-Eigenschaften (`PSPath`, `PSDrive`, …).
   `ConvertTo-Json -Depth 8` rollt dieses Objekt rekursiv aus: aus 1,8 KB Datei wurden

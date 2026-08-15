@@ -44,13 +44,6 @@ function Invoke-Api {
 
     $uri = "$ApiBaseUrl$Path"
 
-    # Body immer als UTF-8-Bytes, nie als String: Windows PowerShell 5.1 kodiert
-    # Strings sonst in der Codepage des Systems und zerlegt damit Umlaute.
-    #
-    # Und immer ein Body, auch ein leerer. Ein PATCH ohne Body laesst PowerShell
-    # 5.1 ohne Laengenangabe los; auf der wiederverwendeten Verbindung liest der
-    # Server den naechsten Request dann falsch und bricht ihn mit
-    # "Request body too large" ab - an einer Stelle, die voellig unschuldig ist.
     if ($null -eq $Body) {
         return Invoke-RestMethod -Method $Method -Uri $uri
     }
@@ -80,11 +73,29 @@ function Get-JUnitFile {
 
 Write-Host "Lege Beispieldaten gegen $ApiBaseUrl an." -ForegroundColor Cyan
 
-# Aufraeumen, damit ein zweiter Lauf nicht die Sidebar zumuellt.
-$existing = Invoke-Api -Method Get -Path '/api/admin/categories' | Where-Object { $_.name -eq $categoryName }
-foreach ($old in $existing) {
+# Aufraeumen, damit ein zweiter Lauf nicht die Sidebar zumuellt. Es wird
+# ausschliesslich auf den exakten Namen dieses Skripts gefiltert - fremde
+# Kategorien bleiben unangetastet. Der Name steht deshalb in der Ausgabe: ein
+# Loeschvorgang, den man nicht nachlesen kann, ist einer zu viel.
+#
+# Bewusst ueber den Index statt mit foreach oder Where-Object: unter Windows
+# PowerShell 5.1 kommt die Liste durch die Funktion hindurch als EIN Objekt an
+# und wird in der Pipeline nicht aufgeblaettert. '$_.name' liefert dann alle
+# Namen auf einmal, '-eq' filtert das Array statt zu vergleichen, und das
+# nicht leere Ergebnis gilt als wahr - womit hier jede Kategorie geloescht
+# wuerde. Der Indexzugriff funktioniert fuer eine Liste wie fuer ein einzelnes
+# Objekt gleichermassen.
+$antwort = Invoke-Api -Method Get -Path '/api/admin/categories'
+
+for ($i = 0; $i -lt $antwort.Count; $i++) {
+    $old = $antwort[$i]
+
+    if ($old.name -ne $categoryName) {
+        continue
+    }
+
     Invoke-Api -Method Delete -Path "/api/admin/categories/$($old.id)" | Out-Null
-    Write-Host "  alte Kategorie $($old.id) entfernt"
+    Write-Host "  entferne vorherige Kategorie '$($old.name)' ($($old.id))"
 }
 
 $category = Invoke-Api -Method Post -Path '/api/admin/categories' -Body @{
