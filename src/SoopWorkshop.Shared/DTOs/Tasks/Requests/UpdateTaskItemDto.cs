@@ -21,7 +21,11 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         public int Order { get; set; }
         
         public bool IsVisible { get; set; }
-        
+
+        public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
+
+        public string? ExpectedSignatures { get; set; }
+
         public List<string> Hints { get; set; } = [];
     }
 }

@@ -11,6 +11,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<TaskHint> TaskHints => Set<TaskHint>();
         public DbSet<TaskTest> TaskTests => Set<TaskTest>();
+        public DbSet<TaskUnitTestFile> TaskUnitTestFiles => Set<TaskUnitTestFile>();
         public DbSet<TaskCategoryWeight> TaskCategoryWeights => Set<TaskCategoryWeight>();
         public DbSet<Submission> Submissions => Set<Submission>();
         public DbSet<SubmissionFile> SubmissionFiles => Set<SubmissionFile>();

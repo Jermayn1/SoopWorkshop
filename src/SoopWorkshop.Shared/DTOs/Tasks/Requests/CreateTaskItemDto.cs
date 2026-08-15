@@ -16,10 +16,19 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         public string Description { get; set; } = string.Empty;
         
         public Difficulty Difficulty { get; set; }
-        
+
         [Range(0, int.MaxValue, ErrorMessage = "Die Reihenfolge darf nicht negativ sein.")]
         public int Order { get; set; }
-        
+
+        // Standard ConsoleOnly - passt zu den fruehen Aufgaben und laesst sich
+        // ohne hinterlegte JUnit-Datei speichern.
+        public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
+
+        public string? ExpectedSignatures { get; set; }
+
+        // Erspart den zusaetzlichen PATCH-Aufruf nach dem Anlegen.
+        public bool IsVisible { get; set; }
+
         public List<string> Hints { get; set; } = [];
     }
 }

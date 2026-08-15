@@ -117,7 +117,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 Description = t.Description,
                 Difficulty = t.Difficulty,
                 Order = t.Order,
-                IsVisible = t.IsVisible
+                IsVisible = t.IsVisible,
+                EvaluationMode = t.EvaluationMode
             }).ToList()
         };
     }

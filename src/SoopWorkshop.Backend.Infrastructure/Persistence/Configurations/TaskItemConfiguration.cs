@@ -28,6 +28,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .HasForeignKey(test => test.TaskItemId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Property(t => t.ExpectedSignatures)
+                .HasColumnType("text");
+
+            builder.HasMany(t => t.UnitTestFiles)
+                .WithOne(file => file.Task)
+                .HasForeignKey(file => file.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasMany(t => t.Submissions)
                 .WithOne(s => s.Task)
                 .HasForeignKey(s => s.TaskItemId)

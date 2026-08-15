@@ -38,6 +38,8 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IEvaluationResultRepository, EvaluationResultRepository>();
             services.AddScoped<ITaskTestRepository, TaskTestRepository>();
+            services.AddScoped<ITaskUnitTestFileRepository, TaskUnitTestFileRepository>();
+            services.AddScoped<ITaskCategoryWeightRepository, TaskCategoryWeightRepository>();
 
             services.AddScoped<IProcessRunner, ProcessRunner>();
 
@@ -52,6 +54,7 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<IEvaluationChecker, CharacterSetChecker>();
             services.AddScoped<IEvaluationChecker, NamingConventionChecker>();
             services.AddScoped<IEvaluationChecker, TestCaseChecker>();
+            services.AddScoped<IEvaluationChecker, JUnitChecker>();
 
             services.AddScoped<IJavaAnalyzer, JavaAnalyzer>();
 

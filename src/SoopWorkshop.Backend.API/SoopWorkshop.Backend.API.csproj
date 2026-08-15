@@ -9,6 +9,15 @@
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 
+  <!--
+    Das JUnit-Standalone-JAR wandert mit ins Ausgabeverzeichnis. Damit greift der
+    Standardpfad aus Evaluation:JUnitJarPath sowohl beim lokalen Start als auch im
+    veroeffentlichten Stand (Phase 7) - beide loesen relativ zu AppContext.BaseDirectory auf.
+  -->
+  <ItemGroup>
+    <None Include="..\..\lib\*.jar" Link="lib\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\SoopWorkshop.Backend.Application\SoopWorkshop.Backend.Application.csproj" />
     <ProjectReference Include="..\SoopWorkshop.Backend.Infrastructure\SoopWorkshop.Backend.Infrastructure.csproj" />

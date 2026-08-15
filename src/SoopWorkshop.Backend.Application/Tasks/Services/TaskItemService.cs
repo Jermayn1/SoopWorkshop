@@ -5,6 +5,7 @@ using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
+using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Application.Tasks.Services
 {
@@ -41,7 +42,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 Description = dto.Description,
                 Difficulty = dto.Difficulty,
                 Order = dto.Order,
-                IsVisible = false,
+                IsVisible = dto.IsVisible,
+                EvaluationMode = dto.EvaluationMode,
+                ExpectedSignatures = dto.ExpectedSignatures,
                 Hints = dto.Hints.Select((content, index) => new TaskHint
                 {
                     Id = Guid.NewGuid(),
@@ -68,7 +71,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             item.Difficulty = dto.Difficulty;
             item.Order = dto.Order;
             item.IsVisible = dto.IsVisible;
-            
+            item.EvaluationMode = dto.EvaluationMode;
+            item.ExpectedSignatures = dto.ExpectedSignatures;
+
+
             item.Hints.Clear();
             foreach (var (content, index) in dto.Hints.Select((content, index) => (content, index)))
             {
@@ -107,6 +113,13 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (item is null)
                 return Result<bool>.Fail("Aufgabe nicht gefunden.");
 
+            if (!item.IsVisible)
+            {
+                var problem = DescribeMissingTestData(item);
+                if (problem is not null)
+                    return Result<bool>.Fail(problem);
+            }
+
             item.IsVisible = !item.IsVisible;
             await _repository.UpdateAsync(item);
 
@@ -118,6 +131,28 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<bool>.Ok(item.IsVisible);
         }
 
+        // Eine sichtbare Aufgabe muss auch pruefbar sein. Geprueft wird erst beim
+        // Sichtbarschalten und nicht beim Anlegen: beim Anlegen gibt es die
+        // Testfaelle noch gar nicht, die Aufgabe entsteht ja erst.
+        //
+        // Ohne diese Pruefung wird eine Aufgabe mit vergessener Testdatei still
+        // milder bewertet - die Kategorie faellt weg und ihr Gewicht verteilt sich.
+        private static string? DescribeMissingTestData(TaskItem item)
+        {
+            var needsConsoleTests = item.EvaluationMode is EvaluationMode.ConsoleOnly or EvaluationMode.Both;
+            var needsUnitTests = item.EvaluationMode is EvaluationMode.UnitTestOnly or EvaluationMode.Both;
+
+            if (needsConsoleTests && item.Tests.Count == 0)
+                return $"Die Aufgabe ist auf '{item.EvaluationMode}' gestellt, hat aber keinen Konsolen-Testfall. " +
+                       "Lege zuerst mindestens einen Testfall an oder stelle den Modus um.";
+
+            if (needsUnitTests && item.UnitTestFiles.Count == 0)
+                return $"Die Aufgabe ist auf '{item.EvaluationMode}' gestellt, hat aber keine JUnit-Datei. " +
+                       "Hinterlege zuerst mindestens eine Testdatei oder stelle den Modus um.";
+
+            return null;
+        }
+
         private static TaskItemDto MapToDto(TaskItem item) => new()
         {
             Id = item.Id,
@@ -127,6 +162,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             Difficulty = item.Difficulty,
             Order = item.Order,
             IsVisible = item.IsVisible,
+            EvaluationMode = item.EvaluationMode,
+            ExpectedSignatures = item.ExpectedSignatures,
             Hints = item.Hints
                 .OrderBy(h => h.Order)
                 .Select(h => new TaskHintDto
@@ -135,6 +172,21 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                     TaskItemId = h.TaskItemId,
                     Content = h.Content,
                     Order = h.Order
+                }).ToList(),
+
+            // Bewusst gefiltert: nicht freigeschaltete Testdateien verlassen den
+            // Admin-Bereich nicht, sonst schreibt man auf den Test hin.
+            VisibleUnitTestFiles = item.UnitTestFiles
+                .Where(file => file.IsVisibleToParticipant)
+                .OrderBy(file => file.Order)
+                .Select(file => new TaskUnitTestFileDto
+                {
+                    Id = file.Id,
+                    TaskItemId = file.TaskItemId,
+                    FileName = file.FileName,
+                    Content = file.Content,
+                    Order = file.Order,
+                    IsVisibleToParticipant = file.IsVisibleToParticipant
                 }).ToList()
         };
     }

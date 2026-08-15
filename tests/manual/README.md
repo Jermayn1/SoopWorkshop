@@ -37,3 +37,53 @@ Welt" mit der erwarteten Ausgabe `Hallo SOOP Workshop!` zugeschnitten.
 
 Passt eine Aufgabe nicht mehr zu diesen Dateien, gehören sie angepasst — sie
 sind Teil der Testanleitung, nicht Beiwerk.
+
+## `seed-phase3.ps1`
+
+Legt gegen die laufende API drei Beispielaufgaben an, die zusammen alle drei
+Auswertungsmodi abdecken, und schaltet sie sichtbar:
+
+```powershell
+.\tests\manual\seed-phase3.ps1
+```
+
+| Aufgabe | Modus | Wofür |
+|---|---|---|
+| Hallo Soop (Konsole) | `ConsoleOnly` | klassische Konsolen-Testfälle |
+| Hallo Soop (Unit-Test) | `UnitTestOnly` | dieselbe Aufgabe über JUnit geprüft — der Teilnehmer schreibt nur eine `main` |
+| Rechner | `Both` | eigene Methode plus Ausgabe, beide Prüfarten zusammen |
+
+Mehrfach ausführbar: eine vorhandene Kategorie gleichen Namens wird vorher
+gelöscht. Löschen aufräumen geht per `DELETE /api/admin/categories/{id}`.
+
+## `junit/`
+
+### `junit/tests/`
+
+Die beiden JUnit-Vorlagen, die das Seed-Skript hinterlegt. Sie sind zugleich die
+Belege dafür, dass sich `main` und Konsolenausgabe aus JUnit heraus prüfen lassen
+— wichtig für die frühen Aufgaben ohne eigene Methoden.
+
+| Datei | Zeigt |
+|---|---|
+| `HalloSoopTest.java` | Ausgabe über `System.setOut` abfangen und `Main.main(...)` aufrufen |
+| `RechnerTest.java` | eigene Methode prüfen und zusätzlich eine Eingabe über `System.setIn` simulieren |
+
+Die Kommentare darin sind Teil der Vorlage: UTF-8-`PrintStream`, Zurücksetzen in
+`@AfterEach` und der statische Zustand zwischen Testmethoden sind genau die
+Stolpersteine, über die man sonst zweimal fällt.
+
+### `junit/loesungen/`
+
+Beispielabgaben zu den Aufgaben aus dem Seed-Skript. Jede liegt in einem eigenen
+Ordner als `Main.java`, weil Java den Dateinamen an den Klassennamen bindet.
+
+| Ordner | Erwartetes Ergebnis |
+|---|---|
+| `hallo-soop` | Musterlösung für Aufgabe 1 und 2 — 100 / 100 |
+| `hallo-soop-tippfehler` | Unit-Test fällt durch, Meldung nennt erwartet gegen erhalten |
+| `rechner` | Musterlösung für Aufgabe 3 — 100 / 100 über alle vier Kategorien |
+| `rechner-falscher-methodenname` | Testdatei kompiliert nicht — die Meldung muss die **erwartete Signatur** nennen, nicht nur „cannot find symbol" |
+| `rechner-falscher-rueckgabewert` | kompiliert, fällt inhaltlich durch — Konsolen- **und** Unit-Tests rot |
+| `rechner-umlaute` | prüft die UTF-8-Kette bis in die Anzeige; Clean Code beanstandet die Umlaute, die Meldung selbst muss lesbar sein |
+| `rechner-system-exit` | beendet die JVM des Testlaufs — muss als verständliche Meldung ankommen, nicht als leeres Ergebnis |

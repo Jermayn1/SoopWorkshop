@@ -26,6 +26,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
             return await _context.TaskItems
                 .Include(t => t.Hints)
                 .Include(t => t.Tests)
+                .Include(t => t.UnitTestFiles)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 

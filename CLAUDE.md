@@ -2,7 +2,7 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-15 — Phase 0, 1 und 2 abgeschlossen, als Nächstes Phase 3.
+> Stand: 2026-08-16 — Phase 0 bis 3 abgeschlossen, als Nächstes Phase 4.
 
 ---
 
@@ -154,6 +154,8 @@ Unterstrich trennt die Ebenen), Standardwerte in `appsettings.json`:
 | `CompileTimeoutSeconds` | 30 | 30 | Zeitgrenze für `javac` |
 | `RunTimeoutSeconds` | 10 | 10 | Zeitgrenze pro Testfall-Durchlauf |
 | `QueueCapacity` | 100 | 100 | Obergrenze der Warteschlange; ist sie voll, wartet das Einreihen |
+| `JUnitRunTimeoutSeconds` | 30 | 30 | Zeitgrenze für den JUnit-Lauf (deckt alle Testmethoden einer Aufgabe ab) |
+| `JUnitJarPath` | `lib/junit-platform-console-standalone-6.1.3.jar` | — | relative Pfade lösen gegen `AppContext.BaseDirectory` auf |
 | `CategoryWeights:*` | 15/20/65/65 | — | Standardgewichte der Bewertungskategorien (siehe unten) |
 
 **Gewichte sind keine Punkte.** `CategoryWeights` gibt nur das Verhältnis der
@@ -212,9 +214,9 @@ Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
 
 ---
 
-## 5. Zielbild Bewertungs-Engine (Phase 3)
+## 5. Bewertungs-Engine (seit Phase 3 umgesetzt)
 
-Das ist der fachliche Kern des Projekts und aktuell der größte Umbau.
+Der fachliche Kern des Projekts. Alles in diesem Abschnitt beschreibt den **Ist-Stand**.
 
 ### 5.1 Zwei Prüfarten pro Aufgabe
 
@@ -228,75 +230,137 @@ Eine Aufgabe kann Konsolen-Testfälle, Aufgaben-Unittests oder beides nutzen:
   OOP-Aufgaben mehrere Klassen über mehrere Dateien geprüft werden.
 
 Konsolenausgabe lässt sich auch **innerhalb** von JUnit prüfen (`System.setOut`
-umleiten, `Main.main(...)` aufrufen). Dafür soll das Admin-Panel Vorlagen anbieten,
-damit man das nicht jedes Mal neu schreibt.
+umleiten, `Main.main(...)` aufrufen) — genau der Weg für die frühen Aufgaben, in denen
+Teilnehmer noch keine eigenen Methoden schreiben. Zwei erprobte Vorlagen liegen unter
+`tests/manual/junit/tests/`; die Vorlagen-Bibliothek im Admin-Panel (Phase 5) baut
+darauf auf.
 
-### 5.2 Neue Domänen-Objekte
+**`EvaluationMode` steuert, nicht die Datenlage.** Bei `ConsoleOnly` laufen hinterlegte
+JUnit-Dateien nicht, auch wenn welche da sind. Damit fällt eine vergessene Testdatei
+auf, statt die Aufgabe still milder zu bewerten. Gegengeprüft wird beim
+**Sichtbarschalten**: eine Aufgabe, deren Modus Daten verlangt, die es nicht gibt,
+lässt sich nicht sichtbar schalten (`TaskItemService.DescribeMissingTestData`).
+Bewusst dort und nicht beim Anlegen — beim Anlegen existieren die Testfälle noch nicht.
+
+### 5.2 Domänen-Objekte
 
 ```
 TaskItem
   ├─ EvaluationMode          ConsoleOnly | UnitTestOnly | Both
-  ├─ Hints                   (bestehend)
-  ├─ Tests                   (bestehend) → Konsolen-Testfälle
-  └─ UnitTestFiles           (neu) → JUnit-Quelldateien: FileName, Content, Order
+  ├─ ExpectedSignatures      Freitext: erwartete Klassen und Methoden (Anzeige: Phase 4)
+  ├─ Hints
+  ├─ Tests                   → Konsolen-Testfälle
+  ├─ UnitTestFiles           → JUnit-Quelldateien: FileName, Content, Order,
+  │                            IsVisibleToParticipant (Standard false)
+  └─ CategoryWeights         → aufgabenspezifische Gewichte, überschreiben den Standard
 ```
 
 ### 5.3 Ausführung der JUnit-Tests
 
-- JUnit 5 „Platform Console Standalone"-JAR wird mitgeliefert und im Backend-Image
-  abgelegt; Pfad über Konfiguration, keine feste Verdrahtung.
-- Ablauf: Abgabe + JUnit-Dateien in ein temporäres Verzeichnis schreiben →
-  `javac` mit JUnit im Classpath → Console Launcher ausführen → **XML-Report**
-  einlesen (nicht stdout parsen, das ist zu brüchig) → pro Testmethode ein
-  `TestCaseResult`.
-- Exakte CLI-Flags und JUnit-Version werden in Phase 3 verifiziert und hier dokumentiert.
-- Kompiliert die JUnit-Datei nicht gegen die Abgabe (z. B. falscher Klassen- oder
-  Methodenname), ist das ein legitimes Nichtbestehen — die Fehlermeldung muss
-  dem Teilnehmer aber verständlich sagen, **was** erwartet wurde.
+**Version:** `junit-platform-console-standalone-6.1.3.jar`, eingecheckt unter `lib/`
+und von `Backend.API.csproj` ins Ausgabeverzeichnis kopiert. Pfad über
+`Evaluation:JUnitJarPath`, relative Angaben lösen gegen `AppContext.BaseDirectory` auf.
+JUnit 6 setzt Java 17+ voraus (JDK 21 ist eingerichtet).
 
-### 5.4 Checker-Pipeline statt fester Verdrahtung
+Ablauf im `JUnitChecker`, alles über `IProcessRunner`:
 
-`JavaAnalyzer` ruft aktuell vier Checker fest verdrahtet auf. Zielbild:
-Interface `IEvaluationChecker` mit `Category`, `Order` und
-`CheckAsync(EvaluationContext)`. Der Kontext trägt Abgabe, Aufgabe,
-Kompilierergebnis und Arbeitsverzeichnis. Neue Prüfungen werden dann nur noch
-registriert — das ist die Voraussetzung dafür, Clean Code sinnvoll auszubauen.
+1. JUnit-Dateien ins Arbeitsverzeichnis schreiben, in dem die Abgabe schon kompiliert ist
+2. `javac -encoding UTF-8 -J-Dstdout.encoding=UTF-8 -J-Dstderr.encoding=UTF-8 -cp <jar><Trenner>. <Testdateien>`
+3. `java -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar <jar> execute --class-path .
+   --reports-dir junit-reports --disable-banner --disable-ansi-colors --details=none
+   --select-class <Klasse>` (je Testdatei ein `--select-class`)
+4. XML-Report lesen, **nicht** stdout parsen
+
+**`Path.PathSeparator` statt `;`** im Classpath — unter Linux trennt `:`, und in Phase 7
+läuft das im Container.
+
+**Zum Report:** der Launcher schreibt je Engine eine Datei (`TEST-junit-jupiter.xml`,
+`TEST-junit-vintage.xml`, …), die meisten davon leer — deshalb werden alle `TEST-*.xml`
+gelesen. Ein Rückgabewert ungleich 0 heißt nur „Tests fehlgeschlagen", die Wahrheit
+steht im Report.
+
+**`@DisplayName` ist nicht Zierde.** Der Launcher legt ihn in `<system-out>` als Zeile
+`display-name: JUnit Jupiter > MainTest > <Text>` ab. Genau dieser Text erscheint beim
+Teilnehmer als Beschreibung der Teilprüfung — ohne ihn steht dort der Methodenname.
+
+**Konsolenausgabe aus JUnit heraus prüfen** — drei Regeln, die in den Vorlagen stehen:
+
+1. Der Abfang-Stream braucht `new PrintStream(buffer, true, StandardCharsets.UTF_8)`.
+   Ohne die explizite Angabe schreibt er in der Codepage des Systems — dieselbe Falle
+   wie bei `stdout.encoding`, nur eine Ebene tiefer.
+2. `System.setOut`/`System.setIn` in `@AfterEach` zurücksetzen.
+3. Statische Felder der Abgabe überleben zwischen Testmethoden (eine JVM pro Lauf).
+   Ein `static Scanner` wird beim Laden der Klasse gebaut — also **bevor**
+   `System.setIn` wirkt.
+
+**Drei Fehlerfälle mit eigener Erklärung**, damit nichts still 0 Punkte ergibt:
+
+- *Testdatei kompiliert nicht gegen die Abgabe* → `JavaCompilerMessages` übersetzt die
+  javac-Meldung („cannot find symbol" + `symbol:`/`location:`) in einen Satz, der die
+  erwartete Signatur nennt. Die Rohausgabe wird **angehängt**, nicht ersetzt.
+- *Kein Report trotz gelaufenem Prozess* → fast immer ein `System.exit(...)` in der
+  Abgabe; das beendet die JVM des Testlaufs und reißt alle Testmethoden mit.
+- *Zeitüberschreitung* → eigene, großzügigere Grenze `JUnitRunTimeoutSeconds`.
+
+Fehlt das JAR oder verlangt der Modus Unit-Tests ohne hinterlegte Datei, wirft der
+Checker — das ist ein Konfigurationsfehler und darf keine Note verändern.
+
+### 5.4 Checker-Pipeline
+
+Interface `IEvaluationChecker` (`Category`, `Order`, `IsApplicable`, `CheckAsync`).
+`JavaAnalyzer` bekommt alle Checker injiziert, sortiert nach `Order` und sammelt ihre
+Teilprüfungen je Kategorie ein. Eine neue Prüfung wird nur noch in der DI registriert.
+
+**Checker vergeben keine Punkte.** Sie liefern bestandene und nicht bestandene
+Teilprüfungen, gerechnet wird ausschließlich im `EvaluationScorer`. Mehrere Checker
+dürfen dieselbe Kategorie bedienen — Clean Code entsteht genau so.
+
+**Die wichtigste Regel:** „nicht anwendbar" hängt allein an der *Aufgabendefinition*,
+niemals am Ergebnis eines Laufs. Würde eine nicht kompilierende Abgabe ihre Kategorien
+verlieren, verteilte sich deren Gewicht auf die übrigen — und kaputter Code bekäme eine
+bessere Note als halb funktionierender. Kompiliert die Abgabe nicht, liefern die Checker
+durchgefallene Teilprüfungen.
+
+Ausführungsreihenfolge in `EvaluationCheckerOrder`, Anzeigereihenfolge getrennt davon
+in `EvaluationCategoryOrder` — kompiliert wird zuerst, angezeigt wird mit Clean Code.
 
 ### 5.5 Punktesystem v2
 
-Aktuell feste Konstanten (5/10/20/65 = 100) mit drei Problemen:
+`EvaluationScorer`, reine Funktion ohne Datenbank und Prozesse:
 
-- Aufgaben **ohne** Testfälle geben jedem 65 Gratispunkte (`TestCaseChecker`,
-  `tests.Count == 0` → volle Punktzahl).
-- Ganzzahl-Division verliert Punkte (65 / 3 = 21, 3 × 21 = 63).
-- Nicht pro Aufgabe anpassbar, obwohl Aufgaben sehr unterschiedlich sind.
-
-Neue Regeln:
-
-1. Jede Kategorie hat ein **Gewicht**; Standardgewichte global, pro Aufgabe überschreibbar.
-2. Kategorie-Ergebnis = Gewicht × (bestandene Teilprüfungen ÷ Teilprüfungen gesamt), als `double`.
-3. Kategorien, die für eine Aufgabe **nicht anwendbar** sind (keine Konsolen-Testfälle,
-   keine JUnit-Datei), fallen komplett raus; ihr Gewicht wird auf die übrigen verteilt.
-   **Keine Gratispunkte.**
-4. Endpunkte auf ganze Zahlen mit Restverteilung (größter Rest), Summe exakt 100.
+1. Nur anwendbare Kategorien zählen. Ihre Gewichte werden auf 100 normiert; das Gewicht
+   weggefallener Kategorien verteilt sich damit von selbst. **Keine Gratispunkte.**
+2. Kategoriepunkte = erreichbare Punkte × (bestanden ÷ gesamt), gerechnet in `double`.
+3. Gerundet nach **größtem Rest**, Summe exakt 100. Gespeichert wird `int`.
+4. Volle Punkte nur, wenn alle Teilprüfungen bestanden sind — Aufrunden ist auf
+   `MaxPoints - 1` gedeckelt, sonst stünde 65/65 neben einem roten Testfall.
 5. `Passed` je Kategorie = alle Teilprüfungen bestanden.
+
+Standardgewichte in `Evaluation:CategoryWeights` (15/20/65/65), pro Aufgabe über
+`TaskCategoryWeight` überschreibbar. Eine reine Konsolenaufgabe behält damit die
+frühere Verteilung 15/20/65; bei `Both` normalisiert sich 15/20/65/65 auf 9/12/40/39;
+ohne Konsolen-Testfälle werden aus 15/20 die Werte 43/57.
+
+Ein Gewicht ≤ 0 oder eine anwendbare Kategorie ohne Teilprüfung wirft — beides sind
+Konfigurationsfehler und dürfen nicht still die Note verschieben.
 
 ### 5.6 Clean Code
 
-`EvaluationCategory.CleanCode` ist eine **Sammelkategorie**. Darunter fallen
-Teilprüfungen wie Namenskonventionen, Zeichensatz und später weitere. Das passt zur
-bestehenden Struktur `CategoryResult → viele TestCaseResults`.
+`EvaluationCategory.CleanCode` ist die **Sammelkategorie**. Teilprüfungen: Zeichensatz,
+Klassennamen in PascalCase, kein snake_case. `CharacterSet` und `NamingConventions`
+sind keine eigenen Kategorien mehr; die Enum-Werte bleiben als Altlast stehen, weil sie
+als `int` in der Datenbank liegen — **nicht wiederverwenden**.
 
-Offen: ob `CharacterSet` und `NamingConventions` als eigene Kategorien bleiben oder
-als Teilprüfungen unter Clean Code wandern — siehe §10.
+Vor jeder Regex-Prüfung entfernt `JavaSourceText.StripCommentsAndLiterals` Kommentare
+sowie String-, Textblock- und Char-Literale. Ohne das schlug die Namensprüfung an,
+sobald `mein_wert` in einem Kommentar oder in einer Ausgabe stand.
 
 ### 5.7 Sortierung der Anzeige
 
-Ergebnisse erscheinen im Frontend derzeit in beliebiger Reihenfolge. Zu ergänzen:
-
-- feste Anzeigereihenfolge der Kategorien (`DisplayOrder` in `Shared`)
-- `Order` auf `TestCaseResult`, damit Teilprüfungen stabil sortiert sind
-- Sortierung im Frontend anwenden, nicht auf DB-Reihenfolge verlassen
+- `EvaluationCategoryOrder` in `Shared`: CleanCode → Kompilierbarkeit → Testfälle → Unit-Tests
+- `Order` auf `TestCaseResult`, vom Scorer fortlaufend vergeben
+- API liefert sortiert aus, das Frontend sortiert zusätzlich — Sortierung ist billig,
+  eine wechselnde Anzeige verwirrt
 
 ---
 
@@ -337,10 +401,18 @@ Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
    Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` nicht ab
 8. `git status` sauber, `.env` taucht **nicht** auf
 
-**Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Dann zuerst über
-`/scalar` oder die Admin-Endpunkte eine sichtbare Kategorie mit sichtbarer Aufgabe
-und mindestens einem Testfall anlegen. Sichtbarkeit ist bei beiden nach dem Anlegen
-`false` und muss per `PATCH .../visibility` gesetzt werden.
+**Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Das erledigt bei
+laufender API ein Aufruf — er legt drei Beispielaufgaben über alle drei Auswertungsmodi
+an und schaltet sie sichtbar:
+
+```bash
+.\tests\manual\seed-phase3.ps1
+```
+
+Von Hand geht es auch über `/scalar`: Kategorie und Aufgabe anlegen, Testfälle bzw.
+JUnit-Dateien ergänzen, **danach** per `PATCH .../visibility` sichtbar schalten. Die
+Reihenfolge ist Pflicht — eine Aufgabe, deren `EvaluationMode` Daten verlangt, die es
+noch nicht gibt, lässt sich nicht sichtbar schalten.
 
 **Hilfsmittel liegen in `tests/manual/`** (eigene README dort):
 
@@ -353,6 +425,11 @@ inklusive der Fälle, die das Frontend clientseitig blockt und die deshalb im Br
 nicht auslösbar sind. Die Beispielabgaben unter `tests/manual/java/` decken die Fälle
 ab, die menschliche Augen brauchen: Zeitüberschreitung, viel Ausgabe auf beiden
 Strömen, Laufzeitfehler, Umlaute, Compilerfehler.
+
+**Für die Bewertungs-Engine** liegen unter `tests/manual/junit/` die JUnit-Vorlagen und
+sieben Beispielabgaben, die zu den Aufgaben aus `seed-phase3.ps1` passen — von der
+Musterlösung über den falschen Methodennamen bis zum `System.exit(0)`. Welche Datei
+welchen Fall zeigt, listet das Seed-Skript am Ende selbst auf.
 
 ## 8. Roadmap
 
@@ -447,21 +524,38 @@ doppelt erzeugt.
 die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
 `NamingConventionChecker`. Alle drei sind als **Ist-Verhalten** durch Tests festgehalten.
 
-### Phase 3 — Bewertungs-Engine v2
+### Phase 3 — Bewertungs-Engine v2 ✅
 *Der fachliche Kern. Details in §5.*
+*Abgeschlossen am 2026-08-16, Branch `phase-3-bewertungs-engine`, zwei Etappen.
+182 Tests, grün.*
 
-- [ ] `EvaluationMode` auf `TaskItem` (ConsoleOnly | UnitTestOnly | Both)
-- [ ] Entität `TaskUnitTestFile` + EF-Konfiguration + Migration
-- [ ] JUnit-Standalone-JAR einbinden, Pfad konfigurierbar, Version dokumentieren
-- [ ] `JUnitChecker`: kompilieren mit JUnit im Classpath, ausführen, **XML-Report** parsen
-- [ ] Kompilierfehler der Testdatei in verständliches Teilnehmer-Feedback übersetzen
-- [ ] Checker-Pipeline: `IEvaluationChecker` + `EvaluationContext`, `JavaAnalyzer` iteriert
-- [ ] Punktesystem v2: Gewichte, Gewichtsverteilung bei nicht anwendbaren Kategorien,
-      Restverteilung — **behebt die 65 Gratispunkte bei Aufgaben ohne Testfälle**
-- [ ] Clean Code als Sammelkategorie ausarbeiten (siehe §10, Punkt 1)
-- [ ] `DisplayOrder` für Kategorien, `Order` für `TestCaseResult`
-- [ ] Admin-Endpunkte für `TaskUnitTestFile` (CRUD)
-- [ ] Projekt-Tests für Punkteberechnung und XML-Parsing (reine Funktionen, gut testbar)
+- [x] `EvaluationMode` auf `TaskItem` (ConsoleOnly | UnitTestOnly | Both) — steuert die
+      Auswertung, gegengeprüft beim Sichtbarschalten
+- [x] Entität `TaskUnitTestFile` + EF-Konfiguration + Migration, inkl.
+      `IsVisibleToParticipant` (Standard `false`)
+- [x] JUnit-Standalone-JAR eingebunden (6.1.3, `lib/`), Pfad konfigurierbar, CLI-Flags
+      und Report-Format empirisch verifiziert und in §5.3 dokumentiert
+- [x] `JUnitChecker`: kompilieren mit JUnit im Classpath, ausführen, **XML-Report** parsen;
+      `@DisplayName` wird als Beschreibung der Teilprüfung übernommen
+- [x] Kompilierfehler der Testdatei in verständliches Teilnehmer-Feedback übersetzt
+      (`JavaCompilerMessages`), Rohausgabe bleibt angehängt
+- [x] Checker-Pipeline: `IEvaluationChecker` + `EvaluationContext`, `JavaAnalyzer` iteriert
+- [x] Punktesystem v2: Gewichte, Gewichtsverteilung bei nicht anwendbaren Kategorien,
+      Restverteilung — **behebt die 65 Gratispunkte und die Ganzzahl-Division**
+- [x] Clean Code als Sammelkategorie: Zeichensatz und Namenskonventionen sind
+      Teilprüfungen, Regex läuft auf bereinigtem Quelltext
+- [x] `EvaluationCategoryOrder` für Kategorien, `Order` für `TestCaseResult`
+- [x] Admin-Endpunkte für `TaskUnitTestFile` (CRUD + Block-Speicherung) und für die
+      aufgabenspezifischen Gewichte
+- [x] Projekt-Tests für Punkteberechnung, XML-Parsing und Signatur-Übersetzung
+
+**Zusätzlich mitgenommen:** `ExpectedSignatures` auf `TaskItem` (Anzeige erst Phase 4),
+`tests/manual/seed-phase3.ps1` mit drei Beispielaufgaben über alle drei Modi, zwei
+erprobte JUnit-Vorlagen und sieben Beispielabgaben unter `tests/manual/junit/`.
+
+**Bewusst anders als geplant:** Die Modus-Validierung greift beim *Sichtbarschalten*
+statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —
+eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 
 ### Phase 4 — Frontend Teilnehmer-Sicht
 
@@ -618,9 +712,24 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   API startete dann gar nicht erst, obwohl sie ohne Auswertung noch nützlich wäre~~
   — erledigt in Phase 2. **Merken für Phase 3 und 7:** jeder neue `BackgroundService`
   muss seine Fehler selbst fangen, sonst reißt er den ganzen Server mit.
-- 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte — Phase 3
-- 2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte — Phase 3
-- 2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives — Phase 3
+- ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte~~ — erledigt in Phase 3
+- ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte~~ — erledigt in Phase 3
+- ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives~~ — erledigt in Phase 3
+- 2026-08-16 — `Backend.API/Controllers/Admin/*` — die älteren Admin-Endpunkte verlangen
+  nach dem Anlegen einen separaten `PATCH .../visibility` und kennen keine
+  Block-Speicherung. Die neuen Endpunkte für JUnit-Dateien und Gewichte sind bereits
+  bequemer geschnitten; der Bestand wird beim Bau des Admin-Panels nachgezogen — Phase 5
+- 2026-08-16 — `tests/manual/seed-phase3.ps1` — `Get-Content` hängt an jeden
+  zurückgegebenen String Provider-Eigenschaften (`PSPath`, `PSDrive`, …).
+  `ConvertTo-Json -Depth 8` rollt dieses Objekt rekursiv aus: aus 1,8 KB Datei wurden
+  105 MB JSON, die der Server als `Request body too large` ablehnte — mit einem Fehler,
+  der auf eine völlig unschuldige Stelle zeigte. Behoben durch
+  `[System.IO.File]::ReadAllText`. **Lehre:** in PowerShell nie `Get-Content` direkt in
+  `ConvertTo-Json` geben
+- 2026-08-16 — `Backend.Infrastructure/Persistence/Repositories/SubmissionRepository.cs` —
+  was `GetByIdAsync` nicht mitlädt, sieht die Auswertung als „nicht vorhanden" und
+  bewertet entsprechend. Beim Ergänzen von `CategoryWeights` und `UnitTestFiles` war das
+  jeweils die stillste denkbare Fehlerquelle — bei neuen Navigationen daran denken
 - 2026-08-15 — `Application/Tasks/Services/TaskCategoryService.cs` — `MapToDto` sortiert Tasks nicht nach `Order` — Phase 4
 - 2026-08-15 — `Backend.API/Controllers/Admin/*` — keinerlei Zugriffsschutz — Phase 5
 
@@ -628,15 +737,15 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
 ## 10. Offene Entscheidungen
 
-1. **Clean-Code-Zuschnitt.** Bleiben `CharacterSet` und `NamingConventions` eigene
-   Kategorien, oder wandern sie als Teilprüfungen unter Clean Code? Zweites ergibt
-   fachlich mehr Sinn, ändert aber die Anzeige und die Punkteverteilung.
-   → Kann in Phase 3 entschieden werden, blockiert vorher nichts.
-2. **JUnit-Dateien für Teilnehmer sichtbar?** Wenn ja, sehen sie genau, was geprüft
-   wird — lehrreich, aber sie können auf den Test hin schreiben. Pro Aufgabe schaltbar?
-3. **Aufgaben-Vertrag.** Woher weiß der Teilnehmer, wie Klasse und Methoden heißen
-   müssen, damit die JUnit-Datei kompiliert? Nur in der Beschreibung, oder ein
-   strukturiertes Feld („Erwartete Signaturen"), das im Frontend hervorgehoben wird?
+1. ~~**Clean-Code-Zuschnitt.**~~ **Entschieden in Phase 3:** `CharacterSet` und
+   `NamingConventions` sind Teilprüfungen unter Clean Code, keine eigenen Kategorien
+   mehr. Die Enum-Werte bleiben als Altlast stehen (siehe §5.6).
+2. ~~**JUnit-Dateien für Teilnehmer sichtbar?**~~ **Entschieden in Phase 3:** pro Datei
+   über `IsVisibleToParticipant` schaltbar, Standard `false`. Die öffentliche API liefert
+   nur freigeschaltete Dateien aus; die Darstellung im Frontend fehlt noch — Phase 4.
+3. ~~**Aufgaben-Vertrag.**~~ **Entschieden in Phase 3:** Feld `ExpectedSignatures` auf
+   `TaskItem`, wird über die Task-DTOs ausgeliefert. Hervorgehobene Darstellung
+   (Phase 4) und das Eingabefeld im Admin-Panel (Phase 5) fehlen noch.
 4. **Sandbox-Tiefe.** Docker Compose containerisiert die *Anwendung*, isoliert aber
    nicht die einzelne Abgabe — `javac`/`java` laufen im Backend-Container.
    Für einen workshop-internen Betrieb vertretbar. Echte Isolation pro Abgabe
