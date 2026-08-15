@@ -243,6 +243,13 @@ Ergebnisse erscheinen im Frontend derzeit in beliebiger Reihenfolge. Zu ergänze
   (`Tasks/Requests/CreateTaskItemDto.cs`).
 - **Namensschema Frontend-Seiten**: `Components/Pages/<Bereich>/<Name>.razor`.
 - **Nullable + ImplicitUsings** sind überall an — so lassen.
+- **Projekt-Tests** spiegeln den Produktivcode als Ordnerbaum
+  (`Unit/Infrastructure/Evaluation/Checkers/`). Testklasse heißt `<Klasse>Tests`,
+  Testmethode `Methode_Szenario_Erwartung` (z. B.
+  `Check_KlasseInCamelCase_LiefertHalbePunkte`). Assertions mit **Shouldly**,
+  Mocks mit **NSubstitute**, gleichartige Fälle als `[Theory]` + `[InlineData]`.
+  Testet ein Test bewusst eine bekannte Schwäche, hält der Kommentar das als
+  **Ist-Verhalten** fest und verweist auf das Finding in §9.
 
 ---
 
@@ -287,15 +294,33 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
       mit klarer Fehlermeldung bei fehlendem Wert; `AppDbContextFactory` liest dieselbe Kette
 - [x] MudBlazor-Warnungen behoben — **Build ist warnungsfrei**
 
-### Phase 1 — Projekt-Testfundament (xUnit)
+### Phase 1 — Projekt-Testfundament (xUnit) ✅
 *Nur das Gerüst, keine volle Abdeckung. Absichert die Umbauten in Phase 2–3.*
+*Abgeschlossen am 2026-08-15, Branch `phase-1-testfundament`. 25 Tests, grün.*
 
-- [ ] `UnitTest1.cs` entfernen, Ordnerstruktur spiegelt Produktivcode
-      (`Unit/Application/`, `Unit/Infrastructure/`, `Integration/`, `Components/`)
-- [ ] Pakete: NSubstitute, Shouldly, bUnit, `Microsoft.AspNetCore.Mvc.Testing`
-- [ ] Testprojekt referenziert zusätzlich `Shared`, `Backend.API`, `Frontend.Services`
-- [ ] Erste echte Tests: `CharacterSetChecker`, `NamingConventionChecker`, `Result<T>`
-- [ ] Benennung festlegen: `Methode_Szenario_Erwartung`
+> **Zur Erinnerung, weil der Begriff doppelt belegt ist:** hier geht es um
+> **Projekt-Tests** — C#-Tests, die *unser Programm* prüfen. Die JUnit-Dateien,
+> die gegen *die Java-Abgaben* laufen, sind Phase 3. Ein Test wie
+> `Check_KlasseInCamelCase_LiefertHalbePunkte` gibt dem Checker einen
+> Java-Schnipsel als C#-String und prüft die vergebene Punktzahl — es wird dabei
+> nichts kompiliert und kein `javac` gestartet.
+
+- [x] `UnitTest1.cs` entfernt, Ordnerstruktur spiegelt Produktivcode
+      (`Helpers/`, `Unit/Application/Common/`, `Unit/Infrastructure/Evaluation/Checkers/`)
+- [x] Pakete: NSubstitute 6.2.0, Shouldly 4.3.0 zentral in `Directory.Packages.props`
+- [x] Testprojekt referenziert zusätzlich `Shared`, `Backend.API`, `Frontend.Services`
+- [x] Erste echte Tests: `CharacterSetChecker` (12), `NamingConventionChecker` (10),
+      `Result<T>` (3) — inklusive Tests, die die bekannten Regex-Schwächen als
+      **Ist-Verhalten** festschreiben, damit Phase 3 die Änderung sofort sieht
+- [x] Benennung festgelegt: `Methode_Szenario_Erwartung` — steht jetzt in §6
+- [x] Gegenprobe gemacht: Checker-Logik testweise deaktiviert → 14 von 25 Tests rot,
+      danach zurückgenommen
+
+**Bewusst nach Phase 6 verschoben:** bUnit, `Microsoft.AspNetCore.Mvc.Testing` und
+die Ordner `Integration/` und `Components/`. Sie werden erst dort gebraucht, ein
+`WebApplicationFactory`-Test bräuchte sofort eine Antwort auf die offene
+DB-Frage (§10.5), und leere Ordner verfolgt Git ohnehin nicht.
+Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 
 ### Phase 2 — Backend-Härtung
 *Voraussetzung für zuverlässiges Ausführen von JUnit in Phase 3.*
@@ -382,6 +407,10 @@ Legende: `[ ]` offen · `[~]` in Arbeit · `[x]` erledigt & geprüft
 
 ### Phase 6 — Projekt-Testabdeckung ausbauen
 
+- [ ] Aus Phase 1 verschoben: Pakete bUnit und `Microsoft.AspNetCore.Mvc.Testing`
+      ergänzen, Ordner `Integration/` und `Components/` anlegen. `WebApplicationFactory`
+      braucht in `Backend.API/Program.cs` einen `public partial class Program`-Shim
+      (Top-Level-Statements) und eine Antwort auf §10.5
 - [ ] Unit: alle Checker inkl. `JUnitChecker` (über `IProcessRunner` aus Phase 2)
 - [ ] Unit: `TaskCategoryService`, `TaskItemService`, `TaskTestService`,
       `SubmissionService`, `EvaluationService` mit gemockten Repositories
