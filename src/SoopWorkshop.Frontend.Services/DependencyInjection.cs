@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SoopWorkshop.Frontend.Services.HttpClients;
-using SoopWorkshop.Frontend.Services.StateManagment;
+using SoopWorkshop.Frontend.Services.StateManagement;
 
 namespace SoopWorkshop.Frontend.Services
 {
