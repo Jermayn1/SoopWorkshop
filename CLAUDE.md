@@ -371,10 +371,18 @@ Bei xUnit v2 (2.9.3) geblieben — kein Wechsel auf v3.
 - [x] Strukturiertes Logging (`ILogger`) in allen Application-Services, im Worker,
       im `ProcessRunner` und im `JavaAnalyzer`
 
-**Zusätzlich mitgenommen, weil direkt daran hängend:** Zeichensatz fest auf UTF-8
-(Upload-Lesen, `javac -encoding UTF-8`, Prozessausgabe) statt Systemabhängigkeit;
-Frontend-Polling auf `/status` umgestellt inklusive Abbruch nach ~5 Minuten;
-`SubmissionPollingState` wird injiziert statt doppelt erzeugt.
+**Zusätzlich mitgenommen, weil direkt daran hängend:** Zeichensatz durchgängig auf
+UTF-8 statt Systemabhängigkeit — Upload-Lesen, `javac -encoding UTF-8`,
+`java -Dstdout.encoding=UTF-8` und die Dekodierung im `ProcessRunner`; javac bekommt
+nur noch Dateinamen statt voller Pfade, damit im Feedback `Main.java:3: error` steht
+und nicht das Temp-Verzeichnis des Servers; Frontend-Polling auf `/status` umgestellt
+inklusive Abbruch nach ~5 Minuten; `SubmissionPollingState` wird injiziert statt
+doppelt erzeugt.
+
+> **Wichtig für Phase 3 und 7:** Die JVM setzt `stdout.encoding` unter Windows auf die
+> Codepage des Systems (`Cp1252`), **auch wenn die Ausgabe umgeleitet ist** —
+> `file.encoding=UTF-8` allein reicht nicht. Jeder neue `java`-Aufruf (auch der
+> JUnit-Launcher) braucht deshalb `-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8`.
 
 **Bewusst nicht angefasst, weil Phase 3:** die 65 Gratispunkte bei `tests.Count == 0`,
 die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
