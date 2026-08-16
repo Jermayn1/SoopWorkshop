@@ -580,8 +580,8 @@ die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
 
 ### Phase 3 — Bewertungs-Engine v2 ✅
 *Der fachliche Kern. Details in §5.*
-*Abgeschlossen am 2026-08-16, Branch `phase-3-bewertungs-engine`, zwei Etappen.
-182 Tests, grün.*
+*Abgeschlossen am 2026-08-16, Branch `phase-3-bewertungs-engine`, zwei Etappen plus
+Nachtrag 3.1. 221 Tests, grün. Manueller Durchlauf nach §7 bestanden.*
 
 - [x] `EvaluationMode` auf `TaskItem` (ConsoleOnly | UnitTestOnly | Both) — steuert die
       Auswertung, gegengeprüft beim Sichtbarschalten
