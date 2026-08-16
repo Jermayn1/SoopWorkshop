@@ -1,0 +1,156 @@
+/*
+    Designsystem nach DESIGN.md.
+
+    Hier stehen nur die Token, die MudBlazor nicht kennt: Radien-Vokabular, Spacing,
+    Layout und getoente Flaechen. Die Farben stehen in AppThemes.cs - MudBlazor erzeugt
+    daraus die --mud-palette-*-Variablen. Eine zweite Farbliste an dieser Stelle waere
+    eine zweite Wahrheit, die still auseinanderlaeuft.
+*/
+
+:root {
+    /* Radien - DESIGN.md: "Don't use radii outside the defined vocabulary" */
+    --radius-tags: 9999px;
+    --radius-cards: 12px;
+    --radius-inputs: 6px;
+    --radius-buttons: 8px;
+    --radius-largecards: 16px;
+
+    /* Spacing, Grundeinheit 4px */
+    --spacing-4: 4px;
+    --spacing-8: 8px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+    --spacing-24: 24px;
+    --spacing-32: 32px;
+    --spacing-48: 48px;
+    --spacing-64: 64px;
+
+    /* Layout */
+    --page-max-width: 1200px;
+    --section-gap: var(--spacing-64);
+    --card-padding: var(--spacing-16);
+    --element-gap: var(--spacing-8);
+
+    /* Laufweite der Display-Groessen. DESIGN.md nennt Satoshi und als Ersatz
+       ausdruecklich "Inter (weight 500, letter-spacing -0.02em)" - die engere
+       Laufweite ist damit das, was Display von Body unterscheidet. */
+    --display-letter-spacing: -0.02em;
+}
+
+/*
+    Getoente Flaechen fuer Badges und Hinweise.
+
+    Bewusst ueber color-mix aus der Palette gemischt statt als feste Hex-Werte: so
+    stimmen sie in Hell und Dunkel, ohne zweimal gepflegt zu werden. DESIGN.md setzt
+    Toenungen nur auf kleine Flaechen ("not to large surfaces").
+*/
+.tint-success { background-color: color-mix(in srgb, var(--mud-palette-success) 14%, transparent); }
+.tint-warning { background-color: color-mix(in srgb, var(--mud-palette-warning) 14%, transparent); }
+.tint-error   { background-color: color-mix(in srgb, var(--mud-palette-error) 14%, transparent); }
+.tint-primary { background-color: color-mix(in srgb, var(--mud-palette-primary) 14%, transparent); }
+
+/*
+    Pille fuer Status und Kategorien. Dunkler Text auf getoentem Grund, nie farbiger
+    Text - Akzentfarben reissen als Schrift die Kontrastschwelle von 4,5:1
+    (#16a34a auf Weiss liegt bei rund 3,0:1). Die Aussage traegt der Text, die Farbe
+    verstaerkt sie nur. Dieselbe Entscheidung wie in SubmissionResult.razor.css.
+*/
+.pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-8);
+    border-radius: var(--radius-tags);
+    padding: var(--spacing-4) var(--spacing-12);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.43;
+    color: var(--mud-palette-text-primary);
+    white-space: nowrap;
+}
+
+/* Der farbige Punkt traegt die Statusfarbe, damit sie nicht in die Schrift muss. */
+.pill-badge::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-tags);
+    background-color: currentColor;
+    opacity: 0.75;
+    flex: none;
+}
+
+.pill-badge.tint-success::before { background-color: var(--mud-palette-success); opacity: 1; }
+.pill-badge.tint-warning::before { background-color: var(--mud-palette-warning); opacity: 1; }
+.pill-badge.tint-error::before   { background-color: var(--mud-palette-error); opacity: 1; }
+.pill-badge.tint-primary::before { background-color: var(--mud-palette-primary); opacity: 1; }
+
+/* Seitenbreite. MudBlazor hat keine 1200px-Stufe - Large waeren 1280px. */
+.page-container {
+    max-width: var(--page-max-width);
+}
+
+/*
+    Kanten statt Schatten - DESIGN.md: "the system relies on 1px borders, not depth".
+    MudBlazor zeichnet bei Elevation="0" gar nichts, ohne diese Regeln gingen AppBar und
+    Drawer nahtlos in den Inhalt ueber.
+
+    Bewusst hier und nicht in einer MainLayout.razor.css: die CSS-Isolation haengt ihr
+    Scope-Attribut nur an HTML-Elemente, die die Komponente selbst rendert. MainLayout
+    besteht ausschliesslich aus MudBlazor-Komponenten - es gibt dort kein Element, an dem
+    ::deep ansetzen koennte, und die Regeln waeren still wirkungslos.
+*/
+.mud-appbar {
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.mud-drawer.mud-drawer-pos-left {
+    border-right: 1px solid var(--mud-palette-lines-default);
+}
+
+/*
+    Radien der MudBlazor-Komponenten. Das Theme kennt nur einen einzigen Wert
+    (DefaultBorderRadius, bei uns 12px fuer Karten); Buttons, Pillen und Eingaben
+    weichen davon ab und werden hier nachgezogen.
+*/
+.mud-button-root:not(.mud-icon-button) {
+    border-radius: var(--radius-buttons);
+}
+
+.mud-chip {
+    border-radius: var(--radius-tags);
+}
+
+.mud-input-control .mud-input,
+.mud-input-slot {
+    border-radius: var(--radius-inputs);
+}
+
+/*
+    Sidebar Nav Item nach DESIGN.md: 8px Radius, aktiver Zustand als weicher
+    Farbschleier statt als fetter Balken an der Kante. Die Schrift bleibt dabei die
+    normale Textfarbe - eingefaerbte Schrift auf getoentem Grund wird schnell zu blass.
+*/
+.mud-nav-link {
+    border-radius: var(--radius-buttons);
+}
+
+.mud-nav-link.active {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+    color: var(--mud-palette-text-primary);
+}
+
+/*
+    Fokus muss sichtbar sein, auch wenn nur mit der Tastatur bedient wird. MudBlazor
+    setzt das je nach Komponente unterschiedlich - hier ein einheitlicher Ring im
+    Akzentblau als Untergrenze.
+*/
+:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}
+
+/* Ziel von <FocusOnNavigate Selector="h1" /> in Routes.razor. Der Fokus wandert beim
+   Seitenwechsel auf die Ueberschrift, soll dort aber keinen Rahmen zeichnen. */
+h1:focus {
+    outline: none;
+}

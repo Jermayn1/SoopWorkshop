@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
+using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
@@ -17,7 +18,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
 
         // Gibt alle Kategorien zurück
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType<List<TaskCategoryDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskCategoryDto>>> GetAll()
         {
             var result = await _categoryService.GetAllAsync();
 
@@ -27,7 +30,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTaskCategoryDto dto)
+        [ProducesResponseType<TaskCategoryDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<TaskCategoryDto>> Create([FromBody] CreateTaskCategoryDto dto)
         {
             var result = await _categoryService.CreateAsync(dto);
 
@@ -37,7 +42,10 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskCategoryDto dto)
+        [ProducesResponseType<TaskCategoryDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskCategoryDto>> Update(Guid id, [FromBody] UpdateTaskCategoryDto dto)
         {
             if (id != dto.Id)
                 return BadRequest("Die ID in der URL stimmt nicht mit der ID im Body überein.");
@@ -50,7 +58,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(Guid id)
         {
             var result = await _categoryService.DeleteAsync(id);
 
@@ -61,12 +71,14 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
 
         // Toggelt die Sichtbarkeit einer Kategorie
         [HttpPatch("{id:guid}/visibility")]
-        public async Task<IActionResult> ToggleVisibility(Guid id)
+        [ProducesResponseType<VisibilityStateDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<VisibilityStateDto>> ToggleVisibility(Guid id)
         {
             var result = await _categoryService.ToggleVisibilityAsync(id);
 
             return result.IsSuccess
-                ? Ok(new { isVisible = result.Value })
+                ? Ok(new VisibilityStateDto { IsVisible = result.Value })
                 : NotFound(result.ErrorMessage);
         }
     }

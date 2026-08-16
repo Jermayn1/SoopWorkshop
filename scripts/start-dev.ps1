@@ -1,13 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Startet die komplette Entwicklungsumgebung: PostgreSQL, Backend-API und Frontend.
+    Startet die Entwicklungsumgebung: PostgreSQL und Backend-API.
 
 .DESCRIPTION
     Prueft den PostgreSQL-Container und startet ihn bei Bedarf, baut die Solution
     und startet Backend und Frontend in je einem eigenen Fenster.
 
-    Zum Beenden die beiden Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
+    Das Frontend ist seit Phase 4 React + Vite (src\SoopWorkshop.Frontend) und
+    laeuft auf Port 5173 — derselbe Port steht im Backend unter
+    Cors:AllowedOrigins. Fehlen die npm-Pakete, werden sie einmalig installiert.
+
+    Zum Beenden die Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
 
 .PARAMETER SkipBuild
     Ueberspringt den Build. Nuetzlich, wenn gerade erst gebaut wurde.
@@ -34,7 +38,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 $backendUrl = 'http://localhost:5120'
-$frontendUrl = 'http://localhost:5072'
+$frontendUrl = 'http://localhost:5173'
+$frontendPath = Join-Path $repoRoot 'src\SoopWorkshop.Frontend'
 
 function Write-Step {
     param([string]$Text)
@@ -124,7 +129,7 @@ if (-not $SkipBuild) {
 }
 
 # ── 3. Dienste starten ──────────────────────────────────────────
-Write-Step 'Backend und Frontend starten'
+Write-Step 'Backend starten'
 
 if (Test-Port -Port 5120) {
     Write-Host "    Port 5120 ist belegt - Backend laeuft vermutlich schon." -ForegroundColor Yellow
@@ -134,12 +139,27 @@ else {
     Wait-ForPort -Port 5120 -Name 'Backend' | Out-Null
 }
 
-if (Test-Port -Port 5072) {
-    Write-Host "    Port 5072 ist belegt - Frontend laeuft vermutlich schon." -ForegroundColor Yellow
+Write-Step 'Frontend starten'
+
+if (Test-Port -Port 5173) {
+    Write-Host "    Port 5173 ist belegt - Frontend laeuft vermutlich schon." -ForegroundColor Yellow
+}
+elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host '    npm nicht gefunden. Node.js installieren, dann erneut starten.' -ForegroundColor Yellow
 }
 else {
-    Start-DevService -Title 'SoopWorkshop Frontend' -Project 'src\SoopWorkshop.Frontend.Web'
-    Wait-ForPort -Port 5072 -Name 'Frontend' | Out-Null
+    # Beim ersten Start fehlen die Pakete. Ohne diesen Zweig bricht Vite mit
+    # einer Meldung ab, die nach einem kaputten Projekt aussieht.
+    if (-not (Test-Path (Join-Path $frontendPath 'node_modules'))) {
+        Write-Host '    node_modules fehlt - npm install laeuft einmalig ...'
+        npm --prefix $frontendPath install
+        if ($LASTEXITCODE -ne 0) { throw 'npm install fehlgeschlagen.' }
+    }
+
+    $command = "`$Host.UI.RawUI.WindowTitle = 'SoopWorkshop Frontend'; npm --prefix '$frontendPath' run dev"
+    Start-Process -FilePath 'powershell' -ArgumentList '-NoExit', '-Command', $command | Out-Null
+    Write-Host '    SoopWorkshop Frontend gestartet.' -ForegroundColor Green
+    Wait-ForPort -Port 5173 -Name 'Frontend' | Out-Null
 }
 
 # ── 4. Uebersicht ───────────────────────────────────────────────
@@ -148,5 +168,5 @@ Write-Host "    Frontend   $frontendUrl"
 Write-Host "    API        $backendUrl"
 Write-Host "    API-Doku   $backendUrl/scalar"
 Write-Host ''
-Write-Host '    Beenden: die beiden Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
+Write-Host '    Beenden: die Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
 Write-Host ''

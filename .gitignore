@@ -434,3 +434,6 @@ Gedanken.md
 # Jetbrains Rider
 .idea/
 *.sln.iml
+
+# Claude Code — launch.json gehoert ins Projekt, die Einstellungen nicht
+.claude/settings.local.json

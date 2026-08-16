@@ -19,7 +19,13 @@ if (builder.Environment.IsDevelopment())
 
 // Add services to the container.
 
+// Enums gehen als Zeichenkette ueber die Leitung, nicht als Zahl — sonst liest ein
+// Frontend ausserhalb von .NET "difficulty": 0 und muss die Bedeutung raten.
+// Der Konverter steht an den Enums selbst (SoopWorkshop.Shared/Enums), nicht hier:
+// eine Registrierung ueber AddJsonOptions wirkt nur zur Laufzeit, der OpenAPI-Erzeuger
+// liest den Typ. Beides getrennt zu pflegen hiesse, zwei Wahrheiten zu haben.
 builder.Services.AddControllers();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

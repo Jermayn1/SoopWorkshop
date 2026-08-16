@@ -2,7 +2,11 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-16 — Phase 0 bis 3 abgeschlossen, als Nächstes Phase 4.
+> Stand: 2026-08-16 — Phase 0 bis 4 abgeschlossen. Das Frontend heißt **Soop Judge**
+> und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
+> `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
+> `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
+> siehe §6.1. Als Nächstes kommt Phase 5 (Admin-Panel) mit der offenen Auth-Frage.
 
 ---
 
@@ -70,7 +74,8 @@ Datenbank-Passwort an die `.env` angleichen (siehe unten):
 ```
 
 `start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
-Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs getrennt lesbar sind.
+Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs lesbar bleiben.
+Fehlen die npm-Pakete, installiert das Skript sie einmalig selbst.
 
 Einzeln:
 
@@ -83,17 +88,36 @@ dotnet test SoopWorkshop.slnx
 ```
 
 ```bash
-docker compose up -d
+npm --prefix src/SoopWorkshop.Frontend run dev
 ```
 
 | Dienst | HTTP | HTTPS |
 |---|---|---|
+| Frontend (Soop Judge) | `http://localhost:5173` | — |
 | Backend API | `http://localhost:5120` | `https://localhost:7212` |
-| Frontend Web | `http://localhost:5072` | `https://localhost:7281` |
 | Scalar (API-Doku, nur Development) | `http://localhost:5120/scalar` | — |
 
-**Voraussetzungen (lokal):** .NET 10 SDK, Docker, JDK im `PATH`
+**Der Frontend-Port steht an zwei Stellen**: in `vite.config.ts` (`strictPort`) und im
+Backend unter `Cors:AllowedOrigins`. Wird er nur an einer geändert, blockt der Browser
+jede Anfrage — und der Fehler sieht nach einem kaputten Backend aus.
+
+**Voraussetzungen (lokal):** .NET 10 SDK, **Node.js** (npm), Docker, JDK im `PATH`
 (`javac`/`java` werden als Prozess aufgerufen).
+
+**Das Backend hält seine DLLs.** Ein `dotnet build` bei laufendem Backend scheitert mit
+`CS2012 … used by another process`. Erst `stop-dev.ps1`, dann bauen.
+
+### Typen aus dem API-Vertrag erzeugen
+
+Nach jeder Änderung an Controllern oder DTOs, bei **laufendem** Backend:
+
+```bash
+npm --prefix src/SoopWorkshop.Frontend run api:types
+```
+
+Schreibt `src/api/schema.d.ts` aus `/openapi/v1.json`. Die Datei ist eingecheckt, damit
+der Build ohne laufendes Backend funktioniert. Fällt im Backend ein Feld weg, bricht
+danach die Umsetzung in `src/api/mappers.ts` beim Übersetzen — genau dafür ist sie da.
 
 Die Datenbank läuft über `docker-compose.yml` (Service `db`, Container
 `soopworkshop-db`). In Phase 7 kommen Backend und Frontend als weitere Services dazu.
@@ -180,7 +204,7 @@ dotnet ef database update --project src/SoopWorkshop.Backend.Infrastructure
 
 ## 4. Architektur
 
-Clean Architecture, 7 Projekte + 1 Testprojekt:
+Clean Architecture im Backend, daneben ein eigenständiges Frontend:
 
 ```
 SoopWorkshop.Shared                  DTOs, Enums, Constants — von allen referenzierbar
@@ -189,17 +213,37 @@ SoopWorkshop.Backend.Application     Services, Interfaces, Result<T> — kennt D
 SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker, ProcessRunner,
                                      Warteschlange + Worker — kennt Application
 SoopWorkshop.Backend.API             Controller, Middleware — kennt Application + Infrastructure
-SoopWorkshop.Frontend.Services       HttpClients, State — kennt Shared
-SoopWorkshop.Frontend.Web            Blazor Server + MudBlazor — kennt Frontend.Services
 tests/SoopWorkshop.Tests             xUnit (Projekt-Tests)
+
+SoopWorkshop.Frontend                React 19 + Vite + TypeScript + Tailwind 4.
+                                     Kein .NET-Projekt, steht deshalb nicht in der .slnx
+archive/SoopWorkshop.Frontend.*      stillgelegtes Blazor-Frontend, nicht in der Solution
 ```
 
 **Abhängigkeitsregeln (nicht verletzen):**
 
 - Domain kennt **kein** EF Core, **keine** Infrastruktur.
 - Application definiert Interfaces (`IJavaAnalyzer`, `I*Repository`), Infrastructure implementiert sie.
-- Frontend kennt **nur** `Shared` — niemals Domain oder Application.
-- Kommunikation Frontend ↔ Backend ausschließlich über HTTP + DTOs aus `Shared`.
+- Kommunikation Frontend ↔ Backend ausschließlich über HTTP.
+- **`Shared` ist nicht mehr der Vertrag.** Das Frontend läuft nicht in .NET und kennt
+  die Assembly nicht. Der Vertrag entsteht aus OpenAPI (§3) — was dort nicht
+  beschrieben ist, existiert für das Frontend nicht.
+
+**Aufbau des Frontends** (Ordner nach Feature, nicht nach Technik):
+
+```
+src/api/         schema.d.ts (erzeugt) · types.ts · mappers.ts · client.ts ·
+                 endpoints.ts · uploadLimits.ts
+src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark
+src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
+src/hooks/       useSubmissionPolling
+```
+
+**Warum zwischen `schema.d.ts` und der Oberfläche noch `mappers.ts` steht:** .NET gibt
+im OpenAPI-Dokument kein `required` aus, also ist dort jedes Feld optional, und jedes
+`int` kommt als `integer | string` heraus (ASP.NET nimmt beim Binden auch Zahlen als
+Zeichenkette an). Ohne Umsetzung stünde in jeder Komponente ein `?? ''`. Der Vertrag
+bleibt die Quelle: fällt ein Feld weg, bricht die Umsetzung beim Übersetzen.
 
 **Kernablauf Auswertung:**
 
@@ -211,7 +255,41 @@ persistiert → Frontend pollt `/status` und holt bei `Done` das `/result`.
 Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
 `IProcessRunner` — nicht direkt über `Process.Start`.
 
----
+### 4.1 Das Frontend heisst Soop Judge
+
+**React 19 + Vite + TypeScript + Tailwind 4** unter `src/SoopWorkshop.Frontend/`.
+Aufbau und Erscheinungsbild stammen aus einem frühen React-Prototyp desselben
+Projekts; übernommen sind dessen Tailwind-Klassen weitgehend unverändert.
+
+**Warum nicht mehr Blazor.** Das erste Frontend (Blazor Server + MudBlazor) liegt
+stillgelegt unter `archive/`. MudBlazor setzt Material Design um; das damals
+angestrebte Bild war in fast jedem Punkt das Gegenteil, und die erste Etappe bestand
+zu weiten Teilen darin, die Bibliothek gegen ihre eigenen Annahmen zu biegen.
+
+**Die Lehre ist präziser als „MudBlazor war schuld":** ein Erscheinungsbild, das gegen
+die Komponentenbibliothek arbeitet, kostet mehr als es einbringt. Deshalb jetzt
+Tailwind **ohne** Komponentenbibliothek — es bringt keine eigene Meinung mit.
+
+**Was der Wechsel am Backend gekostet hat** (alles erledigt, Etappe 4.0):
+
+| Thema | Was nötig war |
+|---|---|
+| API-Vertrag | 27 Actions von `IActionResult` auf `ActionResult<T>` plus `[ProducesResponseType]`. Vorher enthielt das OpenAPI-Dokument **keine einzige** Antwort |
+| Enums | `JsonStringEnumConverter` **an den Enums selbst**, nicht in `AddJsonOptions` — global registriert wirkt er nur zur Laufzeit, der OpenAPI-Erzeuger liest den Typ. Beides lief messbar auseinander |
+| Sichtbarkeit | `ToggleVisibility` gab einen anonymen Typ zurück, aus dem kein Schema ableitbar ist → `VisibilityStateDto` |
+| Zurück-Link | `TaskItemId` auf `SubmissionStatusDto`, damit die Ergebnisseite zur richtigen Aufgabe zurückführt |
+| CORS | auf den Vite-Port 5173 |
+| Aufräumen | `EvaluationCategoryNames` gelöscht (toter Code, nur Blazor las es); `Evaluation:CategoryWeights` stand auf den abgeschafften Kategorien `TestCases`/`UnitTests` |
+
+**Was aus dem alten Frontend fachlich weitergelebt hat** (Details in
+`archive/README.md`): die Polling-Zustandsmaschine, die Erkenntnis der
+unterscheidbaren API-Ausgänge und die Darstellungsregeln aus §5.7.
+
+**Bewusst offen geblieben:** kein Dunkelmodus — der Prototyp kannte nur Hell, und
+das Erscheinungsbild wird von Hand nachgezogen (§6.1). Handy-Optimierung ist
+aufgeschoben, der Workshop läuft an Laptops. Unterhalb von `lg` klappt die
+Seitenleiste als Überlagerung mit Burger-Knopf ein, damit ein schmales Fenster
+bedienbar bleibt.
 
 ## 5. Bewertungs-Engine (seit Phase 3 umgesetzt)
 
@@ -422,13 +500,22 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
 
 - **Ordner = Feature**, nicht Technik: `Tasks/`, `Submissions/`, `Evaluation/` mit je
   `Interfaces/` und `Services/`.
-- **Razor-Komponenten** immer mit Code-Behind (`X.razor` + `X.razor.cs`), Styles als
-  `X.razor.css` (CSS-Isolation). Keine `@code`-Blöcke in `.razor`.
+- **Frontend**: eine Komponente je Datei, benannt wie die Datei. Ordner nach Feature
+  (§4). **Bezeichner englisch, Kommentare deutsch** — wie im Backend. In allem, was
+  ein Teilnehmer liest, stehen **echte Umlaute** (`ä ö ü ß`); die Ersatzschreibung
+  gilt nur für C#-Kommentare.
+- **Keine eigene Farbpalette im Frontend.** Die Komponenten benutzen Tailwinds
+  Standardfarben (`slate`, `indigo`, `emerald`, `rose`, `amber`) direkt. Der
+  Feinschliff passiert von Hand in den Komponenten — eine Token-Zwischenschicht
+  stünde dabei nur im Weg (§6.1).
+- **Zustände statt Wahrheitswerte.** Ein Ladevorgang hat mehr als zwei Ausgänge:
+  `ApiResult` unterscheidet `ok` / `notFound` / `rejected` / `unreachable`, die
+  Auswertung `pending` / `running` / `done` / `failed`. Wer das zusammenfasst,
+  behauptet irgendwann, eine Aufgabe sei gelöscht, weil der Server nicht läuft.
 - **Services geben `Result<T>` zurück**, keine Exceptions für erwartbare Fehlerfälle.
 - **DTOs**: `Shared/DTOs/<Bereich>/` rein fachlich gegliedert. Lese-DTOs direkt im
   Bereichsordner (`Tasks/TaskItemDto.cs`), Schreib-DTOs unter `<Bereich>/Requests/`
   (`Tasks/Requests/CreateTaskItemDto.cs`).
-- **Namensschema Frontend-Seiten**: `Components/Pages/<Bereich>/<Name>.razor`.
 - **Nullable + ImplicitUsings** sind überall an — so lassen.
 - **Projekt-Tests** spiegeln den Produktivcode als Ordnerbaum
   (`Unit/Infrastructure/Evaluation/Checkers/`). Testklasse heißt `<Klasse>Tests`,
@@ -438,6 +525,47 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
   Testet ein Test bewusst eine bekannte Schwäche, hält der Kommentar das als
   **Ist-Verhalten** fest und verweist auf das Finding in §9.
 
+### 6.1 Erscheinungsbild
+
+**Farben und Abstände liegen beim Betreuer.** Das ist bewusst so aufgeteilt: Claude
+baut Struktur, Datenanbindung und Korrektheit, der Feinschliff ist subjektiv und
+passiert von Hand. Deshalb gibt es **keine Token-Zwischenschicht** — die Komponenten
+schreiben Tailwind-Klassen direkt, damit eine Änderung sofort sichtbar ist.
+
+Was unabhängig vom Geschmack gilt:
+
+1. **Akzentfarben nie als Schriftfarbe auf heller Fläche.** Grün und Rot stehen als
+   dunkler Text auf getöntem Grund mit Kante (`text-emerald-900` auf `bg-emerald-50`).
+   Der Prototyp hatte `text-emerald-600` auf Weiß — gemessen 3,77:1, nötig sind 4,5:1.
+2. **Kontraste werden gemessen, nicht geschätzt.** Und zwar richtig:
+   - Tailwind 4 liefert Farben als `oklch()`. Wer die ersten drei Zahlen als R/G/B
+     liest, bekommt für jedes Paar rund 1:1 und hält ein gesundes Design für kaputt.
+     Umrechnen lässt man den Browser über ein 1×1-Canvas.
+   - Während Einblend-Animationen misst `getComputedStyle` Zwischenwerte. Die wirksame
+     Deckkraft ist das Produkt über alle Vorfahren.
+   - **Deaktivierte Bedienelemente sind von WCAG 1.4.3 ausgenommen.** Ein grauer
+     `disabled`-Knopf ist kein Befund.
+3. **Bewegung liegt in CSS**, nicht in einer Animationsbibliothek. Alle Keyframes enden
+   auf dem sichtbaren Zustand und laufen mit `both` — ein Einblenden, das im Fehlerfall
+   Inhalt verschluckt, ist schlechter als keins. Ein- und Ausklappen läuft über
+   `grid-template-rows: 1fr/0fr`; das braucht keine gemessene Höhe.
+4. **Was eingeklappt ist, bekommt `inert`.** Sonst bleiben die Links darin antabbar,
+   obwohl niemand sie sieht — eine unsichtbare Tastaturfalle.
+
+> **Zwei Fallen beim Nachmessen im Browser**, beide haben in Phase 4 Zeit gekostet:
+>
+> - Eine **nicht sichtbare Browser-Ansicht friert jede Animationsuhr ein.**
+>   `requestAnimationFrame` liefert null Frames, CSS-Animationen stehen bei
+>   `currentTime: 0`, obwohl ihr Zustand „running" heißt. Das sieht exakt aus wie eine
+>   tote Animation und ist keine. **Animationen lassen sich so nicht prüfen** — das
+>   muss ein Mensch ansehen. Gegenprobe: `document.visibilityState`.
+> - `overflow: hidden` beschneidet nur das **Zeichnen**. Ein geklipptes Kind behält
+>   seine Layout-Höhe, `getBoundingClientRect()` zeigt sie weiter an. Für „ist das
+>   eingeklappt?" misst man den Container, nicht das Kind.
+>
+> Die ältere Lehre bleibt: **CSS gilt erst als umgesetzt, wenn es nachgemessen ist** —
+> aber die Messung selbst braucht genauso viel Misstrauen wie der Code.
+
 ---
 
 ## 7. Basis-Smoke-Test vor dem Merge
@@ -445,23 +573,35 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
 Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
 
 1. `.\scripts\stop-dev.ps1`, dann `.\scripts\start-dev.ps1` — Build ohne Warnungen,
-   beide Dienste melden „bereit"
+   Backend und Frontend melden „bereit"
 2. `dotnet test SoopWorkshop.slnx` — grün
-3. Frontend öffnen, Theme dreimal umschalten (Light / Dark / OLED)
-4. Aufgabe aus der Sidebar öffnen — Beschreibung, Schwierigkeitsgrad, Tipps sichtbar
-5. `.java` hochladen, abgeben, Ergebnisseite abwarten — Punkte und Kategorien erscheinen
-6. Browser-Konsole (F12) auf Fehler prüfen
+3. `npm --prefix src/SoopWorkshop.Frontend run build` — durchläuft; darin steckt
+   `tsc -b`, die Typprüfung gegen den erzeugten API-Vertrag
+4. `http://localhost:5173` öffnen: Aufgabenliste erscheint, eine Aufgabe anklicken,
+   `.java`-Datei abgeben, Ergebnis erscheint nach dem Pollen
+5. **Backend stoppen, Seite neu laden** — es muss „Der Server ist nicht erreichbar"
+   stehen, **nicht** „Diese Aufgabe gibt es nicht". Danach eine erfundene GUID
+   aufrufen: dort muss „gibt es nicht" stehen
+6. Eine `.txt` und eine zu große Datei abgeben — die Ablehnung erscheint im Wortlaut
+   des Servers, keine Datei verschwindet kommentarlos
 7. Solution zusätzlich in Visual Studio bzw. Rider öffnen und bauen — die
    Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` nicht ab
-8. `git status` sauber, `.env` taucht **nicht** auf
+8. `git status` sauber, `.env` und `node_modules` tauchen **nicht** auf
 
-**Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Das erledigt bei
-laufender API ein Aufruf — er legt drei Beispielaufgaben über alle drei Auswertungsmodi
-an und schaltet sie sichtbar:
+**Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Beide Skripte laufen
+gegen die laufende API und sind unabhängig voneinander mehrfach ausführbar:
 
 ```bash
 .\tests\manual\seed-phase3.ps1
 ```
+
+```bash
+.\tests\manual\seed-pyramide.ps1
+```
+
+Das erste legt drei Aufgaben über alle drei Auswertungsmodi an, das zweite die
+Kategorie „Schleifen" mit der Pyramiden-Aufgabe (`UnitTestOnly`, Testdatei für
+Teilnehmer sichtbar).
 
 Von Hand geht es auch über `/scalar`: Kategorie und Aufgabe anlegen, Testfälle bzw.
 JUnit-Dateien ergänzen, **danach** per `PATCH .../visibility` sichtbar schalten. Die
@@ -628,42 +768,147 @@ Nachtrag 3.1. 221 Tests, grün. Manueller Durchlauf nach §7 bestanden.*
 statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —
 eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 
-### Phase 4 — Frontend Teilnehmer-Sicht
+### Phase 4 — Teilnehmer-Frontend „Soop Judge" ✅
 
-- [ ] `app.css` entrümpeln — enthält noch Bootstrap-Boilerplate aus der Projektvorlage
-- [ ] Favicon ergänzen — `wwwroot/` enthält nur `app.css`, `App.razor` verweist auf
-      keins; jeder Seitenaufruf erzeugt einen 404 in der Browser-Konsole
-- [ ] `NotFound.razor` und `Error.razor` auf MudBlazor umstellen (aktuell rohes HTML)
-- [ ] `ThemeService`: Auswahl in `localStorage` persistieren; Service startet mit `Light`,
-      `MainLayout` initialisiert aber `Dark` → Flackern beim ersten Render
-- [ ] Drawer ist fest `Open="true"` → Toggle im AppBar, Verhalten auf Mobil klären
-- [ ] Sidebar: Aufgaben innerhalb einer Kategorie nach `Order` sortieren (fehlt)
-- [ ] Zentrale Fehlerbehandlung: `GetFromJsonAsync` wirft bei nicht erreichbarer API
-      unbehandelt → Snackbar + Retry statt weißer Seite
-- [ ] Lade- und Leerzustände vereinheitlichen (Skeletons statt nackter Spinner)
-- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button — `MudFileUpload` bringt
-      `DragAndDrop`, `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon
-      selbst bauen. `MaxFileSize`/`MaximumFileCount`/`Accept` sind seit Phase 2 gesetzt
-      und kommen aus `SubmissionUploadLimits`; die Fehlermeldung dazu fehlt noch
-- [ ] `SubmissionResult`: `Pending` und `Running` im Text unterscheiden — seit Phase 2 wird
-      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". `Failed` zeigt
-      bereits die Fehlermeldung. Offen bleiben „Erneut versuchen" und der Zurück-Link zur
-      *richtigen* Aufgabe (geht aktuell nach `/`)
-- [ ] `SubmissionResult`: JUnit-Ergebnisse darstellen — Testmethode, Erwartung, Fehlermeldung
-- [ ] Sortierte Anzeige der Kategorien und Teilprüfungen (setzt Phase 3 voraus)
-- [x] `SubmissionPollingState` sauber verdrahtet (injiziert statt `new`'d, Abbruch nach
-      150 Versuchen ≈ 5 Minuten) — in Phase 2 mitgenommen, weil das Status-Polling ohne
-      diesen Umbau nicht prüfbar gewesen wäre
-- [ ] Aufgabenübersicht als eigene Seite (nicht nur Sidebar)
-- [ ] Responsive-Durchgang: Mobil, Tablet, Desktop
-- [ ] Barrierefreiheit: Fokus-Reihenfolge, Kontraste in allen drei Themes
+*Abgeschlossen am 2026-08-16, Branch `phase-4-frontend-neustart`. React 19 + Vite +
+TypeScript + Tailwind 4. 221 Projekt-Tests grün, Build warnungsfrei, Typprüfung und
+Linter sauber.*
+
+Der zweite Anlauf nach dem Stilllegen des Blazor-Frontends (§4.1). Das Admin-Panel
+bleibt Phase 5 — **im selben Frontend**: die dort geforderte Vorschau „Aufgabe so
+anzeigen, wie Teilnehmer sie sehen" ist über zwei Technologiestapel hinweg wertlos.
+
+- [x] **Etappe 4.0 — Backend geöffnet.** API-Vertrag aus OpenAPI erzeugbar, Enums als
+      Zeichenkette, `TaskItemId` auf dem Status, CORS, tote Konstanten weg (§4.1)
+- [x] **Etappe 4.1 — Gerüst.** Vite + React + TypeScript + Tailwind 4, Schriften als
+      npm-Paket statt CDN, eigenes Zeichen als Favicon, `start-dev.ps1` startet beides
+- [x] **Etappe 4.2 — Anbindung.** Typen aus dem Vertrag, vier API-Ausgänge,
+      Polling-Hook (2 s, Abbruch nach 150 Versuchen)
+- [x] **Etappe 4.3 — Die drei Seiten.** Übersicht, Aufgabenseite mit Markdown und
+      sichtbarem Vertrag, Ergebnisseite nach §5.7
+- [x] **Etappe 4.4 — Querschnitt.** Einklappbare Kategorien, Seitenleiste als
+      Überlagerung unterhalb `lg`, Kontraste gemessen, Bewegung in CSS
+- [x] **Etappe 4.5 — Abnahme.** Smoke-Test, Testanleitung, diese Datei nachgezogen,
+      `FrontRef/` gelöscht
+
+**Bewusst nicht umgesetzt:** kein Dunkelmodus, keine Handy-Optimierung (§4.1). Der
+Feinschliff an Farben und Abständen liegt beim Betreuer (§6.1).
+
+<details>
+<summary><b>Fachliche Anforderungen — alle erfüllt, hier als Nachweis</b></summary>
+
+Die Liste stand vor dem Neustart hier und beschreibt, *was* der Teilnehmer können
+muss. Sie ist unverändert geblieben; nur das *Womit* hat sich geändert.
+
+</details>
+
+<details>
+<summary><b>Etappe 4.1 — Designsystem &amp; Fundament ✅ (archiviert)</b></summary>
+
+*Branch `phase-4-1-fundament`. 221 Tests, grün. Build warnungsfrei. Code unter `archive/`.*
+
+- [x] Designsystem nach `DESIGN.md`: Palette in `AppThemes.cs` (Light **und** Dark in
+      **einem** `MudTheme`, `IsDarkMode` wählt aus), Nicht-Farb-Token in `app.css`,
+      Typo-Skala und Radien-Vokabular gesetzt. Regeln in §6.1
+- [x] Border-first: `Elevation="0" Outlined="true"` durchgehend, Hairlines an AppBar
+      und Drawer, Seitenbreite 1200px, Buttons ohne Versalien
+- [x] Schriften: Google-CDN-Link entfernt (workshop-intern, ggf. ohne Internet), Inter
+      als bevorzugte Schrift mit Systemstapel als Rückfall
+- [x] `app.css` entrümpelt — von 38 Zeilen Bootstrap-Boilerplate blieb `h1:focus`
+- [x] Favicon (`wwwroot/favicon.svg`) — der 404 pro Seitenaufruf ist weg
+- [x] `NotFound.razor` und `Error.razor` auf MudBlazor und Deutsch, `Error` mit
+      Code-Behind — das war die letzte `@code`-Verletzung im Repo
+- [x] `UseStatusCodePagesWithReExecute` wieder aktiviert: `NotFoundPage` in
+      `Routes.razor` greift **nur** bei Navigation im laufenden Circuit; ein direkter
+      Aufruf endete vorher mit leerer Seite und Status 404 (nachgemessen)
+- [x] Theme auf Light/Dark reduziert, `ThemeService` nach
+      `Frontend.Services/StateManagement/`, Persistenz über Cookie statt `localStorage` —
+      der Server kennt die Wahl schon beim Vorabrendern, damit **kein Flackern**;
+      Übergabe an den Circuit über `PersistentComponentState`
+- [x] Drawer: `@bind-Open` + `DrawerVariant.Responsive` + Toggle im AppBar
+- [x] Sortierung nach `Order` — in `TaskCategoryService.MapToDto` **und** in der Sidebar
+- [x] Zentrale Fehlerbehandlung: `ApiResult<T>` trennt Erfolg / nicht vorhanden /
+      fehlgeschlagen, `ErrorBoundary` im Layout, Retry in Sidebar und `TaskDetail`,
+      Upload-Fehlermeldung des Servers erreicht den Teilnehmer im Wortlaut
+- [x] Lade- und Leerzustände: `MudSkeleton` statt nackter Spinner
+
+</details>
+
+**Fachliche Anforderungen — gelten unabhängig vom Werkzeug**
+
+Aufgabenliste und Aufgabenseite:
+
+- [x] Aufgaben nach Kategorie gruppiert, innerhalb der Kategorie nach `Order` sortiert.
+      Die API liefert bereits sortiert (seit 4.1), das Frontend sortiert trotzdem selbst
+- [ ] Aufgabenübersicht als eigene Seite, nicht nur als Navigationsleiste — **offen**.
+      Die Startseite ist derzeit nur eine Begrüßung, die Liste lebt in der Seitenleiste.
+      Bei drei Kategorien reicht das; ab einer Handvoll mehr wird eine Übersichtsseite
+      nötig
+- [x] **Aufgaben-Vertrag sichtbar machen** — `ExpectedClassName`, `ExpectedMethods` und
+      die freigeschalteten JUnit-Dateien liefert die API seit Phase 3.1 aus, angezeigt
+      wurde nie etwas davon. Der `ContractChecker` bewertet also gegen eine Vorgabe, die
+      der Teilnehmer nicht lesen kann. Schließt §10.3
+- [x] Schwierigkeitsgrad auf Deutsch (die API liefert das Enum, `DifficultyNames` in
+      `Shared/Constants` fehlt noch — oder das Frontend übersetzt selbst)
+- [x] Tipps sichtbar, standardmäßig eingeklappt
+
+Abgabe:
+
+- [x] Mehrere `.java`-Dateien, per Auswahl **und** per Drag & Drop, einzeln entfernbar
+- [x] Grenzen aus `SubmissionUploadLimits` **clientseitig anzeigen und begründen**:
+      `.java`, höchstens 10 Dateien, 1 MB je Datei, 10 MB gesamt. Eine verworfene Datei
+      darf nicht kommentarlos verschwinden
+- [x] Die Ablehnung des Servers erreicht den Teilnehmer im Wortlaut — die API antwortet
+      mit `text/plain` und fertigen deutschen Sätzen („'notiz.txt' ist keine
+      .java-Datei."), nicht mit einem Fehlerobjekt
+
+Ergebnis:
+
+- [x] Status pollen: alle 2 s, Obergrenze ~5 Minuten, `Pending` / `Running` / `Done` /
+      `Failed` unterscheiden. **`Pending` und `Running` brauchen verschiedene Texte** —
+      „in der Warteschlange" ist etwas anderes als „wird gerade geprüft"
+- [x] Kategorien in der Reihenfolge aus `EvaluationCategoryOrder`, Teilprüfungen nach
+      `Order`
+- [x] Teilprüfungen nach den Regeln aus **§5.7** darstellen — Eingabe nur wenn vorhanden,
+      Erwartet und Erhalten immer gemeinsam, bestandene Prüfungen zeigen nichts.
+      Diese Regeln sind fachlich und frameworkunabhängig
+- [x] Compilerausgaben und Stacktraces in Monospace, umbrechend, ohne die Karte zu sprengen
+- [x] „Erneut versuchen" und ein Zurück-Link zur **richtigen** Aufgabe. Dafür fehlt
+      `TaskItemId` auf `SubmissionStatusDto` — die `Submission`-Entity hat das Feld
+      direkt, es braucht kein zusätzliches Laden
+
+Querschnitt:
+
+- [x] **Drei API-Ausgänge unterscheiden**: Erfolg, *gibt es nicht*, *nicht erreichbar*.
+      Werden die letzten beiden zusammengeworfen, behauptet die Seite bei gestopptem
+      Backend, die Aufgabe sei gelöscht. Genau das ist in 4.1 passiert
+- [x] Eine nicht erreichbare API darf nie eine weiße Seite ergeben — Meldung plus
+      erneuter Versuch, der Rest der Seite lebt weiter
+- [x] Lade- und Leerzustände in der Form dessen, was gleich kommt
+- [ ] Hell und Dunkel, Wahl überlebt das Neuladen **ohne Aufblitzen** — **bewusst
+      aufgeschoben** (§4.1). Das Gerüst dafür stand kurzzeitig und ist wieder
+      ausgebaut worden, statt es halbfertig liegenzulassen: Erscheinungsbild wird von
+      Hand nachgezogen, und ein zweiter Satz Farben davor wäre Arbeit auf Verdacht.
+      **§10 Punkt 7 ist damit weiter offen** — bei einem reinen Browser-Frontend
+      genügt `localStorage` plus ein Inline-Skript im `<head>`, erprobt
+- [x] Responsive: **Tablet und Desktop** geprüft (1280 und 768, kein Querscroll,
+      Seitenleiste klappt unterhalb `lg` als Überlagerung ein). **Handy bewusst
+      aufgeschoben** — der Workshop läuft an Laptops
+- [x] Barrierefreiheit: Fokus-Reihenfolge, sichtbarer Fokus, Beschriftungen für
+      Bedienelemente ohne Text, Kontraste in beiden Erscheinungsbildern **gemessen**
 
 ### Phase 5 — Admin-Panel
 
-- [ ] **Auth:** festes Passwort aus Konfiguration/Env; API prüft statisches Token,
-      Frontend hat Login-Seite. Da Blazor Server serverseitig läuft, verlässt das
-      Token nie den Browser. `api/admin/*` ist aktuell **komplett offen**.
-- [ ] Eigenes `AdminLayout` unter `/admin` mit eigener Navigation
+> **Im selben Frontend wie die Teilnehmer-Sicht** (§10 Punkt 13). Das Gerüst steht:
+> React + Vite + TypeScript + Tailwind, API-Client mit vier Ausgängen, erzeugte Typen.
+> Die Admin-Endpunkte sind seit Etappe 4.0 im OpenAPI-Vertrag beschrieben, `api:types`
+> liefert sie also mit.
+
+- [ ] **Auth — die erste Aufgabe der Phase, sie blockiert alles Weitere** (§10 Punkt 11).
+      Der alte Plan setzte Blazor Server voraus. Vorschlag: Passwort einmal gegen einen
+      Endpunkt prüfen, Backend setzt ein **HttpOnly-Cookie**, `api/admin/*` verlangt es —
+      damit liegt kein Token im JavaScript. `api/admin/*` ist bis dahin **komplett offen**.
+- [ ] Eigener Admin-Bereich unter `/admin` mit eigener Navigation
 - [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
 - [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
 - [ ] Konsolen-Testfälle: CRUD pro Aufgabe
@@ -682,10 +927,14 @@ eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 
 ### Phase 6 — Projekt-Testabdeckung ausbauen
 
-- [ ] Aus Phase 1 verschoben: Pakete bUnit und `Microsoft.AspNetCore.Mvc.Testing`
-      ergänzen, Ordner `Integration/` und `Components/` anlegen. `WebApplicationFactory`
-      braucht in `Backend.API/Program.cs` einen `public partial class Program`-Shim
-      (Top-Level-Statements) und eine Antwort auf §10.5
+- [ ] Aus Phase 1 verschoben: `Microsoft.AspNetCore.Mvc.Testing` ergänzen, Ordner
+      `Integration/` anlegen. `WebApplicationFactory` braucht in `Backend.API/Program.cs`
+      einen `public partial class Program`-Shim (Top-Level-Statements) und eine Antwort
+      auf §10.5
+- [ ] **Frontend-Tests: Vitest + Testing Library** (bUnit ist mit Blazor hinfällig).
+      Vorrangig die Stellen, die in Phase 4 auffällig waren: der Polling-Hook, die vier
+      API-Ausgänge, `checkFiles` gegen die Upload-Grenzen und die Darstellungsregeln
+      aus §5.7
 - [ ] Unit: alle Checker inkl. `JUnitChecker` (über `IProcessRunner` aus Phase 2)
 - [ ] Unit: `TaskCategoryService`, `TaskItemService`, `TaskTestService`,
       `SubmissionService`, `EvaluationService` mit gemockten Repositories
@@ -693,18 +942,22 @@ eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 - [ ] Unit: Mapping-Logik (Entity ↔ DTO)
 - [ ] Integration: Controller über `WebApplicationFactory`
 - [ ] Integration: Repositories gegen echte PostgreSQL (Testcontainers)
-- [ ] Component: bUnit für `TaskSidebarList`, `TaskDetail`, `SubmissionResult`, Admin-Formulare
-- [ ] GitHub Actions: Build + Test bei jedem Push
+- [ ] Component: Aufgabenliste, Aufgabenseite, Ergebnisseite, Admin-Formulare — Werkzeug
+      offen, siehe oben
+- [ ] GitHub Actions: Build + Test bei jedem Push (bei einem Frontend ausserhalb von .NET
+      zusätzlich dessen Toolchain)
 - [ ] Coverage-Report (coverlet ist bereits eingebunden)
 
 ### Phase 7 — Docker Compose, README, Abschluss
 
 - [ ] `Dockerfile` Backend — inkl. JDK und JUnit-Standalone-JAR
-- [ ] `Dockerfile` Frontend
+- [ ] `Dockerfile` Frontend — mehrstufig: Node baut, ein schlanker Webserver liefert
+      `dist/` aus. Die Schriften liegen als npm-Paket bei, es wird nichts nachgeladen
 - [ ] `docker-compose.yml`: PostgreSQL + Backend + Frontend, Healthchecks, `depends_on`,
       benanntes Volume für die DB
-- [ ] Konfiguration vollständig über Umgebungsvariablen (ConnectionString, ApiBaseUrl,
-      Admin-Passwort) — nichts Fest-Verdrahtetes mehr
+- [ ] Konfiguration vollständig über Umgebungsvariablen (ConnectionString,
+      `VITE_API_URL`, Admin-Passwort) — nichts Fest-Verdrahtetes mehr.
+      `Cors:AllowedOrigins` muss dort auf den Betriebs-Host zeigen, nicht auf 5173
 - [ ] Migrationen beim Start anwenden oder dokumentierter Einzelschritt
 - [ ] **README final**: Was das Tool ist, Voraussetzungen, Setup in einem Befehl,
       DB-Einrichtung, Admin-Login, Aufgaben anlegen, Troubleshooting.
@@ -725,6 +978,11 @@ eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 ---
 
 ## 9. Findings-Log
+
+> **Zu den Frontend-Einträgen:** alles mit `Frontend.Web/` oder `Frontend.Services/` im
+> Pfad betrifft das stillgelegte Blazor-Frontend (§4.1) und liegt jetzt unter `archive/`.
+> Die Einträge bleiben stehen — die **Lehren** darin sind frameworkunabhängig und sollen
+> im neuen Frontend nicht noch einmal gelernt werden müssen.
 
 Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
@@ -821,8 +1079,63 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   was `GetByIdAsync` nicht mitlädt, sieht die Auswertung als „nicht vorhanden" und
   bewertet entsprechend. Beim Ergänzen von `CategoryWeights` und `UnitTestFiles` war das
   jeweils die stillste denkbare Fehlerquelle — bei neuen Navigationen daran denken
-- 2026-08-15 — `Application/Tasks/Services/TaskCategoryService.cs` — `MapToDto` sortiert Tasks nicht nach `Order` — Phase 4
+- ~~2026-08-15 — `Application/Tasks/Services/TaskCategoryService.cs` — `MapToDto` sortiert Tasks nicht nach `Order`~~ — erledigt in Phase 4.1
 - 2026-08-15 — `Backend.API/Controllers/Admin/*` — keinerlei Zugriffsschutz — Phase 5
+- 2026-08-16 — `Frontend.Web/Components/Layout/MainLayout.razor.css` — eine isolierte
+  CSS-Datei mit `::deep`-Regeln auf `.mud-appbar` war **still wirkungslos**. Die
+  CSS-Isolation hängt ihr Scope-Attribut nur an HTML-Elemente, die die Komponente selbst
+  rendert; `MainLayout` besteht ausschließlich aus MudBlazor-Komponenten, es gibt dort
+  kein Element, an dem `::deep` ansetzen könnte. Nur aufgefallen, weil die berechneten
+  Stile im Browser nachgemessen wurden — die Datei sah völlig plausibel aus. Behoben:
+  globale Komponenten-Overrides stehen in `app.css`. **Lehre:** CSS gilt erst als
+  umgesetzt, wenn `getComputedStyle` es bestätigt
+- 2026-08-16 — `Frontend.Web/Program.cs` — `UseStatusCodePagesWithReExecute` war mit der
+  Begründung „Sonst not found bei submissions etc." auskommentiert. Nachgemessen: der
+  Nebeneffekt tritt nicht (mehr) auf, dafür lieferte **jede** direkt aufgerufene
+  unbekannte Adresse eine komplett leere Seite mit Status 404. `NotFoundPage` in
+  `Routes.razor` greift nur bei Navigation innerhalb eines laufenden Circuits. Wieder
+  aktiviert. **Lehre:** eine auskommentierte Zeile mit Begründung ist eine Behauptung,
+  kein Beleg — vor dem Übernehmen nachprüfen
+- 2026-08-16 — `Frontend.Services/HttpClients/TaskApiClient.cs` — `null` als einziges
+  Fehlersignal warf „gibt es nicht" und „ist nicht erreichbar" zusammen. Bei gestopptem
+  Backend stand auf der Aufgabenseite „Diese Aufgabe gibt es nicht (mehr)", obwohl es sie
+  gibt — die denkbar irreführendste Auskunft. Behoben durch `ApiResult<T>` mit drei
+  Ausgängen. **Merken:** bei jedem neuen API-Aufruf zuerst fragen, wie viele
+  unterscheidbare Ausgänge er hat
+- 2026-08-16 — `Frontend.Web/Services/AppThemes.cs` — jedes der drei Themes füllte nur
+  *eine* der beiden MudBlazor-Paletten. Lief `IsDarkMode` dagegen, kamen kommentarlos die
+  MudBlazor-Standardfarben heraus statt eines sichtbaren Fehlers. Behoben: ein Theme mit
+  beiden Paletten
+
+**Aus Phase 4 (React-Frontend):**
+
+- 2026-08-16 — `Backend.API/Controllers/*` — der `JsonStringEnumConverter` war zuerst
+  global über `AddJsonOptions` registriert. Zur Laufzeit stimmte alles (`"Easy"`), im
+  OpenAPI-Dokument stand weiter `type: integer`. **Der Schema-Erzeuger liest den Typ,
+  nicht die Registrierung.** Wäre das so geblieben, hätten die erzeugten
+  TypeScript-Typen `number` behauptet, während die API Zeichenketten schickt — ein
+  Fehler, der erst im Browser auffällt und dort nach einem Backend-Bug aussieht.
+  Behoben: Konverter als Attribut an den Enums in `Shared/Enums/`
+- 2026-08-16 — `Backend.API/appsettings.json` — `Evaluation:CategoryWeights` stand auf
+  `TestCases` und `UnitTests`, also auf Kategorien, die Phase 3 abgeschafft hat. Es
+  wirkte nur zufällig richtig, weil `Functionality: 65` still aus dem Standardwert in
+  `EvaluationOptions` kam — Konfigurationsbindung *ergänzt* das Wörterbuch, statt es zu
+  ersetzen. Wer dort `TestCases` verstellt hätte, hätte nichts bewirkt
+- 2026-08-16 — Messen im Browser, drei Fallen in Folge (Details und Gegenmittel in §6.1):
+  Tailwind 4 liefert `oklch()` und ein naiver R/G/B-Parser meldet für jedes Paar 1:1;
+  `getComputedStyle` misst während Einblendungen Zwischenwerte; **eine nicht gezeichnete
+  Browser-Ansicht friert jede Animationsuhr ein**, was exakt wie eine tote Animation
+  aussieht. Alle drei haben zu falschen Befunden geführt, einer davon zum unnötigen
+  Ausbau einer Bibliothek. **Lehre: die Messung braucht so viel Misstrauen wie der Code,
+  und ein Befund wird gegengeprüft, bevor er eine Änderung auslöst**
+- 2026-08-16 — `Frontend/src/components/Sidebar.tsx` — der eingeklappte Bereich war
+  zuerst nur optisch weg (`overflow: hidden`). Seine Links blieben antabbar: eine
+  unsichtbare Tastaturfalle. Behoben mit `inert`. **Merken:** `overflow: hidden`
+  beschneidet das Zeichnen, nicht die Bedienbarkeit
+- 2026-08-16 — `tests/manual/seed-pyramide.ps1` — Windows PowerShell 5.1 liest eine
+  UTF-8-Datei **ohne BOM** als ANSI. Aus `gehört` wäre `gehÃ¶rt` geworden, und
+  `UTF8.GetBytes` hätte das anschließend noch einmal kodiert. Beide Seed-Skripte haben
+  jetzt eine BOM. Das Senden war schon richtig, es fehlte nur das Lesen
 
 ---
 
@@ -845,3 +1158,42 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
    → Vorschlag: v1 mit Timeouts und Prozesslimits, Hinweis in der README.
 5. **Datenbank in Tests.** Testcontainers (realistisch, braucht Docker) oder
    EF InMemory (schnell, weicht aber von PostgreSQL ab)?
+6. ~~**Wie viele Themes?**~~ **Entschieden in Phase 4.1:** Light und Dark, kein OLED.
+   Die Entscheidung gilt weiter — OLED unterschied sich nur in drei Grauwerten vom
+   Dark-Theme und verdreifachte den Aufwand bei jeder Kontrastprüfung.
+7. ~~**Theme-Persistenz.**~~ **Entschieden in Phase 4.1, teilweise überholt:** Cookie
+   statt `localStorage`, weil Blazor Server vorab rendert und der Server zu diesem
+   Zeitpunkt nicht an `localStorage` herankommt. **Ob das Problem im neuen Frontend
+   überhaupt besteht, hängt an der Renderart** — bei einem reinen Browser-Frontend
+   reicht `localStorage` plus ein Inline-Skript im `<head>`.
+
+### Aus dem Frontend-Neustart — überwiegend entschieden
+
+8. ~~**Erscheinungsbild.**~~ **Entschieden in Phase 4:** übernommen aus dem
+   React-Prototyp, Feinschliff von Hand (§6.1).
+9. ~~**Framework oder nur Komponentenbibliothek?**~~ **Entschieden in Phase 4:**
+   React 19 + Vite + TypeScript + Tailwind 4, **ohne** Komponentenbibliothek.
+10. ~~**API-Vertrag.**~~ **Entschieden in Phase 4:** aus OpenAPI erzeugt
+    (`npm run api:types`), `Shared` ist nicht mehr der Vertrag. `JsonStringEnumConverter`
+    ist gesetzt. **`ProblemDetails` bewusst nicht** — die Ablehnungen sind fertige
+    deutsche Sätze in `text/plain` und werden im Wortlaut angezeigt (§8).
+11. **Auth für `api/admin/*`** — **weiter offen und jetzt blockierend für Phase 5.**
+    Der alte Plan (statisches Token, das dank Blazor Server den Browser nie verlässt)
+    ist mit dem React-Frontend hinfällig. Naheliegend: Passwort einmal gegen einen
+    Endpunkt prüfen, Backend setzt ein **HttpOnly-Cookie**, `api/admin/*` verlangt es.
+    Damit liegt kein Token im JavaScript. Bis dahin ist `api/admin/*` **komplett offen**.
+12. ~~**Werkzeuge.**~~ **Erledigt:** Context7 liefert aktuelle Bibliotheks-Doku
+    (`.mcp.json`), der Browser kann messen und Screenshots machen, sobald die Anwendung
+    aus dem Projekt heraus läuft (`.claude/launch.json`). **Eine Einschränkung bleibt:
+    Animationen lassen sich so nicht prüfen** — eine nicht sichtbare Browser-Ansicht
+    friert jede Animationsuhr ein (§6.1). Das muss ein Mensch ansehen.
+13. ~~**Phasenschnitt.**~~ **Entschieden in Phase 4:** Teilnehmer-Sicht ist Phase 4,
+    Admin-Panel Phase 5 — beide **im selben Frontend**. Die Vorschau aus Phase 5
+    („Aufgabe so anzeigen, wie Teilnehmer sie sehen") wäre über zwei Stapel wertlos.
+
+### Neu offen nach Phase 4
+
+14. **Übersichtsseite für Aufgaben.** Die Liste lebt derzeit nur in der Seitenleiste.
+    Bei drei Kategorien reicht das; wächst der Bestand, braucht es eine eigene Seite.
+15. **Frontend-Tests.** Es gibt noch keine — Phase 6 nennt das Werkzeug nicht mehr,
+    seit bUnit hinfällig ist. Naheliegend wäre Vitest + Testing Library.

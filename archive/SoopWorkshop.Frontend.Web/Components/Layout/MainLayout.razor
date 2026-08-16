@@ -1,0 +1,78 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@AppThemes.Soop" IsDarkMode="@ThemeService.IsDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+
+    @* Elevation 0 durchgehend: DESIGN.md definiert Flaechen ueber 1px-Kanten, nicht
+       ueber Schatten. Die Kanten setzt MainLayout.razor.css. *@
+    <MudAppBar Elevation="0">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       aria-label="Navigation ein- oder ausblenden"
+                       OnClick="ToggleDrawer" />
+
+        <MudText Typo="Typo.h6" Class="ml-3">
+            SoopWorkshop
+        </MudText>
+
+        <MudSpacer />
+
+        @* Bei zwei Zustaenden ist ein Menue ein Umweg - ein Schalter genuegt. *@
+        <MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit"
+                       aria-label="@(ThemeService.IsDarkMode ? "Zu hellem Erscheinungsbild wechseln" : "Zu dunklem Erscheinungsbild wechseln")"
+                       OnClick="ToggleThemeAsync" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               Variant="DrawerVariant.Responsive"
+               Breakpoint="Breakpoint.Lg"
+               Elevation="0"
+               ClipMode="DrawerClipMode.Always">
+        <MudNavMenu Class="pa-2">
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Info">
+                Info
+            </MudNavLink>
+
+            <MudDivider Class="my-2" />
+
+            <TaskSidebarList />
+
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="page-container pa-4">
+            @* Letztes Netz: eine geworfene Ausnahme in einer Seite soll nicht die
+               ganze Verbindung abreissen. Zurueckgesetzt wird beim Seitenwechsel
+               und auf Klick - nicht automatisch beim Rendern, das liefe sonst im
+               Kreis, wenn der Fehler beim Rendern selbst entsteht. *@
+            <ErrorBoundary @ref="_errorBoundary">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent>
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="my-4">
+                        <MudStack Spacing="3" AlignItems="AlignItems.Start">
+                            <MudText Typo="Typo.body1">
+                                Auf dieser Seite ist etwas schiefgelaufen.
+                            </MudText>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Refresh"
+                                       OnClick="RecoverFromError">
+                                Erneut versuchen
+                            </MudButton>
+                        </MudStack>
+                    </MudAlert>
+                </ErrorContent>
+            </ErrorBoundary>
+        </MudContainer>
+    </MudMainContent>
+
+</MudLayout>

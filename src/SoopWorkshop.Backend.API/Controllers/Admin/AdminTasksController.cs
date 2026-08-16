@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
+using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
@@ -17,7 +18,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
 
         // Gibt alle Aufgaben zurück
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType<List<TaskItemDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskItemDto>>> GetAll()
         {
             var result = await _taskItemService.GetAllAsync();
 
@@ -27,7 +30,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [ProducesResponseType<TaskItemDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskItemDto>> GetById(Guid id)
         {
             var result = await _taskItemService.GetByIdAsync(id);
 
@@ -37,7 +42,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTaskItemDto dto)
+        [ProducesResponseType<TaskItemDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<TaskItemDto>> Create([FromBody] CreateTaskItemDto dto)
         {
             var result = await _taskItemService.CreateAsync(dto);
 
@@ -47,7 +54,10 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskItemDto dto)
+        [ProducesResponseType<TaskItemDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskItemDto>> Update(Guid id, [FromBody] UpdateTaskItemDto dto)
         {
             if (id != dto.Id)
                 return BadRequest("Die ID in der URL stimmt nicht mit der ID im Body überein.");
@@ -60,7 +70,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(Guid id)
         {
             var result = await _taskItemService.DeleteAsync(id);
 
@@ -71,12 +83,14 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
 
         // Toggelt die Sichtbarkeit einer Aufgabe
         [HttpPatch("{id:guid}/visibility")]
-        public async Task<IActionResult> ToggleVisibility(Guid id)
+        [ProducesResponseType<VisibilityStateDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<VisibilityStateDto>> ToggleVisibility(Guid id)
         {
             var result = await _taskItemService.ToggleVisibilityAsync(id);
 
             return result.IsSuccess
-                ? Ok(new { isVisible = result.Value })
+                ? Ok(new VisibilityStateDto { IsVisible = result.Value })
                 : NotFound(result.ErrorMessage);
         }
     }

@@ -30,7 +30,6 @@
     <ProjectReference Include="..\..\src\SoopWorkshop.Backend.API\SoopWorkshop.Backend.API.csproj" />
     <ProjectReference Include="..\..\src\SoopWorkshop.Backend.Application\SoopWorkshop.Backend.Application.csproj" />
     <ProjectReference Include="..\..\src\SoopWorkshop.Backend.Infrastructure\SoopWorkshop.Backend.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\SoopWorkshop.Frontend.Services\SoopWorkshop.Frontend.Services.csproj" />
     <ProjectReference Include="..\..\src\SoopWorkshop.Shared\SoopWorkshop.Shared.csproj" />
   </ItemGroup>
 

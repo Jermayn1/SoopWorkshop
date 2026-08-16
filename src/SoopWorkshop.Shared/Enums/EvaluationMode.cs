@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace SoopWorkshop.Shared.Enums
 {
     // Womit eine Aufgabe geprueft wird. Steuert die Auswertung: bei ConsoleOnly
@@ -5,7 +7,9 @@ namespace SoopWorkshop.Shared.Enums
     // ein falsch gesetzter Modus beim Anlegen auf, statt die Aufgabe still milder
     // zu bewerten.
     //
-    // Als int in der Datenbank - neue Werte nur anhaengen.
+    // Als int in der Datenbank - neue Werte nur anhaengen. Ueber die Leitung als
+    // Zeichenkette, siehe Hinweis in EvaluationCategory.
+    [JsonConverter(typeof(JsonStringEnumConverter<EvaluationMode>))]
     public enum EvaluationMode
     {
         // Nur Konsolen-Testfaelle: Eingabe rein, Ausgabe vergleichen.

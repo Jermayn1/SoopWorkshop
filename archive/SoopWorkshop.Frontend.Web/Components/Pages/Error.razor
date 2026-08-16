@@ -1,0 +1,28 @@
+@page "/Error"
+
+<PageTitle>Fehler - SoopWorkshop</PageTitle>
+
+<MudStack Spacing="4" Class="mt-8" AlignItems="AlignItems.Start">
+    <MudText Typo="Typo.h4">Da ist etwas schiefgelaufen</MudText>
+
+    <MudText Typo="Typo.body1" Class="mud-text-secondary">
+        Die Anfrage konnte nicht verarbeitet werden. Versuche es bitte erneut - bleibt es
+        dabei, melde dich bei der Workshop-Leitung.
+    </MudText>
+
+    @* Die Kennung ist das Einzige, womit sich der Vorfall im Server-Log wiederfinden
+       laesst. Sie ist deshalb sichtbar, aber unaufdringlich. *@
+    @if (ShowRequestId)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+            Kennung fuer die Fehlersuche: @RequestId
+        </MudText>
+    }
+
+    <MudButton Href="/"
+               Variant="Variant.Outlined"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.ArrowBack">
+        Zur Startseite
+    </MudButton>
+</MudStack>
