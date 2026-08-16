@@ -151,6 +151,58 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                     b.ToTable("TaskCategories");
                 });
 
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskCategoryWeight", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Weight")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskItemId", "Category")
+                        .IsUnique();
+
+                    b.ToTable("TaskCategoryWeights");
+                });
+
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskExpectedMethod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Signature")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.ToTable("TaskExpectedMethods");
+                });
+
             modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskHint", b =>
                 {
                     b.Property<Guid>("Id")
@@ -186,6 +238,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
 
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
+
+                    b.Property<int>("EvaluationMode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ExpectedClassName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean");
@@ -240,6 +299,37 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                     b.ToTable("TaskTests");
                 });
 
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskUnitTestFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsVisibleToParticipant")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TaskItemId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.ToTable("TaskUnitTestFiles");
+                });
+
             modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TestCaseResult", b =>
                 {
                     b.Property<Guid>("Id")
@@ -261,6 +351,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                     b.Property<string>("ExpectedOutput")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Input")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("Passed")
                         .HasColumnType("boolean");
@@ -316,6 +413,28 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                     b.Navigation("Submission");
                 });
 
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskCategoryWeight", b =>
+                {
+                    b.HasOne("SoopWorkshop.Backend.Domain.Entities.TaskItem", "Task")
+                        .WithMany("CategoryWeights")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskExpectedMethod", b =>
+                {
+                    b.HasOne("SoopWorkshop.Backend.Domain.Entities.TaskItem", "Task")
+                        .WithMany("ExpectedMethods")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
             modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskHint", b =>
                 {
                     b.HasOne("SoopWorkshop.Backend.Domain.Entities.TaskItem", "Task")
@@ -342,6 +461,17 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                 {
                     b.HasOne("SoopWorkshop.Backend.Domain.Entities.TaskItem", "Task")
                         .WithMany("Tests")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskUnitTestFile", b =>
+                {
+                    b.HasOne("SoopWorkshop.Backend.Domain.Entities.TaskItem", "Task")
+                        .WithMany("UnitTestFiles")
                         .HasForeignKey("TaskItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -384,11 +514,17 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
 
             modelBuilder.Entity("SoopWorkshop.Backend.Domain.Entities.TaskItem", b =>
                 {
+                    b.Navigation("CategoryWeights");
+
+                    b.Navigation("ExpectedMethods");
+
                     b.Navigation("Hints");
 
                     b.Navigation("Submissions");
 
                     b.Navigation("Tests");
+
+                    b.Navigation("UnitTestFiles");
                 });
 #pragma warning restore 612, 618
         }

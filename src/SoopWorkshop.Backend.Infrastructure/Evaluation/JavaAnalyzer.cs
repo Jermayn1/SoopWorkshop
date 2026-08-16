@@ -1,39 +1,37 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
+using SoopWorkshop.Backend.Application.Evaluation.Models;
+using SoopWorkshop.Backend.Application.Evaluation.Scoring;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
+using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 {
+    // Fuehrt die registrierten Checker aus und laesst den EvaluationScorer daraus
+    // die Punkte berechnen. Eine neue Pruefung wird nur noch in der DI angemeldet -
+    // hier ist dafuer keine Aenderung mehr noetig.
     public class JavaAnalyzer : IJavaAnalyzer
     {
-        private readonly CharacterSetChecker _characterSetChecker;
-        private readonly NamingConventionChecker _namingConventionChecker;
-        private readonly CompilabilityChecker _compilabilityChecker;
-        private readonly TestCaseChecker _testCaseChecker;
+        private readonly IReadOnlyList<IEvaluationChecker> _checkers;
+        private readonly EvaluationOptions _options;
         private readonly ILogger<JavaAnalyzer> _logger;
 
         public JavaAnalyzer(
-            CharacterSetChecker characterSetChecker,
-            NamingConventionChecker namingConventionChecker,
-            CompilabilityChecker compilabilityChecker,
-            TestCaseChecker testCaseChecker,
+            IEnumerable<IEvaluationChecker> checkers,
+            IOptions<EvaluationOptions> options,
             ILogger<JavaAnalyzer> logger)
         {
-            _characterSetChecker = characterSetChecker;
-            _namingConventionChecker = namingConventionChecker;
-            _compilabilityChecker = compilabilityChecker;
-            _testCaseChecker = testCaseChecker;
+            // Einmal sortieren statt bei jeder Abgabe: die Reihenfolge ist
+            // verbindlich, weil spaetere Checker das Kompilierergebnis brauchen.
+            _checkers = [.. checkers.OrderBy(checker => checker.Order)];
+            _options = options.Value;
             _logger = logger;
         }
 
-        public async Task<EvaluationResult> AnalyzeAsync(
-            Submission submission,
-            List<TaskTest> expectedTests,
-            CancellationToken cancellationToken)
+        public async Task<EvaluationResult> AnalyzeAsync(Submission submission, CancellationToken cancellationToken)
         {
-            var files = submission.Files.ToList();
-
             // Das Arbeitsverzeichnis gehoert dem Analyzer, damit das finally unten es
             // auch dann loescht, wenn ein Checker eine Exception wirft.
             var workingDirectory = Path.Combine(Path.GetTempPath(), "soopworkshop", Guid.NewGuid().ToString());
@@ -41,26 +39,24 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 
             try
             {
-                var characterSetResult = _characterSetChecker.Check(files);
-                var namingConventionResult = _namingConventionChecker.Check(files);
-                var (compilabilityResult, compilation) = await _compilabilityChecker.CheckAsync(files, workingDirectory, cancellationToken);
-                var testCaseResult = await _testCaseChecker.CheckAsync(compilation, expectedTests, cancellationToken);
-
-                var categoryResults = new List<CategoryResult>
+                var context = new EvaluationContext
                 {
-                    characterSetResult,
-                    namingConventionResult,
-                    compilabilityResult,
-                    testCaseResult
+                    Submission = submission,
+                    Task = submission.Task,
+                    WorkingDirectory = workingDirectory,
+                    Files = [.. submission.Files]
                 };
+
+                var scoreInputs = await RunCheckersAsync(context, cancellationToken);
+                var categoryResults = EvaluationScorer.Score(scoreInputs);
 
                 var evaluationResult = new EvaluationResult
                 {
                     Id = Guid.NewGuid(),
                     SubmissionId = submission.Id,
-                    TotalScore = categoryResults.Sum(c => c.Points),
-                    MaxScore = categoryResults.Sum(c => c.MaxPoints),
-                    CategoryResults = categoryResults
+                    TotalScore = categoryResults.Sum(category => category.Points),
+                    MaxScore = categoryResults.Sum(category => category.MaxPoints),
+                    CategoryResults = [.. categoryResults]
                 };
 
                 foreach (var categoryResult in categoryResults)
@@ -74,6 +70,71 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             {
                 CleanupWorkingDirectory(workingDirectory);
             }
+        }
+
+        // Sammelt die Teilpruefungen der anwendbaren Checker je Kategorie ein.
+        // Mehrere Checker duerfen auf dieselbe Kategorie einzahlen - Clean Code
+        // besteht genau so aus Zeichensatz- und Namenspruefung.
+        private async Task<List<CategoryScoreInput>> RunCheckersAsync(
+            EvaluationContext context,
+            CancellationToken cancellationToken)
+        {
+            var results = new Dictionary<EvaluationCategory, List<TestCaseResult>>();
+            var errorTips = new Dictionary<EvaluationCategory, List<string>>();
+
+            foreach (var checker in _checkers)
+            {
+                if (!checker.IsApplicable(context))
+                {
+                    _logger.LogDebug(
+                        "Checker {Checker} ist fuer Aufgabe {TaskItemId} nicht anwendbar und wird uebersprungen.",
+                        checker.GetType().Name,
+                        context.Task.Id);
+                    continue;
+                }
+
+                var outcome = await checker.CheckAsync(context, cancellationToken);
+
+                if (!results.TryGetValue(checker.Category, out var categoryResults))
+                {
+                    categoryResults = [];
+                    results[checker.Category] = categoryResults;
+                    errorTips[checker.Category] = [];
+                }
+
+                categoryResults.AddRange(outcome.Results);
+
+                // Doppelte Hinweise verwerfen: zahlen zwei Checker auf dieselbe
+                // Kategorie ein, sagen sie im Regelfall dasselbe. Aneinandergereiht
+                // liest der Teilnehmer sonst einen Absatz statt eines Satzes.
+                if (!string.IsNullOrWhiteSpace(outcome.ErrorTip)
+                    && !errorTips[checker.Category].Contains(outcome.ErrorTip))
+                {
+                    errorTips[checker.Category].Add(outcome.ErrorTip);
+                }
+            }
+
+            return [.. results.Select(entry => new CategoryScoreInput(
+                entry.Key,
+                ResolveWeight(context.Task, entry.Key),
+                entry.Value,
+                // Mehrere Hinweise einer Kategorie hintereinander, damit keiner verloren geht.
+                errorTips[entry.Key].Count == 0 ? null : string.Join(" ", errorTips[entry.Key])))];
+        }
+
+        // Aufgabenspezifisches Gewicht schlaegt den Standard aus der Konfiguration.
+        private double ResolveWeight(TaskItem task, EvaluationCategory category)
+        {
+            var taskWeight = task.CategoryWeights.FirstOrDefault(weight => weight.Category == category);
+            if (taskWeight is not null)
+                return taskWeight.Weight;
+
+            if (_options.CategoryWeights.TryGetValue(category, out var configuredWeight))
+                return configuredWeight;
+
+            throw new InvalidOperationException(
+                $"Fuer die Kategorie {category} ist kein Gewicht hinterlegt. " +
+                "Erwartet wird ein Eintrag unter Evaluation:CategoryWeights.");
         }
 
         // Löscht das temporäre Verzeichnis mit dem kompilierten Dateien damit der Speicher nicht unnötig voll wird

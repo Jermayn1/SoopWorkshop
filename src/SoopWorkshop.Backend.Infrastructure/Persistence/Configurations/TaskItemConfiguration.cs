@@ -28,9 +28,27 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .HasForeignKey(test => test.TaskItemId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Property(t => t.ExpectedClassName)
+                .HasMaxLength(200);
+
+            builder.HasMany(t => t.ExpectedMethods)
+                .WithOne(method => method.Task)
+                .HasForeignKey(method => method.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(t => t.UnitTestFiles)
+                .WithOne(file => file.Task)
+                .HasForeignKey(file => file.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasMany(t => t.Submissions)
                 .WithOne(s => s.Task)
                 .HasForeignKey(s => s.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(t => t.CategoryWeights)
+                .WithOne(weight => weight.Task)
+                .HasForeignKey(weight => weight.TaskItemId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

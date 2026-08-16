@@ -3,8 +3,8 @@ using NSubstitute;
 using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Evaluation.Models;
+using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Tests.Helpers;
 
 namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
@@ -25,48 +25,51 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             if (Directory.Exists(_workingDirectory))
                 Directory.Delete(_workingDirectory, recursive: true);
+
+            GC.SuppressFinalize(this);
         }
 
         private CompilabilityChecker CreateChecker() => new(_processRunner, Options.Create(_options));
+
+        private EvaluationContext Context(IReadOnlyList<SubmissionFile> files) =>
+            EvaluationContextFactory.For(files: files, workingDirectory: _workingDirectory);
 
         private void JavacReturns(ProcessResult result) =>
             _processRunner.RunAsync(Arg.Any<ProcessRequest>(), Arg.Any<CancellationToken>()).Returns(result);
 
         [Fact]
-        public async Task CheckAsync_KompilierungErfolgreich_LiefertVollePunkteUndHauptklasse()
+        public async Task CheckAsync_KompilierungErfolgreich_HinterlegtHauptklasseImKontext()
         {
             JavacReturns(ProcessResultFactory.Success());
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile>
-            {
-                SubmissionFileFactory.Create("public class Main { public static void main(String[] a) {} }")
-            };
+            var context = Context([SubmissionFileFactory.Create("public class Main { public static void main(String[] a) {} }")]);
 
-            var (result, compilation) = await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(context, CancellationToken.None);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.Compilability);
-            compilation.Success.ShouldBeTrue();
-            compilation.MainClassName.ShouldBe("Main");
-            compilation.WorkingDirectory.ShouldBe(_workingDirectory);
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
+            outcome.ErrorTip.ShouldBeNull();
+
+            context.Compilation.ShouldNotBeNull();
+            context.Compilation.Success.ShouldBeTrue();
+            context.Compilation.MainClassName.ShouldBe("Main");
+            context.Compilation.WorkingDirectory.ShouldBe(_workingDirectory);
         }
 
         [Fact]
-        public async Task CheckAsync_KompilierungFehlgeschlagen_LiefertNullPunkteUndCompilerausgabe()
+        public async Task CheckAsync_KompilierungFehlgeschlagen_LiefertDieCompilerausgabe()
         {
             JavacReturns(ProcessResultFactory.Failure("Main.java:3: error: ';' expected"));
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile>
-            {
-                SubmissionFileFactory.Create("public class Main { kaputt }")
-            };
+            var context = Context([SubmissionFileFactory.Create("public class Main { kaputt }")]);
 
-            var (result, compilation) = await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(context, CancellationToken.None);
 
+            var result = outcome.Results.ShouldHaveSingleItem();
             result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(0);
-            result.TestCaseResults.ShouldHaveSingleItem().ActualOutput.ShouldContain("';' expected");
-            compilation.MainClassName.ShouldBeNull();
+            result.ActualOutput.ShouldContain("';' expected");
+            outcome.ErrorTip.ShouldNotBeNullOrEmpty();
+
+            context.Compilation!.MainClassName.ShouldBeNull();
         }
 
         [Fact]
@@ -74,12 +77,13 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             JavacReturns(ProcessResultFactory.NotFound());
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile> { SubmissionFileFactory.Create("public class Main {}") };
+            var outcome = await CreateChecker().CheckAsync(
+                Context([SubmissionFileFactory.Create("public class Main {}")]),
+                CancellationToken.None);
 
-            var (result, _) = await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
-
+            var result = outcome.Results.ShouldHaveSingleItem();
             result.Passed.ShouldBeFalse();
-            result.TestCaseResults.ShouldHaveSingleItem().ActualOutput.ShouldContain("JDK");
+            result.ActualOutput.ShouldContain("JDK");
         }
 
         [Fact]
@@ -87,11 +91,11 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             JavacReturns(ProcessResultFactory.TimedOut());
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile> { SubmissionFileFactory.Create("public class Main {}") };
+            var outcome = await CreateChecker().CheckAsync(
+                Context([SubmissionFileFactory.Create("public class Main {}")]),
+                CancellationToken.None);
 
-            var (result, _) = await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
-
-            result.TestCaseResults.ShouldHaveSingleItem().ActualOutput.ShouldContain("30 Sekunden");
+            outcome.Results.ShouldHaveSingleItem().ActualOutput.ShouldContain("30 Sekunden");
         }
 
         [Fact]
@@ -101,7 +105,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 
             var files = SubmissionFileFactory.CreateMany("public class File1 {}", "public class File2 {}");
 
-            await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+            await CreateChecker().CheckAsync(Context(files), CancellationToken.None);
 
             await _processRunner.Received(1).RunAsync(
                 Arg.Is<ProcessRequest>(r => r.FileName == "javac"
@@ -119,9 +123,9 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             JavacReturns(ProcessResultFactory.Success());
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile> { SubmissionFileFactory.Create("public class Main {}") };
-
-            await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+            await CreateChecker().CheckAsync(
+                Context([SubmissionFileFactory.Create("public class Main {}")]),
+                CancellationToken.None);
 
             await _processRunner.Received(1).RunAsync(
                 Arg.Is<ProcessRequest>(r => r.Arguments.Contains("Main.java")
@@ -140,15 +144,18 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             JavacReturns(ProcessResultFactory.Success());
 
-            var files = new List<Backend.Domain.Entities.SubmissionFile>
-            {
-                SubmissionFileFactory.Create("public class Main {}", fileName)
-            };
-
-            await CreateChecker().CheckAsync(files, _workingDirectory, CancellationToken.None);
+            await CreateChecker().CheckAsync(
+                Context([SubmissionFileFactory.Create("public class Main {}", fileName)]),
+                CancellationToken.None);
 
             Directory.GetFiles(_workingDirectory).ShouldHaveSingleItem()
                 .ShouldBe(Path.Combine(_workingDirectory, "Main.java"));
+        }
+
+        [Fact]
+        public void IsApplicable_ImmerAnwendbar()
+        {
+            CreateChecker().IsApplicable(Context([])).ShouldBeTrue();
         }
     }
 }

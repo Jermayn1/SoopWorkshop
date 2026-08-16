@@ -1,6 +1,5 @@
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 using SoopWorkshop.Tests.Helpers;
 
@@ -10,19 +9,21 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
     {
         private readonly CharacterSetChecker _checker = new();
 
+        private Task<Backend.Application.Evaluation.Models.CheckerOutcome> CheckAsync(IReadOnlyList<SubmissionFile> files) =>
+            _checker.CheckAsync(EvaluationContextFactory.For(files: files), CancellationToken.None);
+
         // Ohne Dateien gibt es nichts zu beanstanden. Anders als beim TestCaseChecker
         // sind das keine Gratispunkte, denn ohne Code gibt es auch keinen Verstoss.
         [Fact]
-        public void Check_OhneDateien_LiefertVollePunktzahl()
+        public async Task CheckAsync_OhneDateien_GiltAlsBestanden()
         {
-            var result = _checker.Check([]);
+            var outcome = await CheckAsync([]);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.CharacterSet);
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
         }
 
         [Fact]
-        public void Check_CodeOhneUmlaute_LiefertVollePunktzahl()
+        public async Task CheckAsync_CodeOhneUmlaute_GiltAlsBestanden()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
@@ -33,11 +34,10 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.CharacterSet);
-            result.ErrorTip.ShouldBeEmpty();
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
+            outcome.ErrorTip.ShouldBeNull();
         }
 
         [Theory]
@@ -48,7 +48,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         [InlineData("Ö")]
         [InlineData("Ü")]
         [InlineData("ß")]
-        public void Check_VerbotenesZeichen_LiefertNullPunkte(string character)
+        public async Task CheckAsync_VerbotenesZeichen_GiltAlsNichtBestanden(string character)
         {
             var files = SubmissionFileFactory.CreateMany(
                 $$"""
@@ -59,52 +59,50 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 }
                 """);
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(0);
-            result.ErrorTip.ShouldNotBeEmpty();
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeFalse();
+            outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
         // Ist-Verhalten: geprueft wird nur der Dateiinhalt, nicht der Dateiname.
         [Fact]
-        public void Check_UmlautNurImDateinamen_LiefertVollePunktzahl()
+        public async Task CheckAsync_UmlautNurImDateinamen_GiltAlsBestanden()
         {
             var files = new List<SubmissionFile>
             {
                 SubmissionFileFactory.Create("public class Gruesse { }", "Grüße.java")
             };
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.CharacterSet);
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
         }
 
         [Fact]
-        public void Check_UmlautInZweiterDatei_LiefertNullPunkte()
+        public async Task CheckAsync_UmlautInZweiterDatei_GiltAlsNichtBestanden()
         {
             var files = SubmissionFileFactory.CreateMany(
                 "public class Main { }",
                 "public class Helper { String text = \"Grüße\"; }");
 
-            var result = _checker.Check(files);
+            var outcome = await CheckAsync(files);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(0);
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeFalse();
+        }
+
+        // Zeichensatz ist seit der Bewertungs-Engine v2 eine Teilpruefung unter
+        // Clean Code und keine eigene Kategorie mehr.
+        [Fact]
+        public void Category_IstCleanCode()
+        {
+            _checker.Category.ShouldBe(EvaluationCategory.CleanCode);
         }
 
         [Fact]
-        public void Check_Immer_LiefertKategorieUndEinTeilergebnis()
+        public void IsApplicable_ImmerAnwendbar()
         {
-            var files = SubmissionFileFactory.CreateMany("public class Main { }");
-
-            var result = _checker.Check(files);
-
-            result.Category.ShouldBe(EvaluationCategory.CharacterSet);
-            result.MaxPoints.ShouldBe(EvaluationCategoryPoints.CharacterSet);
-            result.TestCaseResults.Count.ShouldBe(1);
-            result.TestCaseResults.Single().Passed.ShouldBeTrue();
+            _checker.IsApplicable(EvaluationContextFactory.For()).ShouldBeTrue();
         }
     }
 }

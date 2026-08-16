@@ -51,8 +51,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Services
 
             try
             {
-                var expectedTests = submission.Task.Tests.ToList();
-                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, expectedTests, cancellationToken);
+                var evaluationResult = await _javaAnalyzer.AnalyzeAsync(submission, cancellationToken);
 
                 await _evaluationResultRepository.AddAsync(evaluationResult);
 

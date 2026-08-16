@@ -38,7 +38,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
             var submission = GivenSubmission();
             var evaluationResult = new EvaluationResult { Id = Guid.NewGuid(), SubmissionId = submission.Id, TotalScore = 80, MaxScore = 100 };
 
-            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<List<TaskTest>>(), Arg.Any<CancellationToken>())
+            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<CancellationToken>())
                 .Returns(evaluationResult);
 
             await CreateService().EvaluateAsync(submission.Id, CancellationToken.None);
@@ -53,7 +53,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
         {
             var submission = GivenSubmission();
 
-            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<List<TaskTest>>(), Arg.Any<CancellationToken>())
+            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<CancellationToken>())
                 .Returns(new EvaluationResult { Id = Guid.NewGuid(), SubmissionId = submission.Id });
 
             await CreateService().EvaluateAsync(submission.Id, CancellationToken.None);
@@ -69,7 +69,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
         {
             var submission = GivenSubmission();
 
-            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<List<TaskTest>>(), Arg.Any<CancellationToken>())
+            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<CancellationToken>())
                 .ThrowsAsync(new InvalidOperationException("irgendetwas ging schief"));
 
             await CreateService().EvaluateAsync(submission.Id, CancellationToken.None);
@@ -92,7 +92,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
             using var cancellation = new CancellationTokenSource();
             await cancellation.CancelAsync();
 
-            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<List<TaskTest>>(), Arg.Any<CancellationToken>())
+            _javaAnalyzer.AnalyzeAsync(submission, Arg.Any<CancellationToken>())
                 .ThrowsAsync(new OperationCanceledException());
 
             await Should.ThrowAsync<OperationCanceledException>(
@@ -113,7 +113,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
             await _submissionRepository.DidNotReceive().UpdateStatusAsync(
                 Arg.Any<Guid>(), Arg.Any<SubmissionStatus>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await _javaAnalyzer.DidNotReceive().AnalyzeAsync(
-                Arg.Any<Submission>(), Arg.Any<List<TaskTest>>(), Arg.Any<CancellationToken>());
+                Arg.Any<Submission>(), Arg.Any<CancellationToken>());
         }
     }
 }

@@ -3,13 +3,14 @@ using SoopWorkshop.Backend.Application.Evaluation;
 using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
-using SoopWorkshop.Backend.Infrastructure.Evaluation.Models;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    public class CompilabilityChecker
+    // Schreibt die Abgabe ins Arbeitsverzeichnis und ruft javac auf. Laeuft als
+    // erster Checker, weil alle spaeteren das Kompilierergebnis aus dem Kontext
+    // brauchen.
+    public class CompilabilityChecker : IEvaluationChecker
     {
         private readonly IProcessRunner _processRunner;
         private readonly EvaluationOptions _options;
@@ -20,13 +21,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _options = options.Value;
         }
 
-        // Das Arbeitsverzeichnis wird vom JavaAnalyzer angelegt und uebergeben, damit
-        // dieser es auch dann aufraeumen kann, wenn hier etwas schiefgeht.
-        public async Task<(CategoryResult Result, CompilationResult Compilation)> CheckAsync(
-            List<SubmissionFile> files,
-            string workingDirectory,
-            CancellationToken cancellationToken)
+        public EvaluationCategory Category => EvaluationCategory.Compilability;
+
+        public int Order => EvaluationCheckerOrder.Compilability;
+
+        // Ohne Kompilieren geht keine Aufgabe - immer anwendbar.
+        public bool IsApplicable(EvaluationContext context) => true;
+
+        public async Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
+            var files = context.Files;
             var fileNames = new List<string>();
 
             foreach (var file in files)
@@ -34,7 +38,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 // Zweite Verteidigungslinie hinter der Upload-Pruefung: nur der reine
                 // Dateiname darf ins Arbeitsverzeichnis, niemals ein Pfad.
                 var fileName = Path.GetFileName(file.FileName);
-                await File.WriteAllTextAsync(Path.Combine(workingDirectory, fileName), file.Content, cancellationToken);
+                await File.WriteAllTextAsync(Path.Combine(context.WorkingDirectory, fileName), file.Content, cancellationToken);
                 fileNames.Add(fileName);
             }
 
@@ -59,44 +63,36 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 new ProcessRequest(
                     "javac",
                     arguments,
-                    workingDirectory,
+                    context.WorkingDirectory,
                     StandardInput: null,
                     TimeSpan.FromSeconds(_options.CompileTimeoutSeconds)),
                 cancellationToken);
 
             var success = process.Success;
             var errorOutput = success ? string.Empty : DescribeFailure(process);
-            var mainClassName = success ? FindMainClassName(files) : null;
 
-            var result = new CategoryResult
-            {
-                Id = Guid.NewGuid(),
-                Category = EvaluationCategory.Compilability,
-                MaxPoints = EvaluationCategoryPoints.Compilability,
-                Points = success ? EvaluationCategoryPoints.Compilability : 0,
-                Passed = success,
-                ErrorTip = success
-                    ? string.Empty
-                    : "Der Code kompiliert nicht fehlerfrei. Pruefe die Fehlermeldung des Compilers auf Tippfehler oder fehlende Importe."
-            };
-
-            result.TestCaseResults.Add(new TestCaseResult
-            {
-                Id = Guid.NewGuid(),
-                Description = "Code kompiliert fehlerfrei",
-                Passed = success,
-                ActualOutput = errorOutput
-            });
-
-            var compilation = new CompilationResult
+            // Ergebnis fuer die nachfolgenden Checker hinterlegen.
+            context.Compilation = new CompilationResult
             {
                 Success = success,
-                WorkingDirectory = workingDirectory,
+                WorkingDirectory = context.WorkingDirectory,
                 ErrorOutput = errorOutput,
-                MainClassName = mainClassName
+                MainClassName = success ? FindMainClassName(files) : null
             };
 
-            return (result, compilation);
+            var result = new TestCaseResult
+            {
+                Id = Guid.NewGuid(),
+                Description = "Der Code kompiliert",
+                Passed = success,
+                ActualOutput = errorOutput
+            };
+
+            return success
+                ? CheckerOutcome.Of(result)
+                : CheckerOutcome.WithTip(
+                    "Der Code kompiliert nicht fehlerfrei. Pruefe die Fehlermeldung des Compilers auf Tippfehler oder fehlende Importe.",
+                    result);
         }
 
         // Uebersetzt das Prozessergebnis in eine Meldung, die dem Teilnehmer sagt,
@@ -116,7 +112,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
         // Sucht die Datei mit "public static void main" und gibt den dazugehoerigen
         // Klassennamen zurueck. In Java muss der Dateiname mit dem Klassennamen uebereinstimmen.
-        private static string? FindMainClassName(List<SubmissionFile> files)
+        private static string? FindMainClassName(IReadOnlyList<SubmissionFile> files)
         {
             var mainFile = files.FirstOrDefault(f => f.Content.Contains("public static void main"));
             return mainFile is null ? null : Path.GetFileNameWithoutExtension(mainFile.FileName);

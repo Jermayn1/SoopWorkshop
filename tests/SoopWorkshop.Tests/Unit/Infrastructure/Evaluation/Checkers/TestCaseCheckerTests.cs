@@ -5,8 +5,6 @@ using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Application.Evaluation.Models;
 using SoopWorkshop.Backend.Domain.Entities;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
-using SoopWorkshop.Backend.Infrastructure.Evaluation.Models;
-using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Tests.Helpers;
 
 namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
@@ -21,28 +19,34 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         private static CompilationResult Compiled(string mainClassName = "Main") =>
             new() { Success = true, MainClassName = mainClassName, WorkingDirectory = "/tmp/egal" };
 
-        private static TaskTest Test(string expectedOutput, string input = "", string description = "Testfall") =>
+        private static TaskTest Test(string expectedOutput, string input = "", string description = "Testfall", int order = 0) =>
             new()
             {
                 Id = Guid.NewGuid(),
                 Input = input,
                 ExpectedOutput = expectedOutput,
-                Description = description
+                Description = description,
+                Order = order
             };
+
+        // Kontext mit kompilierter Abgabe und den uebergebenen Testfaellen.
+        private static EvaluationContext Context(CompilationResult compilation, params TaskTest[] tests) =>
+            EvaluationContextFactory.For(
+                task: EvaluationContextFactory.TaskWithTests(tests),
+                compilation: compilation);
 
         private void ProgramReturns(ProcessResult result) =>
             _processRunner.RunAsync(Arg.Any<ProcessRequest>(), Arg.Any<CancellationToken>()).Returns(result);
 
         [Fact]
-        public async Task CheckAsync_AusgabeStimmtUeberein_LiefertVollePunktzahl()
+        public async Task CheckAsync_AusgabeStimmtUeberein_MeldetTeilpruefungAlsBestanden()
         {
             ProgramReturns(ProcessResultFactory.Success("Hallo Soop"));
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.TestCases);
-            result.TestCaseResults.ShouldHaveSingleItem().Passed.ShouldBeTrue();
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
+            outcome.ErrorTip.ShouldBeNull();
         }
 
         // Zeilenumbrueche und umgebende Leerzeichen sollen keinen Unterschied machen.
@@ -54,9 +58,9 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.Success(actual));
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test(expected)], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test(expected)), CancellationToken.None);
 
-            result.Passed.ShouldBeTrue();
+            outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
         // Frueher lieferte eine Zeitueberschreitung eine leere Ausgabe — der Teilnehmer
@@ -66,11 +70,10 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.TimedOut());
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
-            result.Passed.ShouldBeFalse();
-
-            var testCase = result.TestCaseResults.ShouldHaveSingleItem();
+            var testCase = outcome.Results.ShouldHaveSingleItem();
+            testCase.Passed.ShouldBeFalse();
             testCase.ActualOutput.ShouldContain("Zeitueberschreitung");
             testCase.ActualOutput.ShouldContain("10 Sekunden");
         }
@@ -80,9 +83,9 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.NotFound());
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
-            result.TestCaseResults.ShouldHaveSingleItem().ActualOutput.ShouldContain("JDK");
+            outcome.Results.ShouldHaveSingleItem().ActualOutput.ShouldContain("JDK");
         }
 
         // Ein Laufzeitfehler ohne vorherige Ausgabe war bisher unsichtbar.
@@ -92,9 +95,9 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             ProgramReturns(ProcessResultFactory.Failure(
                 standardError: "Exception in thread \"main\" java.lang.NullPointerException"));
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
-            result.TestCaseResults.ShouldHaveSingleItem().ActualOutput.ShouldContain("NullPointerException");
+            outcome.Results.ShouldHaveSingleItem().ActualOutput.ShouldContain("NullPointerException");
         }
 
         // Gibt das Programm etwas aus, zaehlt allein die Standardausgabe — sonst
@@ -104,27 +107,41 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.Success("Hallo Soop", standardError: "Note: irgendeine Warnung"));
 
-            var result = await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            var outcome = await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
-            result.Passed.ShouldBeTrue();
+            outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
+        // Die Kategorie faellt bei einem Kompilierfehler bewusst nicht weg: sonst
+        // wuerde ihr Gewicht umverteilt und kaputter Code besser bewertet.
         [Fact]
         public async Task CheckAsync_KompilierungFehlgeschlagen_MarkiertAlleTestfaelleAlsNichtBestanden()
         {
             var compilation = new CompilationResult { Success = false, MainClassName = null };
 
-            var result = await CreateChecker().CheckAsync(
-                compilation,
-                [Test("A"), Test("B")],
+            var outcome = await CreateChecker().CheckAsync(
+                Context(compilation, Test("A"), Test("B")),
                 CancellationToken.None);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(0);
-            result.TestCaseResults.Count.ShouldBe(2);
-            result.TestCaseResults.ShouldAllBe(t => !t.Passed);
+            outcome.Results.Count.ShouldBe(2);
+            outcome.Results.ShouldAllBe(result => !result.Passed);
+            outcome.ErrorTip.ShouldNotBeNull();
 
             await _processRunner.DidNotReceive().RunAsync(Arg.Any<ProcessRequest>(), Arg.Any<CancellationToken>());
+        }
+
+        // Ohne die Eingabe im Ergebnis steht in der Anzeige "erwartet 7,
+        // erhalten 5", ohne dass jemand sieht, womit gerechnet wurde.
+        [Fact]
+        public async Task CheckAsync_MitEingabe_UebernimmtSieInsErgebnis()
+        {
+            ProgramReturns(ProcessResultFactory.Success("falsch"));
+
+            var outcome = await CreateChecker().CheckAsync(
+                Context(Compiled(), Test("7", input: "3\n4\n")),
+                CancellationToken.None);
+
+            outcome.Results.ShouldHaveSingleItem().Input.ShouldBe("3\n4\n");
         }
 
         [Fact]
@@ -132,7 +149,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.Success("7"));
 
-            await CreateChecker().CheckAsync(Compiled(), [Test("7", input: "3\n4\n")], CancellationToken.None);
+            await CreateChecker().CheckAsync(Context(Compiled(), Test("7", input: "3\n4\n")), CancellationToken.None);
 
             await _processRunner.Received(1).RunAsync(
                 Arg.Is<ProcessRequest>(r => r.FileName == "java"
@@ -148,7 +165,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         {
             ProgramReturns(ProcessResultFactory.Success("Hallo Soop"));
 
-            await CreateChecker().CheckAsync(Compiled(), [Test("Hallo Soop")], CancellationToken.None);
+            await CreateChecker().CheckAsync(Context(Compiled(), Test("Hallo Soop")), CancellationToken.None);
 
             await _processRunner.Received(1).RunAsync(
                 Arg.Is<ProcessRequest>(r => r.Arguments.Contains("-Dstdout.encoding=UTF-8")
@@ -156,21 +173,29 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Arg.Any<CancellationToken>());
         }
 
-        // Ist-Verhalten, bekannte Schwaeche: Aufgaben ohne Testfaelle geben die volle
-        // Punktzahl geschenkt. Wird in Phase 3 mit dem Punktesystem v2 behoben (§9).
+        // Loest das Finding aus §9 ab: frueher gab es hier die volle Punktzahl
+        // geschenkt. Jetzt faellt die Kategorie aus der Wertung, ihr Gewicht
+        // verteilt sich auf die uebrigen — nachgewiesen in EvaluationScorerTests.
         [Fact]
-        public async Task CheckAsync_KeineTestfaelle_LiefertVollePunktzahlOhnePruefung()
+        public void IsApplicable_KeineTestfaelle_IstNichtAnwendbar()
         {
-            var result = await CreateChecker().CheckAsync(Compiled(), [], CancellationToken.None);
+            var context = EvaluationContextFactory.For(task: EvaluationContextFactory.TaskWithTests());
 
-            result.Passed.ShouldBeTrue();
-            result.Points.ShouldBe(EvaluationCategoryPoints.TestCases);
+            CreateChecker().IsApplicable(context).ShouldBeFalse();
         }
 
-        // Ist-Verhalten, bekannte Schwaeche: 65 / 3 = 21, zwei bestandene Testfaelle
-        // ergeben 42 statt der rechnerisch richtigen 43,33 (§9, Phase 3).
         [Fact]
-        public async Task CheckAsync_ZweiVonDreiBestanden_VerliertPunkteDurchGanzzahlDivision()
+        public void IsApplicable_MitTestfaellen_IstAnwendbar()
+        {
+            var context = Context(Compiled(), Test("A"));
+
+            CreateChecker().IsApplicable(context).ShouldBeTrue();
+        }
+
+        // Ersetzt den frueheren Test zur Ganzzahl-Division: der Checker zaehlt nur
+        // noch bestandene Teilpruefungen, die Punkte rechnet der EvaluationScorer.
+        [Fact]
+        public async Task CheckAsync_ZweiVonDreiBestanden_MeldetZweiBestandeneTeilpruefungen()
         {
             _processRunner.RunAsync(Arg.Any<ProcessRequest>(), Arg.Any<CancellationToken>())
                 .Returns(
@@ -178,13 +203,27 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                     ProcessResultFactory.Success("B"),
                     ProcessResultFactory.Success("falsch"));
 
-            var result = await CreateChecker().CheckAsync(
-                Compiled(),
-                [Test("A"), Test("B"), Test("C")],
+            var outcome = await CreateChecker().CheckAsync(
+                Context(Compiled(), Test("A"), Test("B"), Test("C")),
                 CancellationToken.None);
 
-            result.Passed.ShouldBeFalse();
-            result.Points.ShouldBe(42);
+            outcome.Results.Count(result => result.Passed).ShouldBe(2);
+            outcome.ErrorTip.ShouldNotBeNull();
+        }
+
+        [Fact]
+        public async Task CheckAsync_TestfaelleLaufenInDerReihenfolgeVonOrder()
+        {
+            ProgramReturns(ProcessResultFactory.Success("egal"));
+
+            var outcome = await CreateChecker().CheckAsync(
+                Context(
+                    Compiled(),
+                    Test("A", description: "zweiter", order: 2),
+                    Test("B", description: "erster", order: 1)),
+                CancellationToken.None);
+
+            outcome.Results.Select(result => result.Description).ShouldBe(["erster", "zweiter"]);
         }
     }
 }

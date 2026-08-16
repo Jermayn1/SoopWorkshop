@@ -16,10 +16,18 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
 
         public async Task<Submission?> GetByIdAsync(Guid id)
         {
+            // Die Auswertung liest alles ueber submission.Task - was hier fehlt,
+            // sieht der JavaAnalyzer als "nicht vorhanden" und bewertet entsprechend.
             return await _context.Submissions
                 .Include(s => s.Files)
                 .Include(s => s.Task)
                     .ThenInclude(t => t.Tests)
+                .Include(s => s.Task)
+                    .ThenInclude(t => t.CategoryWeights)
+                .Include(s => s.Task)
+                    .ThenInclude(t => t.UnitTestFiles)
+                .Include(s => s.Task)
+                    .ThenInclude(t => t.ExpectedMethods)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 

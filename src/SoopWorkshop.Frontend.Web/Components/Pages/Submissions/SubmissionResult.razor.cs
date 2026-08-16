@@ -76,8 +76,36 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
         EvaluationCategory.Compilability => EvaluationCategoryNames.Compilability,
         EvaluationCategory.CleanCode => EvaluationCategoryNames.CleanCode,
         EvaluationCategory.TestCases => EvaluationCategoryNames.TestCases,
+        EvaluationCategory.UnitTests => EvaluationCategoryNames.UnitTests,
+        EvaluationCategory.Functionality => EvaluationCategoryNames.Functionality,
         _ => category.ToString()
     };
+
+    // Die API liefert bereits sortiert. Hier wird es trotzdem angewendet, damit
+    // die Anzeige nicht davon abhaengt, dass niemand die Reihenfolge unterwegs
+    // verliert — Sortierung ist billig, eine wechselnde Anzeige verwirrt.
+    private static IEnumerable<CategoryResultDto> SortedCategories(EvaluationResultDto result) =>
+        result.CategoryResults.OrderBy(category => EvaluationCategoryOrder.Of(category.Category));
+
+    private static IEnumerable<TestCaseResultDto> SortedTestCases(CategoryResultDto category) =>
+        category.TestCaseResults.OrderBy(testCase => testCase.Order);
+
+    // Der abschliessende Zeilenumbruch von println haengt an fast jeder Ausgabe
+    // und erzeugt sonst eine leere Zeile unter dem Wert. Er kann nie die Ursache
+    // eines Fehlschlags sein, weil der Vergleich beide Seiten ohnehin trimmt.
+    // Leerzeichen und Umbrueche *innerhalb* der Ausgabe bleiben unangetastet -
+    // die sind oft genau der Grund.
+    private static string ForDisplay(string value) =>
+        string.IsNullOrEmpty(value) ? "—" : value.TrimEnd('\r', '\n');
+
+    // Ein Vergleich liegt vor, sobald eine Erwartung hinterlegt ist oder es eine
+    // Eingabe gab. Dann werden Erwartet und Erhalten immer gemeinsam gezeigt,
+    // auch wenn eine Seite leer bleibt - ein "Erwartet" ohne Gegenstueck laesst
+    // den Leser raten. Reine Ja/Nein-Aussagen wie "Der Code kompiliert" haben
+    // keinen Vergleich und zeigen hoechstens eine Meldung.
+    private static bool HasComparison(TestCaseResultDto testCase) =>
+        !string.IsNullOrWhiteSpace(testCase.ExpectedOutput)
+        || !string.IsNullOrWhiteSpace(testCase.Input);
 
     // Nur abmelden und stoppen: den Lebenszyklus des Dienstes verwaltet die DI.
     public async ValueTask DisposeAsync()
