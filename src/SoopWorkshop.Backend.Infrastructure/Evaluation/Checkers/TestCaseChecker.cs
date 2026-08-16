@@ -49,6 +49,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 {
                     Id = Guid.NewGuid(),
                     Description = test.Description,
+                    Input = test.Input,
                     ExpectedOutput = test.ExpectedOutput,
                     ActualOutput = string.Empty,
                     Passed = false
@@ -69,6 +70,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 {
                     Id = Guid.NewGuid(),
                     Description = test.Description,
+                    Input = test.Input,
                     ExpectedOutput = test.ExpectedOutput,
                     ActualOutput = actualOutput,
                     Passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput)
@@ -77,9 +79,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             return results.All(result => result.Passed)
                 ? CheckerOutcome.Of([.. results])
-                : CheckerOutcome.WithTip(
-                    "Pruefe deine Ausgabe genau gegen die erwartete Ausgabe - achte auf Gross-/Kleinschreibung, Leerzeichen und Zeilenumbrueche.",
-                    [.. results]);
+                : CheckerOutcome.WithTip(EvaluationMessages.ComparisonHint, [.. results]);
         }
 
         // Entfernt führende und abschließende Leerzeichen und vereinheitlicht Zeilenumbrueche,

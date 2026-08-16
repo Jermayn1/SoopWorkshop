@@ -578,6 +578,11 @@ die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
 - [x] Der Aufgaben-Vertrag ist strukturiert (`ExpectedClassName`, `ExpectedMethods`)
       und wird vom `ContractChecker` geprüft, statt nur als Freitext dazustehen —
       schließt die Lücke, dass eine Abgabe mit falschem Klassennamen klaglos bestand
+- [x] Jede Teilprüfung wird gleich dargestellt: **Eingabe / Erwartet / Erhalten**,
+      was fehlt, entfällt. Dafür trägt `TestCaseResult` jetzt die `Input`, und die
+      JUnit-Meldung `expected: <5> but was: <-1>` wird in dieselben Felder zerlegt
+      (`AssertionMessage`) — vorher zeigte ein fehlgeschlagener Unit-Test **gar
+      keinen Grund** an, weil die Anzeige an `ExpectedOutput` hing
 
 **Bewusst anders als geplant:** Die Modus-Validierung greift beim *Sichtbarschalten*
 statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —
@@ -741,6 +746,15 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Aufgaben ohne Testfälle geben 65 Gratispunkte~~ — erledigt in Phase 3
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/TestCaseChecker.cs` — Ganzzahl-Division verliert Punkte~~ — erledigt in Phase 3
 - ~~2026-08-15 — `Infrastructure/Evaluation/Checkers/NamingConventionChecker.cs` — Regex prüft auch Strings und Kommentare → False Positives~~ — erledigt in Phase 3
+- 2026-08-16 — `Frontend.Web/.../SubmissionResult.razor` — der Detailblock hing an
+  `!string.IsNullOrEmpty(test.ExpectedOutput)`. JUnit-Ergebnisse hatten dort nichts
+  stehen, also zeigte ein fehlgeschlagener Unit-Test überhaupt keinen Grund — obwohl
+  die Meldung vorlag. Behoben; die Anzeige prüft jetzt jedes Feld einzeln
+- 2026-08-16 — `Infrastructure/Evaluation/JavaAnalyzer.cs` — seit beide Prüfarten auf
+  dieselbe Kategorie einzahlen, standen ihre Hinweise aneinandergereiht als ein
+  unverständlicher Absatz da. Behoben: gemeinsamer Wortlaut in `EvaluationMessages`
+  plus Entdoppelung im Analyzer. **Merken:** wer Kategorien zusammenlegt, muss auch
+  ihre Texte zusammenlegen
 - 2026-08-16 — `Domain/Entities/TaskItem.cs` — eine Abgabe mit falschem Klassennamen
   bestand klaglos: Java erzwingt nur, dass Dateiname und Klassenname zusammenpassen,
   nicht dass sie heißen wie die Aufgabe verlangt. Bei reinen Konsolenaufgaben fiel das

@@ -218,22 +218,36 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             if (testCases.Count == 0)
                 return DescribeMissingReport(process);
 
-            var results = testCases
-                .Select(testCase => new TestCaseResult
-                {
-                    Id = Guid.NewGuid(),
-                    Description = testCase.DisplayName,
-                    ExpectedOutput = string.Empty,
-                    ActualOutput = testCase.Message,
-                    Passed = testCase.Passed
-                })
-                .ToArray();
+            var results = testCases.Select(ToTestCaseResult).ToArray();
 
             return results.All(result => result.Passed)
                 ? CheckerOutcome.Of(results)
-                : CheckerOutcome.WithTip(
-                    "Mindestens ein Unit-Test ist fehlgeschlagen. Die Meldung darunter nennt, was erwartet wurde.",
-                    results);
+                : CheckerOutcome.WithTip(EvaluationMessages.ComparisonHint, results);
+        }
+
+        // Zwei Faelle, die sauber auseinandergehalten werden muessen:
+        //
+        //  - Die Meldung liess sich zerlegen ("expected: <5> but was: <-1>").
+        //    Dann fuellen die beiden Werte Erwartet und Erhalten, und was davor
+        //    stand, war eine eigene Meldung des Admins - die ergaenzt den
+        //    Anzeigenamen, statt ihn zu ersetzen.
+        //  - Sie liess sich nicht zerlegen (NullPointerException, assertTrue).
+        //    Dann gehoert die ganze Meldung unter "Erhalten"; im Anzeigenamen
+        //    waere ein Stacktrace-Fetzen unlesbar.
+        private static TestCaseResult ToTestCaseResult(JUnitTestCase testCase)
+        {
+            var wasSplit = testCase.Expected.Length > 0 || testCase.Actual.Length > 0;
+
+            return new TestCaseResult
+            {
+                Id = Guid.NewGuid(),
+                Description = wasSplit && !string.IsNullOrWhiteSpace(testCase.Message)
+                    ? $"{testCase.DisplayName} ({testCase.Message})"
+                    : testCase.DisplayName,
+                ExpectedOutput = testCase.Expected,
+                ActualOutput = wasSplit ? testCase.Actual : testCase.Message,
+                Passed = testCase.Passed
+            };
         }
 
         // Kein Report trotz gelaufenem Prozess. Der haeufigste Grund ist ein

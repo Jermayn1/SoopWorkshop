@@ -126,6 +126,7 @@ public class SubmissionService(
                     {
                         Id = t.Id,
                         Description = t.Description,
+                        Input = t.Input,
                         ExpectedOutput = t.ExpectedOutput,
                         ActualOutput = t.ActualOutput,
                         Passed = t.Passed,

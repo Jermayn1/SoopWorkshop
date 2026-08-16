@@ -130,6 +130,20 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             await _processRunner.DidNotReceive().RunAsync(Arg.Any<ProcessRequest>(), Arg.Any<CancellationToken>());
         }
 
+        // Ohne die Eingabe im Ergebnis steht in der Anzeige "erwartet 7,
+        // erhalten 5", ohne dass jemand sieht, womit gerechnet wurde.
+        [Fact]
+        public async Task CheckAsync_MitEingabe_UebernimmtSieInsErgebnis()
+        {
+            ProgramReturns(ProcessResultFactory.Success("falsch"));
+
+            var outcome = await CreateChecker().CheckAsync(
+                Context(Compiled(), Test("7", input: "3\n4\n")),
+                CancellationToken.None);
+
+            outcome.Results.ShouldHaveSingleItem().Input.ShouldBe("3\n4\n");
+        }
+
         [Fact]
         public async Task CheckAsync_MitEingabe_ReichtDieEingabeAnDenProzessDurch()
         {

@@ -185,8 +185,11 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldBeNull();
         }
 
+        // Ein fehlgeschlagener Unit-Test muss dieselben Felder fuellen wie ein
+        // fehlgeschlagener Konsolen-Testfall - sonst zeigt die Ergebnisseite bei
+        // ihm gar keinen Grund an.
         [Fact]
-        public async Task CheckAsync_EinTestFehlgeschlagen_UebernimmtDieMeldung()
+        public async Task CheckAsync_EinTestFehlgeschlagen_FuelltErwartetUndErhalten()
         {
             JavacReturns(ProcessResultFactory.Success());
             JavaWritesReport(Report(("addiere ergibt 5", false), ("main gibt die Summe aus", true)));
@@ -194,8 +197,59 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             var outcome = await CreateChecker().CheckAsync(Context(), CancellationToken.None);
 
             var failed = outcome.Results.Single(result => !result.Passed);
-            failed.ActualOutput.ShouldContain("expected: <5>");
+            failed.ExpectedOutput.ShouldBe("5");
+            failed.ActualOutput.ShouldBe("-1");
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
+        }
+
+        // Ohne Vergleich gehoert die ganze Meldung unter "Erhalten" - im
+        // Anzeigenamen waere ein Stacktrace-Fetzen unlesbar.
+        [Fact]
+        public async Task CheckAsync_FehlerOhneVergleich_ZeigtDieMeldungAlsErhalten()
+        {
+            JavacReturns(ProcessResultFactory.Success());
+            JavaWritesReport("""
+                <testsuite name="JUnit Jupiter" tests="1">
+                  <testcase name="wirft()" classname="MainTest" time="0">
+                    <failure message="java.lang.NullPointerException" type="java.lang.NullPointerException" />
+                    <system-out><![CDATA[
+                display-name: JUnit Jupiter > MainTest > Das Programm laeuft ohne Absturz
+                ]]></system-out>
+                  </testcase>
+                </testsuite>
+                """);
+
+            var failed = (await CreateChecker().CheckAsync(Context(), CancellationToken.None))
+                .Results.ShouldHaveSingleItem();
+
+            failed.Description.ShouldBe("Das Programm laeuft ohne Absturz");
+            failed.ActualOutput.ShouldBe("java.lang.NullPointerException");
+            failed.ExpectedOutput.ShouldBeEmpty();
+        }
+
+        // Eine eigene Meldung des Admins ergaenzt den Anzeigenamen, statt die
+        // Werte zu verdraengen.
+        [Fact]
+        public async Task CheckAsync_EigeneMeldung_ErgaenztDenAnzeigenamen()
+        {
+            JavacReturns(ProcessResultFactory.Success());
+            JavaWritesReport("""
+                <testsuite name="JUnit Jupiter" tests="1">
+                  <testcase name="rechnet()" classname="MainTest" time="0">
+                    <failure message="Bei negativen Zahlen ==> expected: &lt;-1&gt; but was: &lt;5&gt;" type="org.opentest4j.AssertionFailedError" />
+                    <system-out><![CDATA[
+                display-name: JUnit Jupiter > MainTest > addiere rechnet richtig
+                ]]></system-out>
+                  </testcase>
+                </testsuite>
+                """);
+
+            var failed = (await CreateChecker().CheckAsync(Context(), CancellationToken.None))
+                .Results.ShouldHaveSingleItem();
+
+            failed.Description.ShouldBe("addiere rechnet richtig (Bei negativen Zahlen)");
+            failed.ExpectedOutput.ShouldBe("-1");
+            failed.ActualOutput.ShouldBe("5");
         }
 
         // Der Kern des Teilnehmer-Feedbacks: "cannot find symbol" beantwortet die

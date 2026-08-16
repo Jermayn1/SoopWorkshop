@@ -54,13 +54,17 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
                 // Uebersprungene Tests gelten als nicht bestanden: der Teilnehmer
                 // hat die geforderte Leistung nicht gezeigt.
                 var passed = failure is null && skipped is null;
+                var message = ReadMessage(failure, skipped);
+                var comparison = AssertionMessage.Split(message);
 
                 yield return new JUnitTestCase(
                     ReadDisplayName(element) ?? BuildFallbackName(className, methodName),
                     className,
                     methodName,
                     passed,
-                    ReadMessage(failure, skipped));
+                    comparison.Message,
+                    comparison.Expected,
+                    comparison.Actual);
             }
         }
 

@@ -70,14 +70,37 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
                 .ShouldBe(["faellt absichtlich durch", "main gibt Hallo Soop aus"]);
         }
 
+        // Die Vergleichsmeldung wird zerlegt, damit ein fehlgeschlagener
+        // Unit-Test genauso dargestellt werden kann wie ein Konsolen-Testfall.
         [Fact]
-        public void Read_FehlgeschlagenerTest_UebernimmtDieMeldung()
+        public void Read_FehlgeschlagenerTest_TrenntErwartetUndErhalten()
         {
             WriteReport("TEST-junit-jupiter.xml", BestandenUndDurchgefallen);
 
             var failed = JUnitReportReader.Read(_directory).Single(testCase => !testCase.Passed);
 
-            failed.Message.ShouldBe("expected: <etwas anderes> but was: <Hallo Soop>");
+            failed.Expected.ShouldBe("etwas anderes");
+            failed.Actual.ShouldBe("Hallo Soop");
+            failed.Message.ShouldBeEmpty();
+        }
+
+        // Was sich nicht zerlegen laesst, bleibt vollstaendig erhalten.
+        [Fact]
+        public void Read_FehlerOhneVergleich_BehaeltDieMeldung()
+        {
+            WriteReport("TEST-junit-jupiter.xml", """
+                <testsuite name="JUnit Jupiter" tests="1">
+                  <testcase name="wirft()" classname="MainTest" time="0">
+                    <failure message="java.lang.NullPointerException" type="java.lang.NullPointerException" />
+                  </testcase>
+                </testsuite>
+                """);
+
+            var failed = JUnitReportReader.Read(_directory).ShouldHaveSingleItem();
+
+            failed.Message.ShouldBe("java.lang.NullPointerException");
+            failed.Expected.ShouldBeEmpty();
+            failed.Actual.ShouldBeEmpty();
         }
 
         [Fact]

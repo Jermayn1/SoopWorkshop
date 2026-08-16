@@ -90,6 +90,21 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
     private static IEnumerable<TestCaseResultDto> SortedTestCases(CategoryResultDto category) =>
         category.TestCaseResults.OrderBy(testCase => testCase.Order);
 
+    // Manche Teilpruefungen sind reine Ja/Nein-Aussagen ("Kein Umlaut gefunden")
+    // und haben nichts zu zeigen. Dann bleibt der Detailblock ganz weg, statt
+    // leere Beschriftungen zu hinterlassen.
+    // Der abschliessende Zeilenumbruch von println haengt an fast jeder Ausgabe
+    // und erzeugt sonst eine leere Zeile unter dem Wert. Er kann nie die Ursache
+    // eines Fehlschlags sein, weil der Vergleich beide Seiten ohnehin trimmt.
+    // Leerzeichen und Umbrueche *innerhalb* der Ausgabe bleiben unangetastet -
+    // die sind oft genau der Grund.
+    private static string ForDisplay(string value) => value.TrimEnd('\r', '\n');
+
+    private static bool HasDetails(TestCaseResultDto testCase) =>
+        !string.IsNullOrWhiteSpace(testCase.Input)
+        || !string.IsNullOrWhiteSpace(testCase.ExpectedOutput)
+        || !string.IsNullOrWhiteSpace(testCase.ActualOutput);
+
     // Nur abmelden und stoppen: den Lebenszyklus des Dienstes verwaltet die DI.
     public async ValueTask DisposeAsync()
     {

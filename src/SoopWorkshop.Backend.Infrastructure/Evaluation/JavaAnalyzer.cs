@@ -104,8 +104,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 
                 categoryResults.AddRange(outcome.Results);
 
-                if (!string.IsNullOrWhiteSpace(outcome.ErrorTip))
+                // Doppelte Hinweise verwerfen: zahlen zwei Checker auf dieselbe
+                // Kategorie ein, sagen sie im Regelfall dasselbe. Aneinandergereiht
+                // liest der Teilnehmer sonst einen Absatz statt eines Satzes.
+                if (!string.IsNullOrWhiteSpace(outcome.ErrorTip)
+                    && !errorTips[checker.Category].Contains(outcome.ErrorTip))
+                {
                     errorTips[checker.Category].Add(outcome.ErrorTip);
+                }
             }
 
             return [.. results.Select(entry => new CategoryScoreInput(

@@ -14,6 +14,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(500);
 
+            builder.Property(t => t.Input)
+                .HasColumnType("text");
+
             builder.Property(t => t.ExpectedOutput)
                 .HasColumnType("text");
 
