@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Shared.DTOs.Tasks;
@@ -8,6 +9,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
     // Aufgabenspezifische Gewichte der Bewertungskategorien. Ohne Eintrag gelten
     // die Standardgewichte aus Evaluation:CategoryWeights.
     [ApiController]
+    [Authorize]
     [Route("api/admin/tasks/{taskItemId:guid}/weights")]
     public class AdminTaskCategoryWeightsController : ControllerBase
     {

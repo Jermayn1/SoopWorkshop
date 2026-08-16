@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Shared.DTOs.Tasks;
@@ -9,6 +10,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
     // Admin-Endpunkte: die Sichtbarkeit kommt beim Anlegen mit, und PUT auf die
     // Sammlung speichert alle Dateien in einem Aufruf.
     [ApiController]
+    [Authorize]
     [Route("api/admin/tasks/{taskItemId:guid}/unittests")]
     public class AdminTaskUnitTestFilesController : ControllerBase
     {

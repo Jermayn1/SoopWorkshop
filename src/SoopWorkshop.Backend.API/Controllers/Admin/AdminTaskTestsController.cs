@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Shared.DTOs.Tasks;
@@ -6,6 +7,7 @@ using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 namespace SoopWorkshop.Backend.API.Controllers.Admin
 {
     [ApiController]
+    [Authorize]
     [Route("api/admin/tasks/{taskItemId:guid}/tests")]
     public class AdminTaskTestsController : ControllerBase
     {

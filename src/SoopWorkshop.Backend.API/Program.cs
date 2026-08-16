@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using SoopWorkshop.Backend.API.Configuration;
 using SoopWorkshop.Backend.API.Middleware;
 using SoopWorkshop.Backend.Application;
 using SoopWorkshop.Backend.Application.Evaluation;
@@ -33,6 +34,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Zugangsschutz fuer api/admin/*. Bricht den Start ab, wenn kein Passwort
+// gesetzt ist — siehe AdminAuthenticationExtensions.
+builder.Services.AddAdminAuthentication(builder.Configuration);
+
 // CORS (Cross-Origin Resource Sharing), erlaubt es dem Frontend Requests an die API zu senden.
 // Die erlaubten Origins stehen in der Konfiguration, damit sie im Betrieb ueber
 // Umgebungsvariablen gesetzt werden koennen.
@@ -44,7 +49,12 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            // Ohne das schickt der Browser das Anmelde-Cookie nicht mit, weil
+            // Frontend und API verschiedene Origins sind. Erlaubt ist die
+            // Kombination nur, weil die Origins oben namentlich gelistet sind —
+            // zusammen mit AllowAnyOrigin lehnt ASP.NET sie ab, und zwar zu Recht.
+            .AllowCredentials();
     });
 });
 
@@ -79,6 +89,10 @@ app.UseHttpsRedirection();
 // CORS einbinden
 app.UseCors("AllowFrontend");
 
+// Reihenfolge ist Pflicht: erst feststellen, wer da ist, dann entscheiden, ob
+// er darf. Umgedreht liest UseAuthorization eine noch leere Identitaet und
+// weist jeden Aufruf ab, auch den angemeldeten.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

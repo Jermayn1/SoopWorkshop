@@ -2,11 +2,12 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-16 — Phase 0 bis 4 abgeschlossen. Das Frontend heißt **Soop Judge**
+> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappe 5.0 Auth
+> steht, `api/admin/*` ist nicht mehr offen). Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Als Nächstes kommt Phase 5 (Admin-Panel) mit der offenen Auth-Frage.
+> siehe §6.1. Als Nächstes kommt Etappe 5.1 (Admin-Gerüst).
 
 ---
 
@@ -129,8 +130,12 @@ Datenbank auf **und** das Backend liest seine Konfiguration. Den Connection-Stri
 es aus den `POSTGRES_`-Werten, das Passwort steht also nur an einer Stelle. User Secrets
 werden nicht mehr gebraucht.
 
-Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, `POSTGRES_PASSWORD` setzen,
-`docker compose up -d`, dann Migrationen anwenden (siehe unten).
+Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, `POSTGRES_PASSWORD` **und
+`Admin__Password`** setzen, `docker compose up -d`, dann Migrationen anwenden (siehe unten).
+
+**`Admin__Password` ist Pflicht.** Fehlt der Wert, bricht der Start mit einer Meldung ab,
+statt still ohne Zugangsschutz zu laufen. Das Passwort schützt `/verwaltung` und alle
+`api/admin/*` (§10 Punkt 11).
 
 **Die `.env` wird bewusst als letzte Quelle geladen und schlägt damit auch
 Umgebungsvariablen.** Grund: eine vergessene `$env:ConnectionStrings__DefaultConnection`
@@ -904,10 +909,15 @@ Querschnitt:
 > Die Admin-Endpunkte sind seit Etappe 4.0 im OpenAPI-Vertrag beschrieben, `api:types`
 > liefert sie also mit.
 
-- [ ] **Auth — die erste Aufgabe der Phase, sie blockiert alles Weitere** (§10 Punkt 11).
-      Der alte Plan setzte Blazor Server voraus. Vorschlag: Passwort einmal gegen einen
-      Endpunkt prüfen, Backend setzt ein **HttpOnly-Cookie**, `api/admin/*` verlangt es —
-      damit liegt kein Token im JavaScript. `api/admin/*` ist bis dahin **komplett offen**.
+- [x] **Etappe 5.0 — Auth.** Passwort aus `Admin__Password`, geprüft gegen
+      `POST api/admin/auth/login`, Backend setzt ein **HttpOnly-Cookie**; alle
+      `api/admin/*` tragen `[Authorize]`. Kein Token im JavaScript. Fehlt das Passwort,
+      **bricht der Start ab** — ein stiller Start ohne Schutz wäre schlimmer. Im Frontend
+      hat `ApiResult` dafür einen fünften Ausgang `unauthorized` bekommen; ohne ihn liefe
+      ein abgelaufenes Cookie als `rejected` durch und die Anmeldung käme nie. Schließt
+      §10 Punkt 11
+- [ ] **Etappe 5.1 — Gerüst.** Routing unter `/verwaltung`, `AdminLayout` mit eigener
+      Seitenleiste, Formularbausteine, gespiegelte Validierungsgrenzen
 - [ ] Eigener Admin-Bereich unter `/admin` mit eigener Navigation
 - [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
 - [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
@@ -1137,6 +1147,32 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   `UTF8.GetBytes` hätte das anschließend noch einmal kodiert. Beide Seed-Skripte haben
   jetzt eine BOM. Das Senden war schon richtig, es fehlte nur das Lesen
 
+**Aus Phase 5:**
+
+- 2026-08-17 — `Frontend/src/api/client.ts` — der Accept-Kopf lautete
+  `application/json, text/plain`. Die API gibt Ablehnungen als nackten String zurück
+  (`BadRequest("...")`), und ASP.NET wählt dafür den **ersten passenden** Formatter aus
+  dem Accept-Kopf: also JSON. Damit kam jede Server-Ablehnung **JSON-kodiert samt
+  Anführungszeichen** an, und der Teilnehmer las
+  `"'notiz.txt' ist keine .java-Datei."` statt des Satzes. Genau die Stelle, an der
+  CLAUDE.md „im Wortlaut" verspricht. Behoben durch Umdrehen auf
+  `text/plain, application/json` — Objekte kommen weiterhin als JSON, für die kann der
+  `StringOutputFormatter` nicht einspringen. **Lehre:** Content-Negotiation ist eine
+  Reihenfolge, keine Menge; wer einen Text erwartet, muss ihn auch zuerst verlangen
+- 2026-08-17 — lokale Umgebung — das Anmelde-Cookie ist `Secure`. **Weder
+  `Invoke-WebRequest` noch `curl` senden ein `Secure`-Cookie über `http` zurück**, auch
+  nicht an `localhost`. Beide meldeten daraufhin 401 und sahen exakt wie ein kaputter
+  Server aus — der aber lieferte mit explizit gesetztem `Cookie`-Kopf brav 200.
+  Browser sind hier großzügiger: sie behandeln `localhost` als vertrauenswürdigen
+  Ursprung und nehmen das Cookie an, im Browser gemessen. **Lehre:** ein Auth-Fehlschlag
+  auf der Kommandozeile beweist nichts über den Browser — und `Invoke-WebRequest`
+  verwirft einen von Hand gesetzten `Cookie`-Kopf zusätzlich stillschweigend
+- 2026-08-17 — `.env` — beim Bearbeiten mit `Get-Content` + `Set-Content -Encoding utf8`
+  wurden die Rahmenzeichen `──` zu `â”€â”€`. Dieselbe Falle wie bei den Seed-Skripten,
+  nur andersherum: gelesen wurde UTF-8 ohne BOM als ANSI, geschrieben dann als UTF-8.
+  **Lehre:** vor dem Ändern einer Textdatei per PowerShell eine byte-genaue Kopie
+  anlegen (`Copy-Item`), nicht auf das Zurückschreiben vertrauen
+
 ---
 
 ## 10. Offene Entscheidungen
@@ -1177,11 +1213,13 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
     (`npm run api:types`), `Shared` ist nicht mehr der Vertrag. `JsonStringEnumConverter`
     ist gesetzt. **`ProblemDetails` bewusst nicht** — die Ablehnungen sind fertige
     deutsche Sätze in `text/plain` und werden im Wortlaut angezeigt (§8).
-11. **Auth für `api/admin/*`** — **weiter offen und jetzt blockierend für Phase 5.**
-    Der alte Plan (statisches Token, das dank Blazor Server den Browser nie verlässt)
-    ist mit dem React-Frontend hinfällig. Naheliegend: Passwort einmal gegen einen
-    Endpunkt prüfen, Backend setzt ein **HttpOnly-Cookie**, `api/admin/*` verlangt es.
-    Damit liegt kein Token im JavaScript. Bis dahin ist `api/admin/*` **komplett offen**.
+11. ~~**Auth für `api/admin/*`**~~ **Entschieden und umgesetzt in Etappe 5.0:** ein
+    Passwort aus `Admin__Password`, einmal gegen `POST api/admin/auth/login` geprüft,
+    danach trägt ein **HttpOnly-Cookie** den Zugang — im JavaScript liegt nichts.
+    `GET api/admin/auth/session` sagt dem Frontend beim Start, ob eine Anmeldung nötig
+    ist. Keine Benutzerverwaltung: der Workshop hat genau einen Betreuer.
+    **Offen bleibt für Phase 7:** das Cookie ist `Secure`, das trägt im Betrieb nur
+    über HTTPS.
 12. ~~**Werkzeuge.**~~ **Erledigt:** Context7 liefert aktuelle Bibliotheks-Doku
     (`.mcp.json`), der Browser kann messen und Screenshots machen, sobald die Anwendung
     aus dem Projekt heraus läuft (`.claude/launch.json`). **Eine Einschränkung bleibt:
