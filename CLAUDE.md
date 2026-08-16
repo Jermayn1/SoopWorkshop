@@ -2,12 +2,12 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappe 5.0 Auth
-> steht, `api/admin/*` ist nicht mehr offen). Das Frontend heißt **Soop Judge**
+> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 Auth
+> und 5.1 Gerüst stehen, `api/admin/*` ist nicht mehr offen). Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Als Nächstes kommt Etappe 5.1 (Admin-Gerüst).
+> siehe §6.1. Als Nächstes kommt Etappe 5.2 (Kategorien und Aufgaben bearbeiten).
 
 ---
 
@@ -238,10 +238,15 @@ archive/SoopWorkshop.Frontend.*      stillgelegtes Blazor-Frontend, nicht in der
 
 ```
 src/api/         schema.d.ts (erzeugt) · types.ts · mappers.ts · client.ts ·
-                 endpoints.ts · uploadLimits.ts
+                 endpoints.ts · uploadLimits.ts · labels.ts
 src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark
 src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
+src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation
+  api/           session · catalog
+  components/    AdminLayout · AdminSidebar · Field · TextInput · TextArea ·
+                 NumberInput · Select · Checkbox · formStyles
+  pages/         LoginPage · OverviewPage · TaskEditorPage
 ```
 
 **Warum zwischen `schema.d.ts` und der Oberfläche noch `mappers.ts` steht:** .NET gibt
@@ -916,8 +921,13 @@ Querschnitt:
       hat `ApiResult` dafür einen fünften Ausgang `unauthorized` bekommen; ohne ihn liefe
       ein abgelaufenes Cookie als `rejected` durch und die Anmeldung käme nie. Schließt
       §10 Punkt 11
-- [ ] **Etappe 5.1 — Gerüst.** Routing unter `/verwaltung`, `AdminLayout` mit eigener
-      Seitenleiste, Formularbausteine, gespiegelte Validierungsgrenzen
+- [x] **Etappe 5.1 — Gerüst.** Routing unter `/verwaltung`, `AdminLayout` als eigener
+      Rahmen mit eigener Seitenleiste (zeigt **auch die verborgenen** Kategorien und
+      Aufgaben), Übersichtsseite mit echten Daten, Formularbausteine,
+      `admin/validation.ts` mit den gespiegelten DataAnnotations-Grenzen.
+      `@tailwindcss/typography` nachinstalliert — die `prose`-Klassen in `TaskPage`
+      waren seit Phase 4 wirkungslos. Die Enum-Beschriftungen liegen jetzt in
+      `api/labels.ts`, weil Teilnehmersicht und Verwaltung dieselben Wörter brauchen
 - [ ] Eigener Admin-Bereich unter `/admin` mit eigener Navigation
 - [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
 - [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
@@ -1167,6 +1177,14 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   Ursprung und nehmen das Cookie an, im Browser gemessen. **Lehre:** ein Auth-Fehlschlag
   auf der Kommandozeile beweist nichts über den Browser — und `Invoke-WebRequest`
   verwirft einen von Hand gesetzten `Cookie`-Kopf zusätzlich stillschweigend
+- 2026-08-17 — `Frontend/src/index.css` — `@tailwindcss/typography` war nie installiert,
+  obwohl `TaskPage` seit Phase 4 `prose prose-slate prose-p:… prose-code:…` benutzt.
+  Tailwind kennt `prose` nicht von sich aus: **die ganze Klassenkette war still
+  wirkungslos**, die Aufgabenbeschreibung wurde unformatiert gesetzt. Fällt nicht auf,
+  weil eine unbekannte Utility-Klasse keinen Fehler erzeugt, sondern nichts tut.
+  Behoben mit `@plugin '@tailwindcss/typography'`; nachgemessen am Absatzabstand
+  (20 px statt 0 nach dem Preflight-Reset). **Lehre:** dieselbe wie beim `::deep`-Fund
+  aus Phase 4 — eine plausibel aussehende Klassenkette ist kein Beleg
 - 2026-08-17 — `.env` — beim Bearbeiten mit `Get-Content` + `Set-Content -Encoding utf8`
   wurden die Rahmenzeichen `──` zu `â”€â”€`. Dieselbe Falle wie bei den Seed-Skripten,
   nur andersherum: gelesen wurde UTF-8 ohne BOM als ANSI, geschrieben dann als UTF-8.

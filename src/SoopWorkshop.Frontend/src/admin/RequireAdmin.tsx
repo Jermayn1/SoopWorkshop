@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import { useAdminSession } from './useAdminSession'
 import { LoginPage } from './pages/LoginPage'
-import type { AdminOutletContext } from './adminOutlet'
+import type { AdminSessionContext } from './adminOutlet'
 
 // Wache vor dem gesamten Verwaltungsbereich.
 //
@@ -56,5 +56,5 @@ export function RequireAdmin() {
     return <LoginPage onSignIn={signIn} />
   }
 
-  return <Outlet context={{ signOut } satisfies AdminOutletContext} />
+  return <Outlet context={{ signOut } satisfies AdminSessionContext} />
 }

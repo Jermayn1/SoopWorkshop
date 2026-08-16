@@ -1,12 +1,29 @@
 import { useOutletContext } from 'react-router-dom'
+import type { Category } from '../api/types'
 
-// Der Anmeldezustand lebt in RequireAdmin, damit er genau einmal geprueft
-// wird. Alles darunter kommt ueber den Outlet-Kontext daran — das spart einen
-// eigenen React-Context fuer einen einzigen Wert.
-export type AdminOutletContext = {
+// Zwei Ebenen, zwei Kontexte.
+//
+// RequireAdmin haelt den Anmeldezustand, AdminLayout darunter den geladenen
+// Bestand. Beide reichen ueber den Outlet-Kontext weiter — ein geschachtelter
+// Outlet ERSETZT den Kontext seines Elters, deshalb nimmt AdminLayout signOut
+// mit auf und gibt es weiter, statt es zu verlieren.
+
+export type AdminSessionContext = {
   signOut: () => Promise<void>
 }
 
-export function useAdminOutlet(): AdminOutletContext {
-  return useOutletContext<AdminOutletContext>()
+export type AdminCatalogContext = AdminSessionContext & {
+  categories: Category[]
+  loading: boolean
+  error: string | null
+  /** Laedt den Bestand neu — nach dem Anlegen, Aendern oder Loeschen. */
+  reload: () => void
+}
+
+export function useAdminSessionContext(): AdminSessionContext {
+  return useOutletContext<AdminSessionContext>()
+}
+
+export function useAdminCatalog(): AdminCatalogContext {
+  return useOutletContext<AdminCatalogContext>()
 }

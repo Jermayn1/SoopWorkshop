@@ -7,6 +7,8 @@ import type {
   Submission,
   SubmissionState,
   Task,
+  TaskCategoryWeight,
+  TaskTest,
   TestCaseResult,
   UnitTestFile,
 } from './types'
@@ -39,12 +41,37 @@ function toHint(dto: Schemas['TaskHintDto']): Hint {
   }
 }
 
-function toUnitTestFile(dto: Schemas['TaskUnitTestFileDto']): UnitTestFile {
+export function toUnitTestFile(dto: Schemas['TaskUnitTestFileDto']): UnitTestFile {
   return {
     id: dto.id ?? '',
     fileName: dto.fileName ?? '',
     content: dto.content ?? '',
     order: toNumber(dto.order),
+    isVisibleToParticipant: dto.isVisibleToParticipant ?? false,
+  }
+}
+
+export function toTaskTest(dto: Schemas['TaskTestDto']): TaskTest {
+  return {
+    id: dto.id ?? '',
+    taskItemId: dto.taskItemId ?? '',
+    input: dto.input ?? '',
+    expectedOutput: dto.expectedOutput ?? '',
+    description: dto.description ?? '',
+    order: toNumber(dto.order),
+  }
+}
+
+export function toTaskCategoryWeight(
+  dto: Schemas['TaskCategoryWeightDto'],
+): TaskCategoryWeight {
+  return {
+    id: dto.id ?? '',
+    taskItemId: dto.taskItemId ?? '',
+    category: dto.category ?? 'CleanCode',
+    // Gewichte sind Kommazahlen, nicht ganzzahlig — toNumber wuerde die
+    // Nachkommastellen abschneiden.
+    weight: typeof dto.weight === 'number' ? dto.weight : 0,
   }
 }
 
@@ -56,6 +83,7 @@ export function toTask(dto: Schemas['TaskItemDto']): Task {
     description: dto.description ?? '',
     difficulty: dto.difficulty ?? 'Easy',
     order: toNumber(dto.order),
+    isVisible: dto.isVisible ?? false,
     evaluationMode: dto.evaluationMode ?? 'ConsoleOnly',
     expectedClassName: dto.expectedClassName ?? null,
     expectedMethods: dto.expectedMethods ?? [],
@@ -73,6 +101,7 @@ export function toCategory(dto: Schemas['TaskCategoryDto']): Category {
     id: dto.id ?? '',
     name: dto.name ?? '',
     order: toNumber(dto.order),
+    isVisible: dto.isVisible ?? false,
     tasks: (dto.tasks ?? []).map(toTask).sort((a, b) => a.order - b.order),
   }
 }

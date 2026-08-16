@@ -5,7 +5,9 @@ import { TaskPage } from './pages/TaskPage'
 import { ResultPage } from './pages/ResultPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RequireAdmin } from './admin/RequireAdmin'
-import { AdminHomePage } from './admin/pages/AdminHomePage'
+import { AdminLayout } from './admin/components/AdminLayout'
+import { OverviewPage } from './admin/pages/OverviewPage'
+import { TaskEditorPage } from './admin/pages/TaskEditorPage'
 
 export default function App() {
   return (
@@ -25,7 +27,10 @@ export default function App() {
           Teilnehmersicht weder Seitenleiste noch Kopfzeile. RequireAdmin zeigt
           davor die Anmeldung, ohne die Adresse zu wechseln. */}
       <Route path="/verwaltung" element={<RequireAdmin />}>
-        <Route index element={<AdminHomePage />} />
+        <Route element={<AdminLayout />}>
+          <Route index element={<OverviewPage />} />
+          <Route path="aufgaben/:taskId" element={<TaskEditorPage />} />
+        </Route>
       </Route>
     </Routes>
   )

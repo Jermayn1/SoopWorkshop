@@ -5,6 +5,13 @@
 @import '@fontsource-variable/plus-jakarta-sans';
 @import '@fontsource-variable/jetbrains-mono';
 
+/* Setzt die prose-Klassen um, mit denen die Aufgabenbeschreibung (Markdown)
+   gesetzt wird. Sie standen seit Phase 4 in TaskPage, ohne dass das Plugin
+   eingebunden war - Tailwind kennt "prose" nicht von sich aus, die Klassen
+   waren also still wirkungslos. In Tailwind 4 wird ein Plugin hier geladen
+   und nicht mehr in einer tailwind.config.js. */
+@plugin '@tailwindcss/typography';
+
 /* Keine eigene Farbpalette. Die Komponenten benutzen Tailwinds Standardfarben
    (slate, indigo, emerald, rose, amber) genau so wie im Referenzprojekt —
    der Feinschliff an Farben und Abstaenden passiert von Hand.

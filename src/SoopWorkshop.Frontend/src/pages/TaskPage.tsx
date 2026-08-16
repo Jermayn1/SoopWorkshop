@@ -14,25 +14,8 @@ import ReactMarkdown from 'react-markdown'
 import { HintPanel } from '../components/HintPanel'
 import { createSubmission, fetchTask } from '../api/endpoints'
 import { UPLOAD_LIMITS, checkFiles, formatBytes } from '../api/uploadLimits'
-import type { Difficulty, Task } from '../api/types'
-
-const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  Easy: 'Leicht',
-  Medium: 'Mittel',
-  Hard: 'Schwer',
-}
-
-const DIFFICULTY_CLASSES: Record<Difficulty, string> = {
-  Easy: 'bg-emerald-100 text-emerald-800',
-  Medium: 'bg-amber-100 text-amber-800',
-  Hard: 'bg-rose-100 text-rose-800',
-}
-
-const MODE_LABELS = {
-  ConsoleOnly: 'Konsole',
-  UnitTestOnly: 'Unit-Tests',
-  Both: 'Konsole + Unit-Tests',
-} as const
+import type { Task } from '../api/types'
+import { DIFFICULTY_CLASSES, DIFFICULTY_LABELS, MODE_LABELS } from '../api/labels'
 
 type LoadState =
   | { kind: 'loading' }
