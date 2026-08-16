@@ -26,8 +26,11 @@ function ScoreCircle({ score }: { score: number }) {
   }, [count, score])
 
   const great = score >= 80
+  // Der hellste Punkt des Verlaufs traegt die weisse Zahl und muss deshalb
+  // 3:1 halten (Grossschrift). Nachgemessen: emerald-500 lag bei 2,47:1,
+  // emerald-600 liegt bei 3,77:1. Blau (3,76) und Rot (3,75) passen ab -500.
   const gradient = great
-    ? 'from-emerald-500 to-emerald-700'
+    ? 'from-emerald-600 to-emerald-800'
     : score >= 50
       ? 'from-blue-500 to-blue-700'
       : 'from-rose-500 to-rose-700'
