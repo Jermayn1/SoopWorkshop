@@ -109,7 +109,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             Name = category.Name,
             Order = category.Order,
             IsVisible = category.IsVisible,
-            Tasks = category.Tasks.Select(t => new TaskItemDto
+            // Nach Order sortieren: die Aufgaben einer Kategorie bauen aufeinander auf.
+            // Ohne das kam heraus, was die Datenbank gerade zurueckgab - und das ist
+            // keine Reihenfolge, auf die man sich verlassen kann.
+            Tasks = category.Tasks.OrderBy(t => t.Order).Select(t => new TaskItemDto
             {
                 Id = t.Id,
                 TaskCategoryId = t.TaskCategoryId,

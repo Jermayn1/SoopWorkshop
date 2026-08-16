@@ -1,5 +1,18 @@
-﻿@page "/not-found"
-@layout MainLayout
+@page "/not-found"
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>Seite nicht gefunden - SoopWorkshop</PageTitle>
+
+<MudStack Spacing="4" Class="mt-8" AlignItems="AlignItems.Start">
+    <MudText Typo="Typo.h4">Diese Seite gibt es nicht</MudText>
+
+    <MudText Typo="Typo.body1" Class="mud-text-secondary">
+        Der Link stimmt nicht, oder die Aufgabe wurde inzwischen ausgeblendet.
+    </MudText>
+
+    <MudButton Href="/"
+               Variant="Variant.Outlined"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.ArrowBack">
+        Zur Startseite
+    </MudButton>
+</MudStack>

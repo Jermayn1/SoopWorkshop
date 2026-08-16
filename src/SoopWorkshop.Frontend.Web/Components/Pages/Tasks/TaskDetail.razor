@@ -4,11 +4,35 @@
 
 @if (_isLoading)
 {
-    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    @* Skeletons in der Form, die gleich kommt: Titel, Beschreibungsblock, Abgabeblock.
+       Ein einzelner Spinner sagt nur "es passiert etwas", nicht "was". *@
+    <MudStack Spacing="4">
+        <MudSkeleton Width="40%" Height="42px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="140px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" />
+    </MudStack>
+}
+else if (_loadError is not null)
+{
+    @* Nicht dasselbe wie "gibt es nicht": hier gibt es die Aufgabe sehr wohl, nur der
+       Server antwortet gerade nicht. Deshalb ein zweiter Versuch statt einer Absage. *@
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+        <MudStack Spacing="3" AlignItems="AlignItems.Start">
+            <MudText Typo="Typo.body1">@_loadError</MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="RetryLoadAsync">
+                Erneut versuchen
+            </MudButton>
+        </MudStack>
+    </MudAlert>
 }
 else if (_task is null)
 {
-    <MudAlert Severity="Severity.Error">Aufgabe nicht gefunden.</MudAlert>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+        Diese Aufgabe gibt es nicht (mehr).
+    </MudAlert>
 }
 else
 {
@@ -21,7 +45,7 @@ else
             </MudChip>
         </MudStack>
 
-        <MudPaper Elevation="2" Class="pa-4">
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4">
             <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
                 @_task.Description
             </MudText>
@@ -51,7 +75,7 @@ else
             </MudExpansionPanels>
         }
 
-        <MudPaper Elevation="2" Class="pa-4">
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4">
             <MudText Typo="Typo.h6" GutterBottom="true">Lösung abgeben</MudText>
 
             <MudFileUpload T="IReadOnlyList<IBrowserFile>"

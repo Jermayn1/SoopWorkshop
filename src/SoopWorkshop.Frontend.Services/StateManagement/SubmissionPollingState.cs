@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SoopWorkshop.Frontend.Services.HttpClients;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.Enums;
@@ -14,6 +15,7 @@ namespace SoopWorkshop.Frontend.Services.StateManagement
         private const int MaxAttempts = 150;
 
         private readonly SubmissionApiClient _submissionApiClient;
+        private readonly ILogger<SubmissionPollingState> _logger;
         private CancellationTokenSource? _cts;
 
         // Sobald ein Ergebnis vorliegt abboniert das UI das Event und ruft StatehasChanged() auf, um neu zu rendern
@@ -25,9 +27,12 @@ namespace SoopWorkshop.Frontend.Services.StateManagement
         public EvaluationResultDto? CurrentResult { get; private set; }
         public bool IsPolling { get; private set; }
 
-        public SubmissionPollingState(SubmissionApiClient submissionApiClient)
+        public SubmissionPollingState(
+            SubmissionApiClient submissionApiClient,
+            ILogger<SubmissionPollingState> logger)
         {
             _submissionApiClient = submissionApiClient;
+            _logger = logger;
         }
 
         // Startet die Auswertung für eine Submission
@@ -107,7 +112,14 @@ namespace SoopWorkshop.Frontend.Services.StateManagement
                 }
                 catch (Exception ex)
                 {
-                    Fail(ex.Message);
+                    // Die Rohmeldung gehoert ins Log, nicht auf den Bildschirm: ein
+                    // "No connection could be made because the target machine actively
+                    // refused it" sagt dem Teilnehmer nichts und beunruhigt nur.
+                    _logger.LogError(ex,
+                        "Das Abfragen des Auswertungsstands zu Abgabe {SubmissionId} ist fehlgeschlagen.",
+                        submissionId);
+
+                    Fail("Der Auswertungsstand konnte nicht abgerufen werden. Bitte lade die Seite neu.");
                     break;
                 }
             }
