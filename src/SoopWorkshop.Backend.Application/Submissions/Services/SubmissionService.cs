@@ -88,6 +88,7 @@ public class SubmissionService(
         return Result<SubmissionStatusDto>.Ok(new SubmissionStatusDto
         {
             Id = submission.Id,
+            TaskItemId = submission.TaskItemId,
             Status = submission.Status,
             SubmittedAt = submission.SubmittedAt,
             ErrorMessage = submission.ErrorMessage

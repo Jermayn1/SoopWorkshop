@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
+using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
@@ -18,7 +19,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetByTaskItem(Guid taskItemId)
+        [ProducesResponseType<List<TaskCategoryWeightDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskCategoryWeightDto>>> GetByTaskItem(Guid taskItemId)
         {
             var result = await _service.GetByTaskItemIdAsync(taskItemId);
 
@@ -30,7 +33,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         // Ersetzt alle Gewichte der Aufgabe. Eine leere Liste stellt die
         // Standardgewichte wieder her.
         [HttpPut]
-        public async Task<IActionResult> SaveAll(Guid taskItemId, [FromBody] SaveTaskCategoryWeightsDto dto)
+        [ProducesResponseType<List<TaskCategoryWeightDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskCategoryWeightDto>>> SaveAll(Guid taskItemId, [FromBody] SaveTaskCategoryWeightsDto dto)
         {
             if (taskItemId != dto.TaskItemId)
                 return BadRequest("Die TaskItemId in der URL stimmt nicht mit der ID im Body überein.");

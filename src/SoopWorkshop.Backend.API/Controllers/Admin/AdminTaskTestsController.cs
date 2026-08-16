@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
+using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
@@ -16,7 +17,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetByTaskItem(Guid taskItemId)
+        [ProducesResponseType<List<TaskTestDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskTestDto>>> GetByTaskItem(Guid taskItemId)
         {
             var result = await _taskTestService.GetByTaskItemIdAsync(taskItemId);
 
@@ -26,7 +29,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Guid taskItemId, [FromBody] CreateTaskTestDto dto)
+        [ProducesResponseType<TaskTestDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<TaskTestDto>> Create(Guid taskItemId, [FromBody] CreateTaskTestDto dto)
         {
             if (taskItemId != dto.TaskItemId)
                 return BadRequest("Die TaskItemId in der URL stimmt nicht mit der ID im Body überein.");
@@ -39,7 +44,10 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid taskItemId, Guid id, [FromBody] UpdateTaskTestDto dto)
+        [ProducesResponseType<TaskTestDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskTestDto>> Update(Guid taskItemId, Guid id, [FromBody] UpdateTaskTestDto dto)
         {
             if (id != dto.Id)
                 return BadRequest("Die ID in der URL stimmt nicht mit der ID im Body überein.");
@@ -52,7 +60,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid taskItemId, Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(Guid taskItemId, Guid id)
         {
             var result = await _taskTestService.DeleteAsync(id);
 

@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
+using SoopWorkshop.Shared.DTOs.Tasks;
 
 namespace SoopWorkshop.Backend.API.Controllers
 {
@@ -18,7 +19,9 @@ namespace SoopWorkshop.Backend.API.Controllers
 
         // Gibt alle sichtbaren Kategorien und ihre sichtbaren Aufgaben zurück
         [HttpGet("categories")]
-        public async Task<IActionResult> GetVisibleCategories()
+        [ProducesResponseType<List<TaskCategoryDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskCategoryDto>>> GetVisibleCategories()
         {
             var result = await _categoryService.GetAllVisibleAsync();
 
@@ -29,7 +32,9 @@ namespace SoopWorkshop.Backend.API.Controllers
 
         // Gibt die Details einer Aufgabe zurück (Aufgabenstellung, Tipps, etc.)
         [HttpGet("tasks/{id:guid}")]
-        public async Task<IActionResult> GetTaskById(Guid id)
+        [ProducesResponseType<TaskItemDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskItemDto>> GetTaskById(Guid id)
         {
             var result = await _taskItemService.GetByIdAsync(id);
 

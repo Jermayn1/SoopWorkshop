@@ -1,7 +1,16 @@
+using System.Text.Json.Serialization;
+
 namespace SoopWorkshop.Shared.Enums
 {
     // Die Werte liegen als int in der Datenbank. Neue Kategorien werden deshalb
     // ausschliesslich angehaengt - wird umsortiert, deutet das Altbestaende um.
+    //
+    // Ueber die Leitung gehen sie dagegen als Zeichenkette. Der Konverter steht
+    // bewusst am Typ und nicht nur global in AddJsonOptions: der OpenAPI-Erzeuger
+    // liest den Typ, die globale Registrierung nur die Laufzeit. Stand beides nicht
+    // im Einklang, verschickte die API "Easy", waehrend der erzeugte Vertrag eine
+    // Zahl versprach - und das Frontend haette sich still darauf verlassen.
+    [JsonConverter(typeof(JsonStringEnumConverter<EvaluationCategory>))]
     public enum EvaluationCategory
     {
         // Altlast: seit der Bewertungs-Engine v2 sind Zeichensatz und

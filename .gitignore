@@ -434,3 +434,8 @@ Gedanken.md
 # Jetbrains Rider
 .idea/
 *.sln.iml
+
+# Referenzprojekt fuer das neue Frontend (React-Prototyp mit Python-Backend).
+# Dient nur als Ideengeber fuer Aufbau und Erscheinungsbild und wird am Ende
+# von Phase 4 geloescht — es gehoert nicht in die Historie.
+FrontRef/
