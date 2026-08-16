@@ -1,15 +1,9 @@
-import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
 export function NotFoundPage() {
   return (
     <div className="flex-1 flex items-center justify-center bg-white p-8 text-center">
-      <motion.div
-        initial={{ y: 12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="max-w-md"
-      >
+      <div className="anim-auf max-w-md">
         <p className="font-mono text-xs uppercase tracking-widest text-slate-500 mb-2">
           Fehler 404
         </p>
@@ -21,7 +15,7 @@ export function NotFoundPage() {
         >
           Zur Aufgabenliste
         </Link>
-      </motion.div>
+      </div>
     </div>
   )
 }

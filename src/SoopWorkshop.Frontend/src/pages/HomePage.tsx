@@ -1,15 +1,9 @@
-import { motion } from 'framer-motion'
 import { FileText } from 'lucide-react'
 
 export function HomePage() {
   return (
     <div className="flex-1 flex items-center justify-center bg-white p-8 text-center">
-      <motion.div
-        initial={{ y: 12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="max-w-md"
-      >
+      <div className="anim-auf max-w-md">
         <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
           <FileText className="w-10 h-10 text-slate-400" aria-hidden="true" />
         </div>
@@ -17,7 +11,7 @@ export function HomePage() {
           Bereit für die nächste Herausforderung?
         </h1>
         <p className="text-slate-600">Wähle links eine Aufgabe aus der Liste aus, um zu beginnen.</p>
-      </motion.div>
+      </div>
     </div>
   )
 }

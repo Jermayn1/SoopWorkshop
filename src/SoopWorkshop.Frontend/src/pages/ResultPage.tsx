@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { AlertTriangle, ArrowLeft, Clock, Loader2, Trophy } from 'lucide-react'
 import { CategoryCard } from '../components/CategoryCard'
 import { useSubmissionPolling } from '../hooks/useSubmissionPolling'
@@ -16,19 +15,47 @@ function orderOf(category: EvaluationCategory): number {
   return index < 0 ? CATEGORY_ORDER.length : index
 }
 
-function ScoreCircle({ score }: { score: number }) {
-  const count = useMotionValue(0)
-  const rounded = useTransform(count, (value) => Math.round(value))
+// Zählt von 0 auf den Zielwert. Bewusst mit requestAnimationFrame statt über
+// eine Animationsbibliothek — das sind zwanzig Zeilen und kann nicht dazu
+// führen, dass am Ende etwas Unsichtbares stehen bleibt.
+function useCountUp(target: number, durationMs = 1100, delayMs = 250): number {
+  const [value, setValue] = useState(0)
 
   useEffect(() => {
-    const controls = animate(count, score, { duration: 1.2, delay: 0.3, ease: 'easeOut' })
-    return () => controls.stop()
-  }, [count, score])
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setValue(target)
+      return
+    }
 
+    let frame = 0
+    let start = 0
+    const step = (now: number) => {
+      if (start === 0) start = now
+      const elapsed = now - start - delayMs
+      if (elapsed < 0) {
+        frame = requestAnimationFrame(step)
+        return
+      }
+      const fortschritt = Math.min(elapsed / durationMs, 1)
+      // easeOutCubic — schnell los, sanft ankommen
+      setValue(Math.round(target * (1 - Math.pow(1 - fortschritt, 3))))
+      if (fortschritt < 1) frame = requestAnimationFrame(step)
+    }
+
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [target, durationMs, delayMs])
+
+  return value
+}
+
+function ScoreCircle({ score }: { score: number }) {
+  const gezeigt = useCountUp(score)
   const great = score >= 80
-  // Der hellste Punkt des Verlaufs traegt die weisse Zahl und muss deshalb
-  // 3:1 halten (Grossschrift). Nachgemessen: emerald-500 lag bei 2,47:1,
-  // emerald-600 liegt bei 3,77:1. Blau (3,76) und Rot (3,75) passen ab -500.
+
+  // Der hellste Punkt des Verlaufs trägt die weiße Zahl und muss deshalb
+  // 3:1 halten (Großschrift). Nachgemessen: emerald-500 lag bei 2,47:1,
+  // emerald-600 liegt bei 3,65:1. Blau (3,76) und Rot (3,75) passen ab -500.
   const gradient = great
     ? 'from-emerald-600 to-emerald-800'
     : score >= 50
@@ -36,54 +63,37 @@ function ScoreCircle({ score }: { score: number }) {
       : 'from-rose-500 to-rose-700'
 
   return (
-    <motion.div
-      initial={{ scale: 0, rotate: -15 }}
-      animate={{ scale: 1, rotate: 0 }}
-      transition={{ type: 'spring', stiffness: 180, damping: 18 }}
-      className="relative inline-block mb-6"
-    >
+    <div className="anim-feder relative inline-block mb-6">
       <div
         className={`w-36 h-36 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl ring-8 ring-white`}
       >
         <div className="text-white text-center">
-          <motion.div className="text-5xl font-black tabular-nums leading-none">
-            {rounded}
-          </motion.div>
+          <div className="text-5xl font-black tabular-nums leading-none">{gezeigt}</div>
           <div className="text-xs font-semibold uppercase tracking-widest opacity-90 mt-1">
             von 100
           </div>
         </div>
       </div>
       {great && (
-        <motion.div
-          animate={{ rotate: [0, 12, -12, 12, 0] }}
-          transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-          className="absolute -top-3 -right-3 bg-amber-500 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
-        >
+        <div className="anim-wackeln absolute -top-3 -right-3 bg-amber-500 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
           <Trophy className="w-5 h-5 text-white" aria-hidden="true" />
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
 function Waiting({ title, text }: { title: string; text: string }) {
   return (
     <div className="flex-1 flex items-center justify-center bg-slate-50 p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md text-center"
-        role="status"
-        aria-live="polite"
-      >
+      <div className="anim-auf max-w-md text-center" role="status" aria-live="polite">
         <Loader2
           className="w-10 h-10 text-indigo-600 animate-spin mx-auto mb-5"
           aria-hidden="true"
         />
         <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
         <p className="text-slate-600">{text}</p>
-      </motion.div>
+      </div>
     </div>
   )
 }
@@ -147,11 +157,7 @@ export function ResultPage() {
       <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
         <div className="max-w-3xl mx-auto">
           {backLink}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-rose-200 bg-white overflow-hidden shadow-sm"
-          >
+          <div className="anim-auf rounded-2xl border border-rose-200 bg-white overflow-hidden shadow-sm">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-rose-100 bg-rose-50">
               <AlertTriangle className="w-5 h-5 text-rose-700" aria-hidden="true" />
               <h2 className="font-bold text-slate-800">Die Auswertung ist nicht durchgelaufen</h2>
@@ -164,7 +170,7 @@ export function ResultPage() {
                 Du kannst die Aufgabe erneut abgeben.
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -192,24 +198,17 @@ export function ResultPage() {
 
         <div className="text-center mb-10">
           <ScoreCircle score={result.totalScore} />
-          <motion.h1
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-3xl font-extrabold text-slate-900 mb-2"
+          <h1
+            className="anim-auf text-3xl font-extrabold text-slate-900 mb-2"
+            style={{ animationDelay: '380ms' }}
           >
             {headline}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-slate-600 text-sm"
-          >
+          </h1>
+          <p className="anim-ein text-slate-600 text-sm" style={{ animationDelay: '480ms' }}>
             {open === 0
               ? 'Alle Teilprüfungen bestanden.'
               : `${passed} bestanden, ${open} offen. Klapp die Kategorien auf, um zu sehen, woran es liegt.`}
-          </motion.p>
+          </p>
         </div>
 
         <div className="space-y-3">

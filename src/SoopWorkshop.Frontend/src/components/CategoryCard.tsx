@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import type { CategoryResult, TestCaseResult } from '../api/types'
 
@@ -22,13 +21,11 @@ function TestCaseRow({ test, index }: { test: TestCaseResult; index: number }) {
   const hasComparison = test.expectedOutput !== '' || test.actualOutput !== ''
 
   return (
-    <motion.div
-      initial={{ x: -8, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: index * 0.05 }}
-      className={`flex gap-3 p-3 rounded-xl border text-sm ${
+    <div
+      className={`anim-links flex gap-3 p-3 rounded-xl border text-sm ${
         test.passed ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
       }`}
+      style={{ animationDelay: `${index * 50}ms` }}
     >
       <div
         className={`mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
@@ -72,7 +69,7 @@ function TestCaseRow({ test, index }: { test: TestCaseResult; index: number }) {
           </dl>
         )}
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -83,21 +80,29 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
   const total = result.testCaseResults.length
   const hasDetails = total > 0 || result.errorTip !== ''
 
+  // Der Balken startet bei 0 und waechst erst nach dem ersten Anzeigen auf
+  // seinen Wert — sonst gaebe es nichts zu sehen, weil die Breite von Anfang
+  // an stimmen wuerde.
+  const [barWidth, setBarWidth] = useState(0)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setBarWidth(percentage), 60 + delay * 1000)
+    return () => window.clearTimeout(timer)
+  }, [percentage, delay])
+
   return (
-    <motion.div
-      initial={{ y: 16, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay, ease: 'easeOut' }}
-      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-shadow ${
+    <div
+      className={`anim-auf bg-white rounded-2xl border shadow-sm overflow-hidden transition-shadow ${
         open
           ? `${result.passed ? 'border-emerald-200' : 'border-rose-200'} shadow-md`
           : 'border-slate-200 hover:shadow-md'
       }`}
+      style={{ animationDelay: `${delay * 1000}ms` }}
     >
       <button
         type="button"
         onClick={() => hasDetails && setOpen((o) => !o)}
         aria-expanded={hasDetails ? open : undefined}
+        aria-controls={hasDetails ? `kategorie-detail-${result.id}` : undefined}
         className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors ${
           hasDetails ? 'hover:bg-slate-50/70 cursor-pointer' : 'cursor-default'
         }`}
@@ -112,15 +117,13 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
               <span className="text-slate-500 text-sm font-normal"> / {result.maxPoints}</span>
             </span>
             <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${percentage}%` }}
-                transition={{ duration: 1, delay: delay + 0.3 }}
-                className={`h-full ${
+              <div
+                className={`h-full rounded-full transition-[width] duration-700 ease-out ${
                   result.passed
                     ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
                     : 'bg-gradient-to-r from-rose-400 to-rose-600'
                 }`}
+                style={{ width: `${barWidth}%` }}
               />
             </div>
             {total > 0 && (
@@ -132,25 +135,22 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
         </div>
 
         {hasDetails && (
-          <motion.div
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-slate-500 shrink-0"
-          >
-            <ChevronDown className="w-5 h-5" aria-hidden="true" />
-          </motion.div>
+          <ChevronDown
+            className={`w-5 h-5 text-slate-500 shrink-0 transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+            aria-hidden="true"
+          />
         )}
       </button>
 
-      <AnimatePresence initial={false}>
-        {open && hasDetails && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
+      {hasDetails && (
+        <div
+          id={`kategorie-detail-${result.id}`}
+          className={`klapp ${open ? '' : 'klapp-zu'}`}
+          inert={!open}
+        >
+          <div className="klapp-inhalt">
             <div className="px-5 pb-5 pt-4 border-t border-slate-100 space-y-2">
               {result.errorTip !== '' && (
                 <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 whitespace-pre-wrap">
@@ -161,9 +161,9 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
                 <TestCaseRow key={test.id} test={test} index={index} />
               ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

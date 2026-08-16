@@ -42,6 +42,115 @@
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   Bewegung
+
+   Bewusst in CSS statt über eine Animationsbibliothek. motion/framer-motion
+   lief in diesem Aufbau in "Invalid hook call" (zweite React-Kopie in Vites
+   Vorbündelung) und blieb auf den Startwerten stehen — Abschnitte mit
+   opacity 0 blieben damit dauerhaft unsichtbar. Ein Einblenden, das im
+   Fehlerfall Inhalt verschluckt, ist schlechter als gar keins.
+
+   Alle Keyframes enden auf dem sichtbaren Zustand und laufen mit "both",
+   damit nichts unsichtbar hängen bleibt.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes auf-und-ein {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes von-links-ein {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nur-ein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hoch-und-federn {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) rotate(-15deg);
+  }
+  70% {
+    transform: scale(1.06) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes wackeln {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(12deg);
+  }
+  75% {
+    transform: rotate(-12deg);
+  }
+}
+
+@utility anim-auf {
+  animation: auf-und-ein 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility anim-links {
+  animation: von-links-ein 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility anim-ein {
+  animation: nur-ein 0.5s ease-out both;
+}
+
+@utility anim-feder {
+  animation: hoch-und-federn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@utility anim-wackeln {
+  animation: wackeln 2.5s ease-in-out infinite;
+}
+
+/* Ein- und Ausklappen ohne feste Hoehe: Das Raster faehrt die Zeile von 1fr
+   auf 0fr, das Kind muss dafuer min-height 0 haben. Zuverlaessiger als eine
+   Hoehenanimation in JavaScript und ohne gemessene Werte. */
+@utility klapp {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 220ms ease-in-out;
+}
+
+@utility klapp-zu {
+  grid-template-rows: 0fr;
+}
+
+@utility klapp-inhalt {
+  overflow: hidden;
+  min-height: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
