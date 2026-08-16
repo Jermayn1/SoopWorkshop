@@ -435,6 +435,9 @@ Gedanken.md
 .idea/
 *.sln.iml
 
+# Claude Code — launch.json gehoert ins Projekt, die Einstellungen nicht
+.claude/settings.local.json
+
 # Referenzprojekt fuer das neue Frontend (React-Prototyp mit Python-Backend).
 # Dient nur als Ideengeber fuer Aufbau und Erscheinungsbild und wird am Ende
 # von Phase 4 geloescht — es gehoert nicht in die Historie.

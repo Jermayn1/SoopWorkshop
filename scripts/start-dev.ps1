@@ -5,13 +5,13 @@
 
 .DESCRIPTION
     Prueft den PostgreSQL-Container und startet ihn bei Bedarf, baut die Solution
-    und startet das Backend in einem eigenen Fenster.
+    und startet Backend und Frontend in je einem eigenen Fenster.
 
-    Ein Frontend gibt es derzeit nicht: das Blazor-Frontend ist seit dem 2026-08-16
-    stillgelegt (siehe archive/README.md), das neue ist noch nicht gebaut. Solange
-    fuehrt der Weg ueber http://localhost:5120/scalar.
+    Das Frontend ist seit Phase 4 React + Vite (src\SoopWorkshop.Frontend) und
+    laeuft auf Port 5173 — derselbe Port steht im Backend unter
+    Cors:AllowedOrigins. Fehlen die npm-Pakete, werden sie einmalig installiert.
 
-    Zum Beenden das Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
+    Zum Beenden die Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
 
 .PARAMETER SkipBuild
     Ueberspringt den Build. Nuetzlich, wenn gerade erst gebaut wurde.
@@ -38,6 +38,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 $backendUrl = 'http://localhost:5120'
+$frontendUrl = 'http://localhost:5173'
+$frontendPath = Join-Path $repoRoot 'src\SoopWorkshop.Frontend'
 
 function Write-Step {
     param([string]$Text)
@@ -127,8 +129,6 @@ if (-not $SkipBuild) {
 }
 
 # ── 3. Dienste starten ──────────────────────────────────────────
-# Der Frontend-Block ist entfallen, solange kein Frontend existiert. Zum
-# Reaktivieren des alten siehe archive/README.md.
 Write-Step 'Backend starten'
 
 if (Test-Port -Port 5120) {
@@ -139,11 +139,34 @@ else {
     Wait-ForPort -Port 5120 -Name 'Backend' | Out-Null
 }
 
+Write-Step 'Frontend starten'
+
+if (Test-Port -Port 5173) {
+    Write-Host "    Port 5173 ist belegt - Frontend laeuft vermutlich schon." -ForegroundColor Yellow
+}
+elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host '    npm nicht gefunden. Node.js installieren, dann erneut starten.' -ForegroundColor Yellow
+}
+else {
+    # Beim ersten Start fehlen die Pakete. Ohne diesen Zweig bricht Vite mit
+    # einer Meldung ab, die nach einem kaputten Projekt aussieht.
+    if (-not (Test-Path (Join-Path $frontendPath 'node_modules'))) {
+        Write-Host '    node_modules fehlt - npm install laeuft einmalig ...'
+        npm --prefix $frontendPath install
+        if ($LASTEXITCODE -ne 0) { throw 'npm install fehlgeschlagen.' }
+    }
+
+    $command = "`$Host.UI.RawUI.WindowTitle = 'SoopWorkshop Frontend'; npm --prefix '$frontendPath' run dev"
+    Start-Process -FilePath 'powershell' -ArgumentList '-NoExit', '-Command', $command | Out-Null
+    Write-Host '    SoopWorkshop Frontend gestartet.' -ForegroundColor Green
+    Wait-ForPort -Port 5173 -Name 'Frontend' | Out-Null
+}
+
 # ── 4. Uebersicht ───────────────────────────────────────────────
 Write-Step 'Bereit'
+Write-Host "    Frontend   $frontendUrl"
 Write-Host "    API        $backendUrl"
 Write-Host "    API-Doku   $backendUrl/scalar"
 Write-Host ''
-Write-Host '    Kein Frontend - stillgelegt, siehe archive/README.md' -ForegroundColor DarkGray
-Write-Host '    Beenden: das Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
+Write-Host '    Beenden: die Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
 Write-Host ''

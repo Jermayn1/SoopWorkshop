@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/* Schriften kommen als npm-Paket und werden mitgebaut — kein CDN.
+   Der Workshop laeuft unter Umstaenden ohne Internet. */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* Keine eigene Farbpalette. Die Komponenten benutzen Tailwinds Standardfarben
+   (slate, indigo, emerald, rose, amber) genau so wie im Referenzprojekt —
+   der Feinschliff an Farben und Abstaenden passiert von Hand.
+
+   Hier steht nur, was das Geruest braucht. */
+@theme {
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    width: 100%;
+  }
+
+  /* Der Fokus muss sichtbar bleiben — ohne das ist die Seite mit der
+     Tastatur nicht bedienbar. */
+  :focus-visible {
+    outline: 2px solid var(--color-indigo-600);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
