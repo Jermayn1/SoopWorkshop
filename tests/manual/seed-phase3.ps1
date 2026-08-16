@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Legt die Beispielaufgaben für den manuellen Durchlauf der Bewertungs-Engine an.
 
@@ -133,7 +133,7 @@ Write-Host "Aufgabe 1 (ConsoleOnly): $($konsole.id)"
 $unitOnly = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
     taskCategoryId    = $category.id
     title             = 'Hallo Soop (Unit-Test)'
-    description       = 'Dieselbe Aufgabe wie zuvor, geprueft ueber einen Unit-Test statt ueber Konsolen-Testfaelle.'
+    description       = 'Dieselbe Aufgabe wie zuvor, geprüft über einen Unit-Test statt über Konsolen-Testfälle.'
     difficulty        = 0
     order             = 2
     evaluationMode    = 1
@@ -161,7 +161,7 @@ Write-Host "Aufgabe 2 (UnitTestOnly): $($unitOnly.id)"
 $both = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
     taskCategoryId    = $category.id
     title             = 'Rechner'
-    description       = 'Schreibe die Klasse Main. Lies zwei ganze Zahlen ein und gib ihre Summe aus. Die Addition gehoert in eine eigene Methode addiere.'
+    description       = 'Schreibe die Klasse Main. Lies zwei ganze Zahlen ein und gib ihre Summe aus. Die Addition gehört in eine eigene Methode addiere.'
     difficulty        = 1
     order             = 3
     evaluationMode    = 2
@@ -206,11 +206,11 @@ Write-Host "Aufgabe 3 (Both): $($both.id)"
 
 Write-Host ''
 Write-Host 'Fertig. Passende Abgaben liegen unter tests/manual/junit/loesungen/:' -ForegroundColor Green
-Write-Host '  hallo-soop                        Musterloesung fuer Aufgabe 1 und 2'
-Write-Host '  hallo-soop-tippfehler             faellt in Aufgabe 2 durch, zeigt erwartet gegen erhalten'
-Write-Host '  rechner                           Musterloesung fuer Aufgabe 3'
+Write-Host '  hallo-soop                        Musterlösung für Aufgabe 1 und 2'
+Write-Host '  hallo-soop-tippfehler             fällt in Aufgabe 2 durch, zeigt erwartet gegen erhalten'
+Write-Host '  rechner                           Musterlösung für Aufgabe 3'
 Write-Host '  rechner-falscher-klassenname      Rechner.java statt Main.java - kompiliert, verletzt aber die Vorgabe'
 Write-Host '  rechner-falscher-methodenname     Testdatei kompiliert nicht - nennt die erwartete Signatur'
-Write-Host '  rechner-falscher-rueckgabewert    kompiliert, faellt inhaltlich durch'
-Write-Host '  rechner-umlaute                   prueft die UTF-8-Kette bis in die Anzeige'
-Write-Host '  rechner-system-exit               beendet die JVM - muss verstaendlich gemeldet werden'
+Write-Host '  rechner-falscher-rueckgabewert    kompiliert, fällt inhaltlich durch'
+Write-Host '  rechner-umlaute                   prüft die UTF-8-Kette bis in die Anzeige'
+Write-Host '  rechner-system-exit               beendet die JVM - muss verständlich gemeldet werden'
