@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SoopWorkshop.Shared\SoopWorkshop.Shared.csproj" />
+    <ProjectReference Include="..\..\src\SoopWorkshop.Shared\SoopWorkshop.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

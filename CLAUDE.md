@@ -2,8 +2,10 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-16 — Phase 0 bis 3 und Etappe 4.1 abgeschlossen, als Nächstes Etappe 4.2.
-> Das Designsystem steht in `DESIGN.md`, die Regeln zur Umsetzung in §6.1.
+> Stand: 2026-08-16 — Phase 0 bis 3 abgeschlossen. **Phase 4 ist neu aufgesetzt:** das
+> Blazor-Frontend ist stillgelegt und liegt unter `archive/`, ein neues ist noch nicht
+> gewählt. Lies **§4.1** und **§10 ab Punkt 8**, bevor du am Frontend planst.
+> Das Backend ist davon unberührt und vollständig.
 
 ---
 
@@ -54,7 +56,7 @@ Zusätzlich:
 
 ## 3. Befehle
 
-Alles starten (Datenbank, Build, Backend, Frontend):
+Alles starten (Datenbank, Build, Backend — ein Frontend gibt es derzeit nicht, §4.1):
 
 ```bash
 .\scripts\start-dev.ps1
@@ -71,7 +73,7 @@ Datenbank-Passwort an die `.env` angleichen (siehe unten):
 ```
 
 `start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
-Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs getrennt lesbar sind.
+Das Backend läuft in einem eigenen Fenster, damit die Logs lesbar bleiben.
 
 Einzeln:
 
@@ -90,8 +92,8 @@ docker compose up -d
 | Dienst | HTTP | HTTPS |
 |---|---|---|
 | Backend API | `http://localhost:5120` | `https://localhost:7212` |
-| Frontend Web | `http://localhost:5072` | `https://localhost:7281` |
 | Scalar (API-Doku, nur Development) | `http://localhost:5120/scalar` | — |
+| ~~Frontend Web~~ | ~~`http://localhost:5072`~~ | ~~`https://localhost:7281`~~ — stillgelegt, §4.1 |
 
 **Voraussetzungen (lokal):** .NET 10 SDK, Docker, JDK im `PATH`
 (`javac`/`java` werden als Prozess aufgerufen).
@@ -190,17 +192,20 @@ SoopWorkshop.Backend.Application     Services, Interfaces, Result<T> — kennt D
 SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker, ProcessRunner,
                                      Warteschlange + Worker — kennt Application
 SoopWorkshop.Backend.API             Controller, Middleware — kennt Application + Infrastructure
-SoopWorkshop.Frontend.Services       HttpClients, State — kennt Shared
-SoopWorkshop.Frontend.Web            Blazor Server + MudBlazor — kennt Frontend.Services
 tests/SoopWorkshop.Tests             xUnit (Projekt-Tests)
+
+archive/SoopWorkshop.Frontend.*      stillgelegtes Blazor-Frontend, nicht in der Solution
 ```
+
+**Ein Frontend gibt es derzeit nicht** — siehe §4.1. Das Backend ist davon unberührt.
 
 **Abhängigkeitsregeln (nicht verletzen):**
 
 - Domain kennt **kein** EF Core, **keine** Infrastruktur.
 - Application definiert Interfaces (`IJavaAnalyzer`, `I*Repository`), Infrastructure implementiert sie.
-- Frontend kennt **nur** `Shared` — niemals Domain oder Application.
-- Kommunikation Frontend ↔ Backend ausschließlich über HTTP + DTOs aus `Shared`.
+- Kommunikation Frontend ↔ Backend ausschließlich über HTTP. Solange das Frontend in .NET
+  lief, waren das direkt die DTOs aus `Shared`; ein Frontend ausserhalb von .NET braucht
+  stattdessen einen erzeugten Vertrag — siehe §4.1.
 
 **Kernablauf Auswertung:**
 
@@ -211,6 +216,35 @@ persistiert → Frontend pollt `/status` und holt bei `Done` das `/result`.
 
 Externe Prozesse (`javac`, `java`, später JUnit) laufen ausschließlich über
 `IProcessRunner` — nicht direkt über `Process.Start`.
+
+### 4.1 Frontend-Neustart (Stand 2026-08-16)
+
+**Das Blazor-Frontend ist stillgelegt.** Es liegt vollständig unter `archive/`, ist aus
+`SoopWorkshop.slnx` genommen und wird nicht gebaut. Begründung und Anleitung zum
+Reaktivieren stehen in `archive/README.md`. `DESIGN.md` ist entfernt — das dort
+beschriebene Erscheinungsbild war auf MudBlazor gemünzt und wird neu entschieden.
+
+Anlass: das Ergebnis hat optisch nicht überzeugt. Der wahrscheinliche Grund ist, dass
+MudBlazor Material Design umsetzt (Schatten, großzügige Abstände, Farbrollen), während
+das angestrebte Bild dessen Gegenteil war (1px-Kanten, kompakte Dichte, ein Akzent).
+Etappe 4.1 bestand zu weiten Teilen darin, die Bibliothek gegen ihre eigenen Annahmen zu
+biegen.
+
+**Was der Neustart am Backend berührt** — nichts davon ist erledigt, alles gehört in die
+neue Planung:
+
+| Thema | Warum es auffällt, sobald das Frontend nicht mehr .NET ist |
+|---|---|
+| **Enums gehen als Zahl über die Leitung** | Kein `JsonStringEnumConverter` registriert (`Backend.API/Program.cs`). Für Blazor egal, weil es dieselbe `Shared`-Assembly nutzte. Ein anderes Frontend liest dann `difficulty: 0` und muss die Bedeutung raten |
+| **Kein API-Vertrag** | `Shared` war der Vertrag. Ohne .NET-Frontend braucht es einen erzeugten (OpenAPI → Typen). `Microsoft.AspNetCore.OpenApi` und Scalar sind bereits eingebunden |
+| **Fehlerantworten sind Klartext-Strings**, kein `ProblemDetails` | Auswertbar ist das nur mit Konventionswissen |
+| **CORS** | `Cors:AllowedOrigins` steht auf den alten Frontend-Ports 5072/7281 |
+| **Auth für `api/admin/*`** (Phase 5) | Der geplante Weg — statisches Token, das dank Blazor Server den Browser nie verlässt — funktioniert **nur** mit einem serverseitig gerenderten Frontend. Bei einem Browser-Frontend liegt das Token im Browser. Das ist eine echte Neuentscheidung, keine Portierung |
+| **Phase 7** | Ein drittes Image plus Node-Toolchain im Build |
+
+**Was aus dem alten Frontend fachlich weiterlebt** (Details in `archive/README.md`):
+die Polling-Zustandsmaschine, die Erkenntnis der drei API-Ausgänge (Erfolg / gibt es
+nicht / nicht erreichbar) und die Darstellungsregeln für Teilprüfungen aus §5.7.
 
 ---
 
@@ -423,13 +457,15 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
 
 - **Ordner = Feature**, nicht Technik: `Tasks/`, `Submissions/`, `Evaluation/` mit je
   `Interfaces/` und `Services/`.
-- **Razor-Komponenten** immer mit Code-Behind (`X.razor` + `X.razor.cs`), Styles als
-  `X.razor.css` (CSS-Isolation). Keine `@code`-Blöcke in `.razor`.
+- **Frontend-Konventionen stehen offen.** Die alten Regeln (Code-Behind statt
+  `@code`-Blöcke, `X.razor.css`, `Components/Pages/<Bereich>/<Name>.razor`) galten für
+  Blazor und sind mit dem Neustart hinfällig — siehe §4.1. Neue Regeln kommen mit der
+  Entscheidung für das neue Frontend hierher. Der *Geist* der alten bleibt gültig:
+  Auszeichnung und Logik getrennt, Styles nah an der Komponente, Ordner nach Feature.
 - **Services geben `Result<T>` zurück**, keine Exceptions für erwartbare Fehlerfälle.
 - **DTOs**: `Shared/DTOs/<Bereich>/` rein fachlich gegliedert. Lese-DTOs direkt im
   Bereichsordner (`Tasks/TaskItemDto.cs`), Schreib-DTOs unter `<Bereich>/Requests/`
   (`Tasks/Requests/CreateTaskItemDto.cs`).
-- **Namensschema Frontend-Seiten**: `Components/Pages/<Bereich>/<Name>.razor`.
 - **Nullable + ImplicitUsings** sind überall an — so lassen.
 - **Projekt-Tests** spiegeln den Produktivcode als Ordnerbaum
   (`Unit/Infrastructure/Evaluation/Checkers/`). Testklasse heißt `<Klasse>Tests`,
@@ -439,41 +475,30 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
   Testet ein Test bewusst eine bekannte Schwäche, hält der Kommentar das als
   **Ist-Verhalten** fest und verweist auf das Finding in §9.
 
-### 6.1 Designsystem — `DESIGN.md` (seit Phase 4.1)
+### 6.1 Designsystem — offen
 
-Verbindliche Referenz ist **`DESIGN.md`** im Repo-Wurzelverzeichnis („Dub"-Stil: helles
-Canvas, ein Akzent, kompakte Dichte). Zwei Regeln, damit nichts auseinanderläuft:
+**Es gibt derzeit kein Designsystem.** `DESIGN.md` ist mit dem Frontend-Neustart entfernt
+worden (§4.1); es beschrieb ein Erscheinungsbild, das gegen MudBlazor durchgesetzt werden
+musste. Was an seine Stelle tritt, wird zusammen mit dem Frontend entschieden.
 
-| Art von Token | Wohnort |
-|---|---|
-| **Farben** | `Frontend.Web/Services/AppThemes.cs` — MudBlazor erzeugt daraus die `--mud-palette-*` |
-| Radien, Typo-Skala, Spacing, Tints, Layout | `Frontend.Web/wwwroot/app.css` (`:root`) |
-| Komponenten-Feinschliff | `X.razor.css` (CSS-Isolation) |
+Vier Regeln haben sich unabhängig vom Werkzeug bewährt und sollten in das neue System
+übernommen werden:
 
-**Eigenes CSS nutzt ausschließlich `var(--mud-palette-…)`, niemals Hex-Werte.** Sonst gibt
-es eine zweite Farbliste, die still von der Palette abweicht.
+1. **Eine Wahrheit pro Token-Art.** Farben an genau einer Stelle, alles Übrige an genau
+   einer anderen. Zwei Farblisten laufen still auseinander.
+2. **Eigenes CSS greift nur auf Variablen zu, nie auf Hex-Werte.**
+3. **Akzentfarben nie als Schriftfarbe** — nur Icon, Kante oder getönter Hintergrund.
+   `#16a34a` auf Weiß liegt bei ~3,0:1 und reißt die Schwelle von 4,5:1. Die Aussage
+   trägt der Text, die Farbe verstärkt sie nur.
+4. **Ein Erscheinungsbild, das gegen die Komponentenbibliothek arbeitet, kostet mehr, als
+   es einbringt.** Das ist die Lehre aus Etappe 4.1 — erst das Aussehen festlegen, dann
+   eine Bibliothek wählen, die es *von sich aus* kann.
 
-**Kanten statt Schatten.** DESIGN.md definiert Container über 1px-Hairlines
-(`--mud-palette-lines-default`), nicht über Elevation. Deshalb überall
-`Elevation="0" Outlined="true"`.
-
-**Die eine gefüllte Aktion pro Seite** liegt auf `Color.Dark` (schwarze Füllung hell /
-helle Füllung dunkel), nicht auf `Primary` — `Primary` ist das Akzentblau und färbt Links,
-Navigation und Fortschrittsbalken mit.
-
-**Akzentfarben nie als Schriftfarbe**, nur als Icon, Kante oder getönter Hintergrund.
-`#16a34a` auf Weiß liegt bei ~3,0:1 und reißt die Schwelle von 4,5:1. Präzedenzfall und
-Begründung stehen in `SubmissionResult.razor.css`.
-
-**Zwei bewusste Ergänzungen zu DESIGN.md**, weil das Dokument sie offenlässt:
-Fehlerrot (`#dc2626` / `#f87171`) und die komplette Dark-Ableitung. Beide in
-`AppThemes.cs` kommentiert.
-
-> **Achtung, einmal reingefallen:** eine `MainLayout.razor.css` mit `::deep`-Regeln auf
-> `.mud-appbar` war **still wirkungslos**. Die CSS-Isolation hängt ihr Scope-Attribut nur
-> an HTML-Elemente, die die Komponente selbst rendert — `MainLayout` besteht nur aus
-> MudBlazor-Komponenten, es gibt dort kein Element, an dem `::deep` ansetzen kann.
-> Globale Komponenten-Overrides gehören nach `app.css`.
+> **Und eine Falle, die frameworkspezifisch war, aber typisch ist:** eine
+> `MainLayout.razor.css` mit `::deep`-Regeln war **still wirkungslos**, weil Blazors
+> CSS-Isolation ihr Scope-Attribut nur an HTML-Elemente hängt, die die Komponente selbst
+> rendert — und das Layout bestand nur aus Fremdkomponenten. Aufgefallen ist es erst über
+> `getComputedStyle` im Browser. **CSS gilt erst als umgesetzt, wenn es nachgemessen ist.**
 
 ---
 
@@ -481,14 +506,18 @@ Fehlerrot (`#dc2626` / `#f87171`) und die komplette Dark-Ableitung. Beide in
 
 Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
 
+> **Solange es kein Frontend gibt**, entfallen die Schritte 3 bis 6. Der fachliche
+> Durchlauf läuft stattdessen über `/scalar`: Abgabe hochladen, `/status` pollen, bei
+> `Done` das `/result` holen. Sobald das neue Frontend steht, werden die Schritte
+> ersetzt — nicht wieder eingefügt, sie waren auf Blazor gemünzt.
+
 1. `.\scripts\stop-dev.ps1`, dann `.\scripts\start-dev.ps1` — Build ohne Warnungen,
-   beide Dienste melden „bereit"
+   das Backend meldet „bereit"
 2. `dotnet test SoopWorkshop.slnx` — grün
-3. Frontend öffnen, Theme umschalten (Light / Dark) und **F5 drücken** — die Wahl muss
-   den Neuladen überstehen, ohne dass die Seite kurz hell aufblitzt
-4. Aufgabe aus der Sidebar öffnen — Beschreibung, Schwierigkeitsgrad, Tipps sichtbar
-5. `.java` hochladen, abgeben, Ergebnisseite abwarten — Punkte und Kategorien erscheinen
-6. Browser-Konsole (F12) auf Fehler prüfen
+3. *(Frontend — siehe Hinweis oben)*
+4. *(Frontend)*
+5. *(Frontend)*
+6. *(Frontend)*
 7. Solution zusätzlich in Visual Studio bzw. Rider öffnen und bauen — die
    Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` nicht ab
 8. `git status` sauber, `.env` taucht **nicht** auf
@@ -666,13 +695,34 @@ Nachtrag 3.1. 221 Tests, grün. Manueller Durchlauf nach §7 bestanden.*
 statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —
 eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 
-### Phase 4 — Frontend Teilnehmer-Sicht
+### Phase 4 — Frontend (Neustart) 🔄
 
-Drei Etappen. Zusätzlich zur ursprünglichen Liste kam **`DESIGN.md`** dazu (siehe §6.1),
-und **OLED entfällt** — es bleiben Light und Dark.
+**Die Phase ist am 2026-08-16 neu aufgesetzt worden.** Das Blazor-Frontend ist
+stillgelegt (§4.1), `DESIGN.md` ist entfernt. Alles unter „Etappe 4.1" ist **erledigt,
+aber archiviert** — es steht hier als Beleg, was schon einmal gelöst war und in welcher
+Form es wiederkommen muss.
 
-**Etappe 4.1 — Designsystem & Fundament** ✅
-*Branch `phase-4-1-fundament`. 221 Tests, grün. Build warnungsfrei.*
+**Die Neuplanung passiert in einem eigenen Chat** und beantwortet in dieser Reihenfolge:
+
+1. **Wie soll es aussehen?** Erst das Erscheinungsbild, dann das Werkzeug — die Lehre
+   aus 4.1 (§6.1).
+2. **Womit?** Anderes Framework (React/…) oder andere Komponentenbibliothek unter
+   Blazor. Der Aufwandsunterschied ist groß: ein Bibliothekswechsel lässt Backend,
+   `Shared` als Vertrag und die Auth-Planung unberührt, ein Frameworkwechsel nicht
+   (Tabelle in §4.1).
+3. **Welche Werkzeuge braucht die Umsetzung?** Erweitertes Skillset über MCP-Server,
+   Komponenten-Vorschau, Screenshot-gestützte Prüfung. In dieser Sitzung war der
+   Screenshot-Kanal nicht verfügbar — geprüft werden konnte nur über `getComputedStyle`.
+4. **Was davon ist Phase 4, was Phase 5?** Teilnehmer-Sicht und Admin-Panel teilen sich
+   dasselbe Frontend; die Trennung der beiden Phasen war auf Blazor gemünzt.
+
+Die fachlichen Anforderungen darunter gelten unverändert — sie beschreiben, *was* der
+Teilnehmer können muss, nicht *womit*.
+
+<details>
+<summary><b>Etappe 4.1 — Designsystem &amp; Fundament ✅ (archiviert)</b></summary>
+
+*Branch `phase-4-1-fundament`. 221 Tests, grün. Build warnungsfrei. Code unter `archive/`.*
 
 - [x] Designsystem nach `DESIGN.md`: Palette in `AppThemes.cs` (Light **und** Dark in
       **einem** `MudTheme`, `IsDarkMode` wählt aus), Nicht-Farb-Token in `app.css`,
@@ -699,47 +749,73 @@ und **OLED entfällt** — es bleiben Light und Dark.
       Upload-Fehlermeldung des Servers erreicht den Teilnehmer im Wortlaut
 - [x] Lade- und Leerzustände: `MudSkeleton` statt nackter Spinner
 
-**Etappe 4.2 — Inhalte** (offen)
+</details>
 
-- [ ] Shared/Backend: `TaskItemId` auf `SubmissionStatusDto`, `DifficultyNames` in
-      `Shared/Constants` (Schwierigkeitsgrad steht noch auf Englisch)
-- [ ] `TaskDetail`: Aufgaben-Vertrag anzeigen (`ExpectedClassName`, `ExpectedMethods`,
-      `VisibleUnitTestFiles`) — wird geprüft, aber nirgends gezeigt; schließt §10.3
-- [ ] `TaskDetail`: Schwierigkeitsgrad als Pill-Badge statt vollflächigem Chip
-- [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button — `MudFileUpload` bringt
-      `DragAndDrop`, `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon
-      selbst bauen. `MaxFileSize`/`MaximumFileCount`/`Accept` sind seit Phase 2 gesetzt
-      und kommen aus `SubmissionUploadLimits`; die Fehlermeldung dazu fehlt noch
-- [ ] `SubmissionResult`: `Pending` und `Running` im Text unterscheiden — seit Phase 2 wird
-      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". Braucht ein
-      `OnStatusChanged` im `SubmissionPollingState`, das es noch nicht gibt
-- [ ] `SubmissionResult`: „Erneut versuchen" und Zurück-Link zur *richtigen* Aufgabe
-      (geht aktuell nach `/`); Polling-Start von `OnInitializedAsync` nach
-      `OnParametersSetAsync` verlegen, sonst bricht genau dieser neue Link
-- [ ] `SubmissionResult`: Punktzahl als Display-Größe in Textfarbe, Wertung über
-      Status-Badge statt eingefärbter Zahl
-- [ ] Aufgabenübersicht als eigene Seite unter `/tasks` (nicht nur Sidebar)
-- [x] `SubmissionPollingState` sauber verdrahtet (injiziert statt `new`'d, Abbruch nach
-      150 Versuchen ≈ 5 Minuten) — in Phase 2 mitgenommen, weil das Status-Polling ohne
-      diesen Umbau nicht prüfbar gewesen wäre
-- [x] Sortierte Anzeige der Kategorien und Teilprüfungen — war in `SubmissionResult`
-      bereits mit Phase 3 erledigt; offen war nur die Sidebar, siehe 4.1
-- [x] JUnit-Ergebnisse darstellen — durch Phase 3.1 erledigt: seit `AssertionMessage`
-      zerlegt wird, sehen Unit-Test-Prüfungen genauso aus wie Konsolen-Testfälle.
-      Offen ist nur noch der Feinschliff (Monospace, Umbruch langer Ausgaben)
+**Fachliche Anforderungen — gelten unabhängig vom Werkzeug**
 
-**Etappe 4.3 — Feinschliff** (offen)
+Aufgabenliste und Aufgabenseite:
 
-- [ ] Responsive-Durchgang: Mobil, Tablet, Desktop
-- [ ] Barrierefreiheit: Fokus-Reihenfolge, `aria-label`, Kontraste in **beiden** Themes
-      messen — besonders die in 4.1 abgeleiteten Dark-Werte und die Tint-Badges
+- [ ] Aufgaben nach Kategorie gruppiert, innerhalb der Kategorie nach `Order` sortiert.
+      Die API liefert bereits sortiert (seit 4.1), das Frontend sortiert trotzdem selbst
+- [ ] Aufgabenübersicht als eigene Seite, nicht nur als Navigationsleiste
+- [ ] **Aufgaben-Vertrag sichtbar machen** — `ExpectedClassName`, `ExpectedMethods` und
+      die freigeschalteten JUnit-Dateien liefert die API seit Phase 3.1 aus, angezeigt
+      wurde nie etwas davon. Der `ContractChecker` bewertet also gegen eine Vorgabe, die
+      der Teilnehmer nicht lesen kann. Schließt §10.3
+- [ ] Schwierigkeitsgrad auf Deutsch (die API liefert das Enum, `DifficultyNames` in
+      `Shared/Constants` fehlt noch — oder das Frontend übersetzt selbst)
+- [ ] Tipps sichtbar, standardmäßig eingeklappt
+
+Abgabe:
+
+- [ ] Mehrere `.java`-Dateien, per Auswahl **und** per Drag & Drop, einzeln entfernbar
+- [ ] Grenzen aus `SubmissionUploadLimits` **clientseitig anzeigen und begründen**:
+      `.java`, höchstens 10 Dateien, 1 MB je Datei, 10 MB gesamt. Eine verworfene Datei
+      darf nicht kommentarlos verschwinden
+- [ ] Die Ablehnung des Servers erreicht den Teilnehmer im Wortlaut — die API antwortet
+      mit `text/plain` und fertigen deutschen Sätzen („'notiz.txt' ist keine
+      .java-Datei."), nicht mit einem Fehlerobjekt
+
+Ergebnis:
+
+- [ ] Status pollen: alle 2 s, Obergrenze ~5 Minuten, `Pending` / `Running` / `Done` /
+      `Failed` unterscheiden. **`Pending` und `Running` brauchen verschiedene Texte** —
+      „in der Warteschlange" ist etwas anderes als „wird gerade geprüft"
+- [ ] Kategorien in der Reihenfolge aus `EvaluationCategoryOrder`, Teilprüfungen nach
+      `Order`
+- [ ] Teilprüfungen nach den Regeln aus **§5.7** darstellen — Eingabe nur wenn vorhanden,
+      Erwartet und Erhalten immer gemeinsam, bestandene Prüfungen zeigen nichts.
+      Diese Regeln sind fachlich und frameworkunabhängig
+- [ ] Compilerausgaben und Stacktraces in Monospace, umbrechend, ohne die Karte zu sprengen
+- [ ] „Erneut versuchen" und ein Zurück-Link zur **richtigen** Aufgabe. Dafür fehlt
+      `TaskItemId` auf `SubmissionStatusDto` — die `Submission`-Entity hat das Feld
+      direkt, es braucht kein zusätzliches Laden
+
+Querschnitt:
+
+- [ ] **Drei API-Ausgänge unterscheiden**: Erfolg, *gibt es nicht*, *nicht erreichbar*.
+      Werden die letzten beiden zusammengeworfen, behauptet die Seite bei gestopptem
+      Backend, die Aufgabe sei gelöscht. Genau das ist in 4.1 passiert
+- [ ] Eine nicht erreichbare API darf nie eine weiße Seite ergeben — Meldung plus
+      erneuter Versuch, der Rest der Seite lebt weiter
+- [ ] Lade- und Leerzustände in der Form dessen, was gleich kommt
+- [ ] Hell und Dunkel, Wahl überlebt das Neuladen **ohne Aufblitzen**
+- [ ] Responsive: Mobil, Tablet, Desktop
+- [ ] Barrierefreiheit: Fokus-Reihenfolge, sichtbarer Fokus, Beschriftungen für
+      Bedienelemente ohne Text, Kontraste in beiden Erscheinungsbildern **gemessen**
 
 ### Phase 5 — Admin-Panel
 
-- [ ] **Auth:** festes Passwort aus Konfiguration/Env; API prüft statisches Token,
-      Frontend hat Login-Seite. Da Blazor Server serverseitig läuft, verlässt das
-      Token nie den Browser. `api/admin/*` ist aktuell **komplett offen**.
-- [ ] Eigenes `AdminLayout` unter `/admin` mit eigener Navigation
+> **Hängt am Frontend-Neustart (§4.1).** Die Punkte unten beschreiben weiter das
+> fachlich Nötige, aber die Auth-Frage ist **neu zu entscheiden**, und ob Admin-Panel und
+> Teilnehmer-Sicht getrennte Phasen bleiben, ebenfalls.
+
+- [ ] **Auth — neu zu entscheiden.** Der bisherige Plan (festes Passwort aus der
+      Konfiguration, API prüft ein statisches Token, das dank Blazor Server den Browser
+      nie verlässt) funktioniert **nur** mit einem serverseitig gerenderten Frontend.
+      Läuft das Frontend im Browser, liegt das Token dort — dann braucht es einen anderen
+      Weg. `api/admin/*` ist bis dahin **komplett offen**.
+- [ ] Eigener Admin-Bereich unter `/admin` mit eigener Navigation
 - [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
 - [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
 - [ ] Konsolen-Testfälle: CRUD pro Aufgabe
@@ -758,10 +834,13 @@ und **OLED entfällt** — es bleiben Light und Dark.
 
 ### Phase 6 — Projekt-Testabdeckung ausbauen
 
-- [ ] Aus Phase 1 verschoben: Pakete bUnit und `Microsoft.AspNetCore.Mvc.Testing`
-      ergänzen, Ordner `Integration/` und `Components/` anlegen. `WebApplicationFactory`
-      braucht in `Backend.API/Program.cs` einen `public partial class Program`-Shim
-      (Top-Level-Statements) und eine Antwort auf §10.5
+- [ ] Aus Phase 1 verschoben: `Microsoft.AspNetCore.Mvc.Testing` ergänzen, Ordner
+      `Integration/` anlegen. `WebApplicationFactory` braucht in `Backend.API/Program.cs`
+      einen `public partial class Program`-Shim (Top-Level-Statements) und eine Antwort
+      auf §10.5
+- [ ] **bUnit ist hinfällig, solange kein Blazor-Frontend existiert** (§4.1). Womit
+      Frontend-Komponenten geprüft werden, entscheidet sich mit dem Frontend — die
+      Anforderung „Komponenten werden getestet" bleibt
 - [ ] Unit: alle Checker inkl. `JUnitChecker` (über `IProcessRunner` aus Phase 2)
 - [ ] Unit: `TaskCategoryService`, `TaskItemService`, `TaskTestService`,
       `SubmissionService`, `EvaluationService` mit gemockten Repositories
@@ -769,18 +848,22 @@ und **OLED entfällt** — es bleiben Light und Dark.
 - [ ] Unit: Mapping-Logik (Entity ↔ DTO)
 - [ ] Integration: Controller über `WebApplicationFactory`
 - [ ] Integration: Repositories gegen echte PostgreSQL (Testcontainers)
-- [ ] Component: bUnit für `TaskSidebarList`, `TaskDetail`, `SubmissionResult`, Admin-Formulare
-- [ ] GitHub Actions: Build + Test bei jedem Push
+- [ ] Component: Aufgabenliste, Aufgabenseite, Ergebnisseite, Admin-Formulare — Werkzeug
+      offen, siehe oben
+- [ ] GitHub Actions: Build + Test bei jedem Push (bei einem Frontend ausserhalb von .NET
+      zusätzlich dessen Toolchain)
 - [ ] Coverage-Report (coverlet ist bereits eingebunden)
 
 ### Phase 7 — Docker Compose, README, Abschluss
 
 - [ ] `Dockerfile` Backend — inkl. JDK und JUnit-Standalone-JAR
-- [ ] `Dockerfile` Frontend
+- [ ] `Dockerfile` Frontend — Inhalt hängt am Frontend-Neustart (§4.1); bei einem
+      Frontend ausserhalb von .NET kommt eine Node-Toolchain in den Build-Schritt
 - [ ] `docker-compose.yml`: PostgreSQL + Backend + Frontend, Healthchecks, `depends_on`,
       benanntes Volume für die DB
 - [ ] Konfiguration vollständig über Umgebungsvariablen (ConnectionString, ApiBaseUrl,
-      Admin-Passwort) — nichts Fest-Verdrahtetes mehr
+      Admin-Passwort) — nichts Fest-Verdrahtetes mehr. **`Cors:AllowedOrigins` steht noch
+      auf den Ports des stillgelegten Frontends** (5072/7281)
 - [ ] Migrationen beim Start anwenden oder dokumentierter Einzelschritt
 - [ ] **README final**: Was das Tool ist, Voraussetzungen, Setup in einem Befehl,
       DB-Einrichtung, Admin-Login, Aufgaben anlegen, Troubleshooting.
@@ -801,6 +884,11 @@ und **OLED entfällt** — es bleiben Light und Dark.
 ---
 
 ## 9. Findings-Log
+
+> **Zu den Frontend-Einträgen:** alles mit `Frontend.Web/` oder `Frontend.Services/` im
+> Pfad betrifft das stillgelegte Blazor-Frontend (§4.1) und liegt jetzt unter `archive/`.
+> Die Einträge bleiben stehen — die **Lehren** darin sind frameworkunabhängig und sollen
+> im neuen Frontend nicht noch einmal gelernt werden müssen.
 
 Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
@@ -946,13 +1034,30 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
    → Vorschlag: v1 mit Timeouts und Prozesslimits, Hinweis in der README.
 5. **Datenbank in Tests.** Testcontainers (realistisch, braucht Docker) oder
    EF InMemory (schnell, weicht aber von PostgreSQL ab)?
-6. ~~**Wie viele Themes?**~~ **Entschieden in Phase 4.1:** Light und Dark. OLED ist
-   ersatzlos entfallen — es unterschied sich nur in drei Grauwerten vom Dark-Theme und
-   verdreifachte den Aufwand bei jeder Kontrastprüfung. `AppTheme` hat noch zwei Werte,
-   der Umschalter im AppBar ist ein Schalter statt eines Menüs.
-7. ~~**Theme-Persistenz.**~~ **Entschieden in Phase 4.1:** Cookie statt `localStorage`.
-   Blazor Server rendert die Seite vorab, bevor JavaScript läuft — an `localStorage`
-   kommt der Server zu diesem Zeitpunkt nicht heran, und die Seite baut sich erst hell
-   und dann dunkel auf. Das Cookie wird serverseitig gelesen und über
-   `PersistentComponentState` an den Circuit weitergereicht; geschrieben wird es im
-   Browser, weil es zu diesem Zeitpunkt keine HTTP-Antwort mehr gibt.
+6. ~~**Wie viele Themes?**~~ **Entschieden in Phase 4.1:** Light und Dark, kein OLED.
+   Die Entscheidung gilt weiter — OLED unterschied sich nur in drei Grauwerten vom
+   Dark-Theme und verdreifachte den Aufwand bei jeder Kontrastprüfung.
+7. ~~**Theme-Persistenz.**~~ **Entschieden in Phase 4.1, teilweise überholt:** Cookie
+   statt `localStorage`, weil Blazor Server vorab rendert und der Server zu diesem
+   Zeitpunkt nicht an `localStorage` herankommt. **Ob das Problem im neuen Frontend
+   überhaupt besteht, hängt an der Renderart** — bei einem reinen Browser-Frontend
+   reicht `localStorage` plus ein Inline-Skript im `<head>`.
+
+### Neu offen durch den Frontend-Neustart — Stoff für den neuen Chat
+
+8. **Erscheinungsbild.** Zuerst festlegen, wie es aussehen soll, dann das Werkzeug
+   wählen. Umgekehrt ist es in Phase 4.1 schiefgegangen.
+9. **Framework oder nur Komponentenbibliothek?** Ein Bibliothekswechsel unter Blazor
+   lässt Backend, `Shared` als Vertrag und die Auth-Planung unberührt; ein Wechsel zu
+   React/… zieht API-Vertrag, Enum-Serialisierung, CORS, Auth und Phase 7 nach sich
+   (Tabelle in §4.1). Der Aufwandsunterschied ist der Kern der Entscheidung.
+10. **API-Vertrag.** Bleibt `Shared` der Vertrag, oder wird er aus OpenAPI erzeugt?
+    Davon hängt ab, ob `JsonStringEnumConverter` und `ProblemDetails` nötig werden.
+11. **Auth für `api/admin/*`.** Der alte Plan setzte serverseitiges Rendern voraus
+    (§8, Phase 5). Bei einem Browser-Frontend braucht es einen anderen Weg.
+12. **Werkzeuge für die Umsetzung.** Welche MCP-Server oder Skills helfen wirklich —
+    Komponenten-Vorschau, Screenshot-gestützte Prüfung, Zugriff auf die Doku der
+    gewählten Bibliothek? In dieser Sitzung war der Screenshot-Kanal nicht verfügbar,
+    geprüft werden konnte nur über `getComputedStyle`. Für Designarbeit ist das zu wenig.
+13. **Phasenschnitt.** Teilnehmer-Sicht (Phase 4) und Admin-Panel (Phase 5) teilen sich
+    dasselbe Frontend. Ob die Trennung so bleibt, ist offen.

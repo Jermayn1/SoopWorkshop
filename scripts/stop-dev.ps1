@@ -24,6 +24,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Frontend.Web steht weiter in der Liste: wer das stillgelegte Frontend zum Vergleich
+# noch einmal startet, soll es hiermit auch wieder loswerden.
 $processNames = @('SoopWorkshop.Backend.API', 'SoopWorkshop.Frontend.Web')
 $stopped = 0
 

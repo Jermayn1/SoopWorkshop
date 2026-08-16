@@ -1,13 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Startet die komplette Entwicklungsumgebung: PostgreSQL, Backend-API und Frontend.
+    Startet die Entwicklungsumgebung: PostgreSQL und Backend-API.
 
 .DESCRIPTION
     Prueft den PostgreSQL-Container und startet ihn bei Bedarf, baut die Solution
-    und startet Backend und Frontend in je einem eigenen Fenster.
+    und startet das Backend in einem eigenen Fenster.
 
-    Zum Beenden die beiden Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
+    Ein Frontend gibt es derzeit nicht: das Blazor-Frontend ist seit dem 2026-08-16
+    stillgelegt (siehe archive/README.md), das neue ist noch nicht gebaut. Solange
+    fuehrt der Weg ueber http://localhost:5120/scalar.
+
+    Zum Beenden das Fenster schliessen oder .\scripts\stop-dev.ps1 aufrufen.
 
 .PARAMETER SkipBuild
     Ueberspringt den Build. Nuetzlich, wenn gerade erst gebaut wurde.
@@ -34,7 +38,6 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 $backendUrl = 'http://localhost:5120'
-$frontendUrl = 'http://localhost:5072'
 
 function Write-Step {
     param([string]$Text)
@@ -124,7 +127,9 @@ if (-not $SkipBuild) {
 }
 
 # ── 3. Dienste starten ──────────────────────────────────────────
-Write-Step 'Backend und Frontend starten'
+# Der Frontend-Block ist entfallen, solange kein Frontend existiert. Zum
+# Reaktivieren des alten siehe archive/README.md.
+Write-Step 'Backend starten'
 
 if (Test-Port -Port 5120) {
     Write-Host "    Port 5120 ist belegt - Backend laeuft vermutlich schon." -ForegroundColor Yellow
@@ -134,19 +139,11 @@ else {
     Wait-ForPort -Port 5120 -Name 'Backend' | Out-Null
 }
 
-if (Test-Port -Port 5072) {
-    Write-Host "    Port 5072 ist belegt - Frontend laeuft vermutlich schon." -ForegroundColor Yellow
-}
-else {
-    Start-DevService -Title 'SoopWorkshop Frontend' -Project 'src\SoopWorkshop.Frontend.Web'
-    Wait-ForPort -Port 5072 -Name 'Frontend' | Out-Null
-}
-
 # ── 4. Uebersicht ───────────────────────────────────────────────
 Write-Step 'Bereit'
-Write-Host "    Frontend   $frontendUrl"
 Write-Host "    API        $backendUrl"
 Write-Host "    API-Doku   $backendUrl/scalar"
 Write-Host ''
-Write-Host '    Beenden: die beiden Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
+Write-Host '    Kein Frontend - stillgelegt, siehe archive/README.md' -ForegroundColor DarkGray
+Write-Host '    Beenden: das Fenster schliessen oder .\scripts\stop-dev.ps1' -ForegroundColor DarkGray
 Write-Host ''
