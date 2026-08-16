@@ -57,7 +57,7 @@ export type Category = {
 export type TestCaseResult = {
   id: string
   description: string
-  /** Leer, wenn die Pruefung keine Eingabe hatte. */
+  /** Leer, wenn die Prüfung keine Eingabe hatte. */
   input: string
   expectedOutput: string
   actualOutput: string
@@ -92,7 +92,7 @@ export type Submission = {
 
 export type SubmissionState = {
   id: string
-  /** Fuer den Zurueck-Link zur richtigen Aufgabe. */
+  /** Für den Zurück-Link zur richtigen Aufgabe. */
   taskItemId: string
   status: SubmissionStatus
   submittedAt: string

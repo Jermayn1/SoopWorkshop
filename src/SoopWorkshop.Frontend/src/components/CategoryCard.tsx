@@ -6,23 +6,26 @@ import type { CategoryResult, TestCaseResult } from '../api/types'
 const CATEGORY_LABELS: Record<string, string> = {
   CleanCode: 'Clean Code',
   Compilability: 'Kompilierbarkeit',
-  Functionality: 'Funktionalitaet',
-  // Altlasten aus frueheren Auswertungen — sie werden nicht mehr vergeben,
+  Functionality: 'Funktionalität',
+  // Altlasten aus früheren Auswertungen — sie werden nicht mehr vergeben,
   // kommen in alten Ergebnissen aber noch vor und brauchen einen Namen.
   CharacterSet: 'Zeichensatz',
   NamingConventions: 'Namenskonventionen',
-  TestCases: 'Testfaelle',
+  TestCases: 'Testfälle',
   UnitTests: 'Unit-Tests',
 }
 
-// Zeigt eine Teilpruefung nach den Regeln aus CLAUDE.md §5.7:
+// Zeigt eine Teilprüfung nach den Regeln aus CLAUDE.md §5.7:
 // Eingabe nur wenn es eine gab, Erwartet und Erhalten immer gemeinsam,
-// bestandene Pruefungen zeigen nichts.
-function TestCaseRow({ test }: { test: TestCaseResult }) {
+// bestandene Prüfungen zeigen nichts.
+function TestCaseRow({ test, index }: { test: TestCaseResult; index: number }) {
   const hasComparison = test.expectedOutput !== '' || test.actualOutput !== ''
 
   return (
-    <div
+    <motion.div
+      initial={{ x: -8, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: index * 0.05 }}
       className={`flex gap-3 p-3 rounded-xl border text-sm ${
         test.passed ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
       }`}
@@ -44,7 +47,7 @@ function TestCaseRow({ test }: { test: TestCaseResult }) {
           {test.description}
         </p>
 
-        {/* Bestandene Pruefungen zeigen nichts weiter — die Zustimmung steht
+        {/* Bestandene Prüfungen zeigen nichts weiter — die Zustimmung steht
             schon im Haken. */}
         {!test.passed && (
           <dl className="mt-2 grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-1 font-mono text-xs">
@@ -69,7 +72,7 @@ function TestCaseRow({ test }: { test: TestCaseResult }) {
           </dl>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -82,17 +85,21 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
 
   return (
     <motion.div
-      initial={{ y: 12, opacity: 0 }}
+      initial={{ y: 16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay, ease: 'easeOut' }}
-      className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-shadow ${
+        open
+          ? `${result.passed ? 'border-emerald-200' : 'border-rose-200'} shadow-md`
+          : 'border-slate-200 hover:shadow-md'
+      }`}
     >
       <button
         type="button"
         onClick={() => hasDetails && setOpen((o) => !o)}
         aria-expanded={hasDetails ? open : undefined}
-        className={`w-full flex items-center gap-4 px-5 py-4 text-left ${
-          hasDetails ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-default'
+        className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors ${
+          hasDetails ? 'hover:bg-slate-50/70 cursor-pointer' : 'cursor-default'
         }`}
       >
         <div className="flex-1 min-w-0">
@@ -108,8 +115,12 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
-                transition={{ duration: 0.8, delay: delay + 0.2 }}
-                className={`h-full ${result.passed ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                transition={{ duration: 1, delay: delay + 0.3 }}
+                className={`h-full ${
+                  result.passed
+                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
+                    : 'bg-gradient-to-r from-rose-400 to-rose-600'
+                }`}
               />
             </div>
             {total > 0 && (
@@ -146,8 +157,8 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
                   {result.errorTip}
                 </p>
               )}
-              {result.testCaseResults.map((test) => (
-                <TestCaseRow key={test.id} test={test} />
+              {result.testCaseResults.map((test, index) => (
+                <TestCaseRow key={test.id} test={test} index={index} />
               ))}
             </div>
           </motion.div>

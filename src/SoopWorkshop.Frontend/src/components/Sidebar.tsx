@@ -29,7 +29,7 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
       <div className="p-6 border-b border-slate-200 bg-white">
         <NavLink to="/" className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <BrandMark size={32} />
-          SoopWorkshop
+          Soop Judge
         </NavLink>
       </div>
 
@@ -42,7 +42,7 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
           </div>
         )}
 
-        {/* Ein Fehler in der Navigation darf den Rest der Seite nicht mitreissen —
+        {/* Ein Fehler in der Navigation darf den Rest der Seite nicht mitreißen —
             und "nicht erreichbar" steht hier im Wortlaut, statt als "keine
             Aufgaben vorhanden" verkleidet zu werden. */}
         {error && !loading && (

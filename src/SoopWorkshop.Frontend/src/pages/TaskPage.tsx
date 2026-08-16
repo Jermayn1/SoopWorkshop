@@ -29,6 +29,12 @@ const DIFFICULTY_CLASSES: Record<Difficulty, string> = {
   Hard: 'bg-rose-100 text-rose-800',
 }
 
+const MODE_LABELS = {
+  ConsoleOnly: 'Konsole',
+  UnitTestOnly: 'Unit-Tests',
+  Both: 'Konsole + Unit-Tests',
+} as const
+
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ok'; task: Task }
@@ -94,7 +100,7 @@ export function TaskPage() {
       return
     }
 
-    // Der Server antwortet mit fertigen deutschen Saetzen. Die werden
+    // Der Server antwortet mit fertigen deutschen Sätzen. Die werden
     // durchgereicht, nicht durch eine eigene Meldung ersetzt.
     setServerError(result.message)
   }, [files, navigate, sending, taskId])
@@ -115,7 +121,11 @@ export function TaskPage() {
     const unreachable = state.kind === 'unreachable'
     return (
       <div className="flex-1 flex items-center justify-center bg-white p-8">
-        <div className="max-w-md text-center">
+        <motion.div
+          initial={{ y: 12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="max-w-md text-center"
+        >
           <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <AlertCircle className="w-8 h-8 text-slate-500" aria-hidden="true" />
           </div>
@@ -127,13 +137,13 @@ export function TaskPage() {
             <button
               type="button"
               onClick={() => setAttempt((n) => n + 1)}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700 transition-colors"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:-translate-y-0.5 active:translate-y-0"
             >
               <RefreshCw className="w-4 h-4" aria-hidden="true" />
               Erneut versuchen
             </button>
           )}
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -146,38 +156,55 @@ export function TaskPage() {
     <div className="flex-1 bg-white flex flex-col p-8 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full pb-20">
         <header className="mb-10 border-b pb-8 border-slate-100">
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="flex items-center gap-2 mb-3 flex-wrap"
+          >
             <span
               className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${DIFFICULTY_CLASSES[task.difficulty]}`}
             >
               {DIFFICULTY_LABELS[task.difficulty]}
             </span>
             <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold uppercase tracking-wider">
-              {task.evaluationMode === 'ConsoleOnly'
-                ? 'Konsole'
-                : task.evaluationMode === 'UnitTestOnly'
-                  ? 'Unit-Tests'
-                  : 'Konsole + Unit-Tests'}
+              {MODE_LABELS[task.evaluationMode]}
             </span>
-          </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 leading-tight">{task.title}</h1>
+          </motion.div>
+          <motion.h1
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl font-extrabold text-slate-900 leading-tight"
+          >
+            {task.title}
+          </motion.h1>
         </header>
 
-        <section className="prose prose-slate max-w-none mb-10 prose-p:text-slate-700 prose-p:leading-relaxed prose-code:before:content-none prose-code:after:content-none prose-code:rounded prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-normal">
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="prose prose-slate max-w-none mb-10 prose-p:text-slate-700 prose-p:leading-relaxed prose-code:before:content-none prose-code:after:content-none prose-code:rounded prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-normal"
+        >
           <div className="bg-slate-50/50 p-8 rounded-2xl border border-slate-100 shadow-sm">
             <ReactMarkdown>{task.description}</ReactMarkdown>
           </div>
-        </section>
+        </motion.section>
 
         {/* Der Aufgaben-Vertrag wurde bisher nie angezeigt — der ContractChecker
             bewertete also gegen eine Vorgabe, die der Teilnehmer nicht lesen
             konnte. */}
         {hasContract && (
-          <section className="mb-10">
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-10"
+          >
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
-              Was geprueft wird
+              Was geprüft wird
             </h2>
-            <dl className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100">
+            <dl className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100 shadow-sm">
               {task.expectedClassName && (
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-5 py-3">
                   <dt className="text-sm text-slate-500 sm:w-40 shrink-0">Klasse</dt>
@@ -197,7 +224,7 @@ export function TaskPage() {
                 </div>
               )}
             </dl>
-          </section>
+          </motion.section>
         )}
 
         {task.visibleUnitTestFiles.length > 0 && (
@@ -209,9 +236,9 @@ export function TaskPage() {
               {task.visibleUnitTestFiles.map((file) => (
                 <details
                   key={file.id}
-                  className="rounded-2xl border border-slate-200 overflow-hidden"
+                  className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
                 >
-                  <summary className="cursor-pointer px-5 py-3 font-mono text-sm bg-slate-50 hover:bg-slate-100">
+                  <summary className="cursor-pointer px-5 py-3 font-mono text-sm bg-slate-50 hover:bg-slate-100 transition-colors">
                     {file.fileName}
                   </summary>
                   <pre className="overflow-x-auto bg-slate-800 p-4 text-xs leading-relaxed text-slate-100">
@@ -229,7 +256,7 @@ export function TaskPage() {
 
         <section>
           <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-            <h2 className="text-xl font-bold text-slate-800">Loesung abgeben</h2>
+            <h2 className="text-xl font-bold text-slate-800">Lösung abgeben</h2>
             {files.length > 0 && (
               <button
                 type="button"
@@ -256,12 +283,13 @@ export function TaskPage() {
               setDragging(false)
               addFiles(event.dataTransfer.files)
             }}
-            className={`relative border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center transition-all ${
+            onClick={() => inputRef.current?.click()}
+            className={`group relative border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center transition-all cursor-pointer ${
               dragging
-                ? 'bg-indigo-50 border-indigo-500'
+                ? 'bg-indigo-50 border-indigo-500 shadow-xl shadow-indigo-50'
                 : files.length > 0
                   ? 'bg-emerald-50 border-emerald-300'
-                  : 'bg-slate-50 border-slate-300'
+                  : 'bg-slate-50 border-slate-300 hover:bg-white hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-50'
             }`}
           >
             <input
@@ -276,77 +304,109 @@ export function TaskPage() {
               }}
             />
 
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 mb-5">
-              <Upload className="w-8 h-8 text-indigo-600" aria-hidden="true" />
-            </div>
-            <p className="text-lg font-bold text-slate-800 mb-1">
-              Zieh deine .java-Dateien hierher
-            </p>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="text-indigo-700 font-semibold hover:underline"
-            >
-              oder klicke, um sie auszuwaehlen
-            </button>
+            <AnimatePresence mode="wait" initial={false}>
+              {files.length === 0 ? (
+                <motion.div
+                  key="leer"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-center"
+                >
+                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 mb-6 mx-auto transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    <Upload className="w-10 h-10 text-indigo-600" aria-hidden="true" />
+                  </div>
+                  <p className="text-xl font-bold text-slate-800 mb-1">
+                    Zieh deine .java-Dateien hierher
+                  </p>
+                  <p className="text-slate-600">oder klicke, um sie auszuwählen</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="gewaehlt"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-center"
+                >
+                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-emerald-100 mb-6 mx-auto scale-110">
+                    <FileCode2 className="w-10 h-10 text-emerald-700" aria-hidden="true" />
+                  </div>
+                  <p className="text-xl font-bold text-slate-800 mb-1">
+                    {files.length === 1 ? '1 Datei' : `${files.length} Dateien`} bereit
+                  </p>
+                  <p className="text-emerald-800 font-medium">Klicke, um weitere hinzuzufügen</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Die Grenzen stehen da, bevor jemand dagegen laeuft. */}
-            <p className="mt-4 text-xs text-slate-600 text-center">
-              {UPLOAD_LIMITS.allowedExtension} · hoechstens {UPLOAD_LIMITS.maxFileCount} Dateien ·{' '}
+            {/* Die Grenzen stehen da, bevor jemand dagegen läuft. */}
+            <p className="mt-6 text-xs text-slate-600 text-center">
+              {UPLOAD_LIMITS.allowedExtension} · höchstens {UPLOAD_LIMITS.maxFileCount} Dateien ·{' '}
               {formatBytes(UPLOAD_LIMITS.maxFileSizeBytes)} je Datei ·{' '}
               {formatBytes(UPLOAD_LIMITS.maxTotalSizeBytes)} gesamt
             </p>
           </div>
 
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {files.length > 0 && (
               <motion.ul
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mt-4 space-y-2"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 space-y-2 overflow-hidden"
               >
-                {files.map((file) => (
-                  <li
+                {files.map((file, index) => (
+                  <motion.li
                     key={file.name}
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.05 }}
                     className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5"
                   >
                     <FileCode2 className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
                     <span className="font-mono text-sm text-slate-800 truncate flex-1">
                       {file.name}
                     </span>
-                    <span className="text-xs text-slate-600 shrink-0">
-                      {formatBytes(file.size)}
-                    </span>
+                    <span className="text-xs text-slate-600 shrink-0">{formatBytes(file.size)}</span>
                     <button
                       type="button"
                       onClick={() => setFiles((current) => current.filter((f) => f !== file))}
                       aria-label={`${file.name} entfernen`}
-                      className="p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-rose-700"
+                      className="p-1 rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-rose-700"
                     >
                       <X className="w-4 h-4" aria-hidden="true" />
                     </button>
-                  </li>
+                  </motion.li>
                 ))}
                 <li className="px-4 text-xs text-slate-600">
-                  {files.length} von {UPLOAD_LIMITS.maxFileCount} Dateien ·{' '}
-                  {formatBytes(totalBytes)} gesamt
+                  {files.length} von {UPLOAD_LIMITS.maxFileCount} Dateien · {formatBytes(totalBytes)}{' '}
+                  gesamt
                 </li>
               </motion.ul>
             )}
           </AnimatePresence>
 
           {/* Eine verworfene Datei verschwindet nicht kommentarlos. */}
-          {rejections.length > 0 && (
-            <ul className="mt-4 space-y-1.5 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              {rejections.map((reason) => (
-                <li key={reason} className="flex gap-2 text-sm text-amber-900">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-                  {reason}
-                </li>
-              ))}
-            </ul>
-          )}
+          <AnimatePresence>
+            {rejections.length > 0 && (
+              <motion.ul
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-4 space-y-1.5 rounded-xl border border-amber-200 bg-amber-50 p-4"
+              >
+                {rejections.map((reason) => (
+                  <li key={reason} className="flex gap-2 text-sm text-amber-900">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                    {reason}
+                  </li>
+                ))}
+              </motion.ul>
+            )}
+          </AnimatePresence>
 
           <div className="mt-8 flex justify-center">
             <button
@@ -356,7 +416,7 @@ export function TaskPage() {
               className={`px-10 py-4 rounded-xl font-bold text-lg transition-all flex items-center gap-3 ${
                 files.length === 0 || sending
                   ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xl shadow-indigo-200 hover:-translate-y-1 active:translate-y-0'
               }`}
             >
               {sending ? (
@@ -367,21 +427,26 @@ export function TaskPage() {
               ) : (
                 <>
                   <CheckCircle className="w-5 h-5" aria-hidden="true" />
-                  Jetzt pruefen
+                  Jetzt prüfen
                 </>
               )}
             </button>
           </div>
 
-          {serverError && (
-            <div
-              role="alert"
-              className="mt-4 flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800"
-            >
-              <FileText className="w-5 h-5 shrink-0" aria-hidden="true" />
-              <p>{serverError}</p>
-            </div>
-          )}
+          <AnimatePresence>
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                role="alert"
+                className="mt-4 flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800"
+              >
+                <FileText className="w-5 h-5 shrink-0" aria-hidden="true" />
+                <p>{serverError}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </div>
     </div>

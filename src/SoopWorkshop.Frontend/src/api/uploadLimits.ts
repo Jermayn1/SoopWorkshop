@@ -36,7 +36,7 @@ export function checkFiles(
     }
 
     if (accepted.some((f) => f.name === file.name)) {
-      rejections.push(`'${file.name}' ist bereits ausgewaehlt.`)
+      rejections.push(`'${file.name}' ist bereits ausgewählt.`)
       continue
     }
 
@@ -47,14 +47,14 @@ export function checkFiles(
 
     if (file.size > UPLOAD_LIMITS.maxFileSizeBytes) {
       rejections.push(
-        `'${file.name}' ist ${formatBytes(file.size)} gross — erlaubt sind ${formatBytes(UPLOAD_LIMITS.maxFileSizeBytes)} je Datei.`,
+        `'${file.name}' ist ${formatBytes(file.size)} groß — erlaubt sind ${formatBytes(UPLOAD_LIMITS.maxFileSizeBytes)} je Datei.`,
       )
       continue
     }
 
     if (accepted.length >= UPLOAD_LIMITS.maxFileCount) {
       rejections.push(
-        `'${file.name}' passt nicht mehr dazu — es sind hoechstens ${UPLOAD_LIMITS.maxFileCount} Dateien erlaubt.`,
+        `'${file.name}' passt nicht mehr dazu — es sind höchstens ${UPLOAD_LIMITS.maxFileCount} Dateien erlaubt.`,
       )
       continue
     }
@@ -62,7 +62,7 @@ export function checkFiles(
     const total = accepted.reduce((sum, f) => sum + f.size, 0) + file.size
     if (total > UPLOAD_LIMITS.maxTotalSizeBytes) {
       rejections.push(
-        `'${file.name}' sprengt die Gesamtgroesse von ${formatBytes(UPLOAD_LIMITS.maxTotalSizeBytes)}.`,
+        `'${file.name}' sprengt die Gesamtgröße von ${formatBytes(UPLOAD_LIMITS.maxTotalSizeBytes)}.`,
       )
       continue
     }

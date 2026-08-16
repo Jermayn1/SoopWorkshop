@@ -12,7 +12,7 @@ export type PollingPhase =
   | { kind: 'idle' }
   /** In der Warteschlange — noch niemand hat die Abgabe angefasst. */
   | { kind: 'pending' }
-  /** Wird gerade geprueft. Bewusst ein eigener Zustand: das ist etwas
+  /** Wird gerade geprüft. Bewusst ein eigener Zustand: das ist etwas
    *  anderes als Warten, und der Teilnehmer soll den Unterschied sehen. */
   | { kind: 'running' }
   | { kind: 'done'; result: EvaluationResult }
@@ -52,7 +52,7 @@ export function useSubmissionPolling(submissionId: string | null) {
         setPhase({
           kind: 'failed',
           message:
-            'Die Auswertung dauert ungewoehnlich lange. Lade die Seite neu oder reiche noch einmal ein.',
+            'Die Auswertung dauert ungewöhnlich lange. Lade die Seite neu oder reiche noch einmal ein.',
         })
         return
       }

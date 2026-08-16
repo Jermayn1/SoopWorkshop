@@ -21,7 +21,7 @@ function ScoreCircle({ score }: { score: number }) {
   const rounded = useTransform(count, (value) => Math.round(value))
 
   useEffect(() => {
-    const controls = animate(count, score, { duration: 1.1, delay: 0.2, ease: 'easeOut' })
+    const controls = animate(count, score, { duration: 1.2, delay: 0.3, ease: 'easeOut' })
     return () => controls.stop()
   }, [count, score])
 
@@ -34,13 +34,13 @@ function ScoreCircle({ score }: { score: number }) {
 
   return (
     <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+      initial={{ scale: 0, rotate: -15 }}
+      animate={{ scale: 1, rotate: 0 }}
       transition={{ type: 'spring', stiffness: 180, damping: 18 }}
       className="relative inline-block mb-6"
     >
       <div
-        className={`w-36 h-36 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-xl ring-8 ring-white`}
+        className={`w-36 h-36 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl ring-8 ring-white`}
       >
         <div className="text-white text-center">
           <motion.div className="text-5xl font-black tabular-nums leading-none">
@@ -52,9 +52,13 @@ function ScoreCircle({ score }: { score: number }) {
         </div>
       </div>
       {great && (
-        <div className="absolute -top-3 -right-3 bg-amber-500 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+        <motion.div
+          animate={{ rotate: [0, 12, -12, 12, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+          className="absolute -top-3 -right-3 bg-amber-500 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
+        >
           <Trophy className="w-5 h-5 text-white" aria-hidden="true" />
-        </div>
+        </motion.div>
       )}
     </motion.div>
   )
@@ -63,11 +67,20 @@ function ScoreCircle({ score }: { score: number }) {
 function Waiting({ title, text }: { title: string; text: string }) {
   return (
     <div className="flex-1 flex items-center justify-center bg-slate-50 p-8">
-      <div className="max-w-md text-center" role="status" aria-live="polite">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mx-auto mb-5" aria-hidden="true" />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <Loader2
+          className="w-10 h-10 text-indigo-600 animate-spin mx-auto mb-5"
+          aria-hidden="true"
+        />
         <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
         <p className="text-slate-600">{text}</p>
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -76,9 +89,9 @@ export function ResultPage() {
   const { submissionId = '' } = useParams()
   const { phase } = useSubmissionPolling(submissionId)
 
-  // Fuer den Zurueck-Link zur richtigen Aufgabe. Das Feld kommt seit
+  // Für den Zurück-Link zur richtigen Aufgabe. Das Feld kommt seit
   // Etappe 4.0 auf dem Status mit, damit ein direkt aufgerufener
-  // Ergebnis-Link ebenfalls einen Weg zurueck hat.
+  // Ergebnis-Link ebenfalls einen Weg zurück hat.
   const [taskId, setTaskId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -88,7 +101,7 @@ export function ResultPage() {
         if (result.kind === 'ok') setTaskId(result.value.taskItemId)
       })
       .catch(() => {
-        /* Der Zurueck-Link ist Beiwerk — sein Fehlschlag darf nichts stoeren. */
+        /* Der Zurück-Link ist Beiwerk — sein Fehlschlag darf nichts stören. */
       })
     return () => controller.abort()
   }, [submissionId])
@@ -102,12 +115,12 @@ export function ResultPage() {
         className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
         aria-hidden="true"
       />
-      {taskId ? 'Zurueck zur Aufgabe' : 'Zur Aufgabenliste'}
+      {taskId ? 'Zurück zur Aufgabe' : 'Zur Aufgabenliste'}
     </Link>
   )
 
-  // Warteschlange und Pruefung sind verschiedene Zustaende und bekommen
-  // verschiedene Texte — "wartet" ist etwas anderes als "wird geprueft".
+  // Warteschlange und Prüfung sind verschiedene Zustände und bekommen
+  // verschiedene Texte — "wartet" ist etwas anderes als "wird geprüft".
   if (phase.kind === 'idle' || phase.kind === 'pending') {
     return (
       <Waiting
@@ -120,8 +133,8 @@ export function ResultPage() {
   if (phase.kind === 'running') {
     return (
       <Waiting
-        title="Wird gerade geprueft"
-        text="Kompilieren, Testfaelle, Unit-Tests. Das dauert meist ein paar Sekunden."
+        title="Wird gerade geprüft"
+        text="Kompilieren, Testfälle, Unit-Tests. Das dauert meist ein paar Sekunden."
       />
     )
   }
@@ -131,7 +144,11 @@ export function ResultPage() {
       <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
         <div className="max-w-3xl mx-auto">
           {backLink}
-          <div className="rounded-2xl border border-rose-200 bg-white overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-rose-200 bg-white overflow-hidden shadow-sm"
+          >
             <div className="flex items-center gap-2 px-5 py-4 border-b border-rose-100 bg-rose-50">
               <AlertTriangle className="w-5 h-5 text-rose-700" aria-hidden="true" />
               <h2 className="font-bold text-slate-800">Die Auswertung ist nicht durchgelaufen</h2>
@@ -144,7 +161,7 @@ export function ResultPage() {
                 Du kannst die Aufgabe erneut abgeben.
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     )
@@ -172,17 +189,29 @@ export function ResultPage() {
 
         <div className="text-center mb-10">
           <ScoreCircle score={result.totalScore} />
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2">{headline}</h1>
-          <p className="text-slate-600 text-sm">
+          <motion.h1
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-3xl font-extrabold text-slate-900 mb-2"
+          >
+            {headline}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-slate-600 text-sm"
+          >
             {open === 0
-              ? 'Alle Teilpruefungen bestanden.'
+              ? 'Alle Teilprüfungen bestanden.'
               : `${passed} bestanden, ${open} offen. Klapp die Kategorien auf, um zu sehen, woran es liegt.`}
-          </p>
+          </motion.p>
         </div>
 
         <div className="space-y-3">
           {categories.map((category, index) => (
-            <CategoryCard key={category.id} result={category} delay={index * 0.1} />
+            <CategoryCard key={category.id} result={category} delay={0.1 + index * 0.1} />
           ))}
         </div>
       </div>

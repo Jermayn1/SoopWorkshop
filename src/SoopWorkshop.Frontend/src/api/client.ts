@@ -52,7 +52,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
     return {
       kind: 'unreachable',
-      message: 'Der Server ist nicht erreichbar. Laeuft das Backend?',
+      message: 'Der Server ist nicht erreichbar. Läuft das Backend?',
     }
   }
 
