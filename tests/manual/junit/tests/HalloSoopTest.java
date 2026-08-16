@@ -16,6 +16,10 @@ import org.junit.jupiter.api.Test;
  * Fuer die ersten Aufgaben gedacht: der Teilnehmer schreibt nur eine main, und
  * geprueft wird trotzdem ueber JUnit statt ueber Konsolen-Testfaelle.
  *
+ * Das funktioniert hier, weil die Aufgabe keine Eingabe hat. Sobald eine ins
+ * Spiel kommt, gehoert die Pruefung in einen Konsolen-Testfall - nur dort
+ * erscheint die Eingabe im Ergebnis (siehe RechnerTest).
+ *
  * Drei Dinge, die hier absichtlich so stehen:
  *
  *  1. Der PrintStream bekommt StandardCharsets.UTF_8 ausdruecklich mit. Ohne
@@ -44,7 +48,7 @@ class HalloSoopTest {
     }
 
     @Test
-    @DisplayName("Das Programm gibt 'Hallo Soop' aus")
+    @DisplayName("Das Programm gibt Hallo Soop aus")
     void mainGibtHalloSoopAus() {
         Main.main(new String[0]);
 

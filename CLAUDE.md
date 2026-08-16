@@ -306,10 +306,10 @@ Teilnehmer als Beschreibung der Teilprüfung — ohne ihn steht dort der Methode
 1. Der Abfang-Stream braucht `new PrintStream(buffer, true, StandardCharsets.UTF_8)`.
    Ohne die explizite Angabe schreibt er in der Codepage des Systems — dieselbe Falle
    wie bei `stdout.encoding`, nur eine Ebene tiefer.
-2. `System.setOut`/`System.setIn` in `@AfterEach` zurücksetzen.
+2. `System.setOut` in `@AfterEach` zurücksetzen.
 3. Statische Felder der Abgabe überleben zwischen Testmethoden (eine JVM pro Lauf).
-   Ein `static Scanner` wird beim Laden der Klasse gebaut — also **bevor**
-   `System.setIn` wirkt.
+
+Für Eingaben gilt das **nicht** — die gehören in Konsolen-Testfälle, siehe §5.7.
 
 **Drei Fehlerfälle mit eigener Erklärung**, damit nichts still 0 Punkte ergibt:
 
@@ -372,7 +372,44 @@ Vor jeder Regex-Prüfung entfernt `JavaSourceText.StripCommentsAndLiterals` Komm
 sowie String-, Textblock- und Char-Literale. Ohne das schlug die Namensprüfung an,
 sobald `mein_wert` in einem Kommentar oder in einer Ausgabe stand.
 
-### 5.7 Sortierung der Anzeige
+### 5.7 Wie eine Teilprüfung aussieht
+
+Alle Teilprüfungen einer Auswertung stammen aus fünf Quellen — drei Checkern, den
+Konsolen-Testfällen und den `@DisplayName`s der JUnit-Datei. Ohne Absprache klingt
+jede anders, und in derselben Kategorie nebeneinander verwirrt das mehr, als es hilft.
+
+**Der Text ist eine Aussage über die Abgabe, das Häkchen sagt, ob sie stimmt.**
+Nie eine Feststellung des Ergebnisses — „Kein Umlaut gefunden" mit einem roten Kreuz
+behauptet das Gegenteil dessen, was passiert ist.
+
+| Was geprüft wird | Wortlaut |
+|---|---|
+| Clean Code | „Der Code kommt ohne Umlaute und ohne ß aus" |
+| Kompilierbarkeit | „Der Code kompiliert", „Die geforderte Klasse ist vorhanden" |
+| Funktionalität, Konsole | „Das Programm addiert zwei positive Zahlen" |
+| Funktionalität, JUnit | „Die Methode addiere rechnet auch mit negativen Zahlen" |
+
+Subjekt zuerst: **„Das Programm …"** für alles, was über `main` läuft, **„Die Methode
+X …"** für Methodenprüfungen. Konkrete Werte gehören **nicht** in den Text, sondern in
+die Zeilen darunter — das gilt auch für lange Signaturen.
+
+**Die Darstellung ist immer dieselbe**, egal aus welcher Quelle:
+
+- `Eingabe` — nur, wenn es eine gab
+- `Erwartet` und `Erhalten` — **immer gemeinsam**, sobald eine Erwartung vorliegt.
+  Ein „Erwartet" ohne Gegenstück lässt den Leser raten; fehlt eine Seite, steht dort
+  ein Gedankenstrich, und der Checker füllt sprechende Werte (`nicht gefunden`,
+  `(keine Ausgabe)`) statt ins Leere zu zeigen.
+- Prüfungen ohne Vergleich zeigen höchstens eine Meldung (Compilerausgabe, Stacktrace).
+- Bestandene Prüfungen zeigen nichts.
+
+**Eingaben gehören in Konsolen-Testfälle, nicht in JUnit.** Eine über `System.setIn`
+im Testcode versteckte Eingabe kann die Anzeige nicht kennen — der Teilnehmer sähe
+„Erwartet 7", ohne zu erfahren, womit gerechnet wurde. Faustregel: **JUnit prüft
+Methoden, Konsolen-Testfälle prüfen das Programm.** Die Ausnahme sind Aufgaben ganz
+ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
+
+### 5.8 Sortierung der Anzeige
 
 - `EvaluationCategoryOrder` in `Shared`: CleanCode → Kompilierbarkeit → Funktionalität
 - `Order` auf `TestCaseResult`, vom Scorer fortlaufend vergeben
@@ -578,11 +615,14 @@ die Ganzzahl-Division in `TestCaseChecker`, die Regex-Schwächen im
 - [x] Der Aufgaben-Vertrag ist strukturiert (`ExpectedClassName`, `ExpectedMethods`)
       und wird vom `ContractChecker` geprüft, statt nur als Freitext dazustehen —
       schließt die Lücke, dass eine Abgabe mit falschem Klassennamen klaglos bestand
-- [x] Jede Teilprüfung wird gleich dargestellt: **Eingabe / Erwartet / Erhalten**,
-      was fehlt, entfällt. Dafür trägt `TestCaseResult` jetzt die `Input`, und die
-      JUnit-Meldung `expected: <5> but was: <-1>` wird in dieselben Felder zerlegt
+- [x] Jede Teilprüfung wird gleich dargestellt und gleich benannt (§5.7). Dafür trägt
+      `TestCaseResult` jetzt die `Input`, und die JUnit-Meldung
+      `expected: <5> but was: <-1>` wird in dieselben Felder zerlegt
       (`AssertionMessage`) — vorher zeigte ein fehlgeschlagener Unit-Test **gar
       keinen Grund** an, weil die Anzeige an `ExpectedOutput` hing
+- [x] Die Eingabesimulation über `System.setIn` ist aus der Vorlage `RechnerTest`
+      geflogen: eine im Testcode versteckte Eingabe kann die Anzeige nicht kennen,
+      und dieselbe Prüfung leisten die Konsolen-Testfälle sichtbar
 
 **Bewusst anders als geplant:** Die Modus-Validierung greift beim *Sichtbarschalten*
 statt beim Speichern. Beim Anlegen einer Aufgabe gibt es die Testfälle noch gar nicht —

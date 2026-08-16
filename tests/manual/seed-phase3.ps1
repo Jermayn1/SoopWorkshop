@@ -122,7 +122,7 @@ Invoke-Api -Method Post -Path "/api/admin/tasks/$($konsole.id)/tests" -Body @{
     taskItemId     = $konsole.id
     input          = ''
     expectedOutput = 'Hallo Soop'
-    description    = 'Das Programm gibt "Hallo Soop" aus'
+    description    = 'Das Programm gibt Hallo Soop aus'
     order           = 1
 } | Out-Null
 
@@ -177,7 +177,7 @@ Invoke-Api -Method Post -Path "/api/admin/tasks/$($both.id)/tests" -Body @{
     taskItemId     = $both.id
     input          = "3`n4`n"
     expectedOutput = '7'
-    description    = '3 und 4 ergeben 7'
+    description    = 'Das Programm addiert zwei positive Zahlen'
     order          = 1
 } | Out-Null
 
@@ -185,7 +185,7 @@ Invoke-Api -Method Post -Path "/api/admin/tasks/$($both.id)/tests" -Body @{
     taskItemId     = $both.id
     input          = "10`n-4`n"
     expectedOutput = '6'
-    description    = '10 und -4 ergeben 6'
+    description    = 'Das Programm rechnet auch mit negativen Zahlen'
     order          = 2
 } | Out-Null
 

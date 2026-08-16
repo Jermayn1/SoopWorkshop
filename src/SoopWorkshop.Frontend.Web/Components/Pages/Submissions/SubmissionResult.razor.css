@@ -13,10 +13,11 @@
     align-items: baseline;
 }
 
+/* Normale Schreibweise statt Versalien: im Deutschen sind die Begriffe ohnehin
+   grossgeschrieben, Versalien wirken daneben nur laut. */
 .pruefung-details dt {
     font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-weight: 600;
     color: var(--mud-palette-text-secondary);
     white-space: nowrap;
 }
@@ -41,4 +42,18 @@
    sofort ins Auge faellt. */
 .pruefung-details dd.pruefung-erhalten {
     color: var(--mud-palette-error-text);
+}
+
+/* Meldungen ohne Vergleich: Compilerausgabe, Stacktrace. Gleiche Optik wie ein
+   Wert, nur ueber die volle Breite - sie sind meist mehrzeilig. */
+.pruefung-meldung {
+    margin-top: 0.25rem;
+    font-family: var(--mud-typography-caption-family, monospace);
+    font-size: 0.8125rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--mud-palette-error-text);
+    background-color: var(--mud-palette-background-grey);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
 }

@@ -63,7 +63,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             {
                 return CheckerOutcome.WithTip(
                     "Da dein Code nicht kompiliert, konnten die Unit-Tests nicht ausgefuehrt werden.",
-                    Failed("Unit-Tests ausgefuehrt", string.Empty));
+                    Failed("Die Unit-Tests konnten ausgefuehrt werden", string.Empty));
             }
 
             await WriteTestFilesAsync(context.WorkingDirectory, testFiles, cancellationToken);
@@ -136,7 +136,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             {
                 return CheckerOutcome.WithTip(
                     $"Das Kompilieren der Testdatei hat laenger als {_options.CompileTimeoutSeconds} Sekunden gebraucht.",
-                    Failed("Testdatei kompiliert gegen deine Abgabe", string.Empty));
+                    Failed("Die Testdatei passt zu deiner Abgabe", string.Empty));
             }
 
             var rawOutput = string.IsNullOrWhiteSpace(compilation.StandardError)
@@ -156,7 +156,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             // der schnellste Weg zur Ursache.
             return CheckerOutcome.WithTip(
                 tip,
-                Failed("Testdatei kompiliert gegen deine Abgabe", rawOutput));
+                Failed("Die Testdatei passt zu deiner Abgabe", rawOutput));
         }
 
         private async Task<CheckerOutcome> RunAsync(
@@ -208,7 +208,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 return CheckerOutcome.WithTip(
                     $"Der Testlauf hat laenger als {_options.JUnitRunTimeoutSeconds} Sekunden gebraucht und wurde abgebrochen. " +
                     "Pruefe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.",
-                    Failed("Unit-Tests ausgefuehrt", string.Empty));
+                    Failed("Die Unit-Tests konnten ausgefuehrt werden", string.Empty));
             }
 
             // Ein Rueckgabewert ungleich 0 heisst hier nur "Tests sind
@@ -263,7 +263,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             return CheckerOutcome.WithTip(
                 "Der Testlauf hat kein Ergebnis hinterlassen. Ruft dein Programm System.exit(...) auf? " +
                 "Das beendet die virtuelle Maschine und bricht die Pruefung ab, bevor ein Ergebnis entsteht.",
-                Failed("Unit-Tests ausgefuehrt", process.StandardOutput));
+                Failed("Die Unit-Tests konnten ausgefuehrt werden", process.StandardOutput));
         }
 
         private static TestCaseResult Failed(string description, string actualOutput) => new()

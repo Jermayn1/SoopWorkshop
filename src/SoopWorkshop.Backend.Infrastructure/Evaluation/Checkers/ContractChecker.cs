@@ -49,7 +49,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 results.Add(new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = $"Klasse '{expectedClassName}' vorhanden",
+                    Description = "Die geforderte Klasse ist vorhanden",
                     ExpectedOutput = expectedClassName,
                     ActualOutput = found ? expectedClassName : DescribeFoundTypes(code),
                     Passed = found
@@ -63,12 +63,15 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             {
                 var found = DeclaresMethod(code, method.Name);
 
+                // Der Name in der Ueberschrift, die vollstaendige Signatur in der
+                // Zeile darunter - dort steht sie neben "Erhalten" und laesst
+                // sich vergleichen, statt die Ueberschrift zu sprengen.
                 results.Add(new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = $"Methode '{method.Signature}' vorhanden",
+                    Description = $"Die Methode '{method.Name}' ist vorhanden",
                     ExpectedOutput = method.Signature,
-                    ActualOutput = found ? method.Signature : string.Empty,
+                    ActualOutput = found ? method.Signature : "nicht gefunden",
                     Passed = found
                 });
 

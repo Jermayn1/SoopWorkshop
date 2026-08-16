@@ -67,7 +67,7 @@ Belege dafür, dass sich `main` und Konsolenausgabe aus JUnit heraus prüfen las
 | Datei | Zeigt |
 |---|---|
 | `HalloSoopTest.java` | Ausgabe über `System.setOut` abfangen und `Main.main(...)` aufrufen |
-| `RechnerTest.java` | eigene Methode prüfen und zusätzlich eine Eingabe über `System.setIn` simulieren |
+| `RechnerTest.java` | eine eigene Methode prüfen — bewusst **ohne** Eingabesimulation, siehe CLAUDE.md §5.7 |
 
 Die Kommentare darin sind Teil der Vorlage: UTF-8-`PrintStream`, Zurücksetzen in
 `@AfterEach` und der statische Zustand zwischen Testmethoden sind genau die

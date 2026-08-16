@@ -90,20 +90,22 @@ public partial class SubmissionResult : ComponentBase, IAsyncDisposable
     private static IEnumerable<TestCaseResultDto> SortedTestCases(CategoryResultDto category) =>
         category.TestCaseResults.OrderBy(testCase => testCase.Order);
 
-    // Manche Teilpruefungen sind reine Ja/Nein-Aussagen ("Kein Umlaut gefunden")
-    // und haben nichts zu zeigen. Dann bleibt der Detailblock ganz weg, statt
-    // leere Beschriftungen zu hinterlassen.
     // Der abschliessende Zeilenumbruch von println haengt an fast jeder Ausgabe
     // und erzeugt sonst eine leere Zeile unter dem Wert. Er kann nie die Ursache
     // eines Fehlschlags sein, weil der Vergleich beide Seiten ohnehin trimmt.
     // Leerzeichen und Umbrueche *innerhalb* der Ausgabe bleiben unangetastet -
     // die sind oft genau der Grund.
-    private static string ForDisplay(string value) => value.TrimEnd('\r', '\n');
+    private static string ForDisplay(string value) =>
+        string.IsNullOrEmpty(value) ? "—" : value.TrimEnd('\r', '\n');
 
-    private static bool HasDetails(TestCaseResultDto testCase) =>
-        !string.IsNullOrWhiteSpace(testCase.Input)
-        || !string.IsNullOrWhiteSpace(testCase.ExpectedOutput)
-        || !string.IsNullOrWhiteSpace(testCase.ActualOutput);
+    // Ein Vergleich liegt vor, sobald eine Erwartung hinterlegt ist oder es eine
+    // Eingabe gab. Dann werden Erwartet und Erhalten immer gemeinsam gezeigt,
+    // auch wenn eine Seite leer bleibt - ein "Erwartet" ohne Gegenstueck laesst
+    // den Leser raten. Reine Ja/Nein-Aussagen wie "Der Code kompiliert" haben
+    // keinen Vergleich und zeigen hoechstens eine Meldung.
+    private static bool HasComparison(TestCaseResultDto testCase) =>
+        !string.IsNullOrWhiteSpace(testCase.ExpectedOutput)
+        || !string.IsNullOrWhiteSpace(testCase.Input);
 
     // Nur abmelden und stoppen: den Lebenszyklus des Dienstes verwaltet die DI.
     public async ValueTask DisposeAsync()

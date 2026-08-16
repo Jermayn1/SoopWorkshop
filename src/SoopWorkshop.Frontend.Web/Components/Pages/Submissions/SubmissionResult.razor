@@ -74,10 +74,11 @@ else
                                     <MudStack Spacing="1">
                                         <MudText Typo="Typo.body2">@test.Description</MudText>
 
-                                        @* Immer dieselben drei Zeilen, egal ob die Pruefung aus einem
-                                           Konsolen-Testfall, einem Unit-Test oder einer Vorgabe stammt.
-                                           Was nicht vorliegt, wird weggelassen - nicht leer angezeigt. *@
-                                        @if (!test.Passed && HasDetails(test))
+                                        @* Einheitlich, egal ob die Pruefung aus einem Konsolen-Testfall,
+                                           einem Unit-Test oder einer Vorgabe stammt. "Eingabe" nur, wenn
+                                           es eine gab; "Erwartet" und "Erhalten" immer gemeinsam - ein
+                                           "Erwartet" ohne Gegenstueck laesst den Leser raten. *@
+                                        @if (!test.Passed && HasComparison(test))
                                         {
                                             <dl class="pruefung-details">
                                                 @if (!string.IsNullOrWhiteSpace(test.Input))
@@ -85,17 +86,19 @@ else
                                                     <dt>Eingabe</dt>
                                                     <dd>@ForDisplay(test.Input)</dd>
                                                 }
-                                                @if (!string.IsNullOrWhiteSpace(test.ExpectedOutput))
-                                                {
-                                                    <dt>Erwartet</dt>
-                                                    <dd>@ForDisplay(test.ExpectedOutput)</dd>
-                                                }
-                                                @if (!string.IsNullOrWhiteSpace(test.ActualOutput))
-                                                {
-                                                    <dt>Erhalten</dt>
-                                                    <dd class="pruefung-erhalten">@ForDisplay(test.ActualOutput)</dd>
-                                                }
+
+                                                <dt>Erwartet</dt>
+                                                <dd>@ForDisplay(test.ExpectedOutput)</dd>
+
+                                                <dt>Erhalten</dt>
+                                                <dd class="pruefung-erhalten">@ForDisplay(test.ActualOutput)</dd>
                                             </dl>
+                                        }
+                                        else if (!test.Passed && !string.IsNullOrWhiteSpace(test.ActualOutput))
+                                        {
+                                            @* Kein Vergleich, nur eine Meldung - etwa die Ausgabe des
+                                               Compilers oder ein Stacktrace. *@
+                                            <div class="pruefung-meldung">@ForDisplay(test.ActualOutput)</div>
                                         }
                                     </MudStack>
                                 </MudListItem>

@@ -98,8 +98,14 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Task("Main", "addiere"),
                 "public class Main { public static int addieren(int a, int b) { return a + b; } }");
 
-            var method = outcome.Results.Single(result => result.Description.Contains("addiere("));
+            var method = outcome.Results.Single(result => result.Description.Contains("addiere"));
             method.Passed.ShouldBeFalse();
+
+            // Der Name in der Ueberschrift, die vollstaendige Signatur daneben -
+            // sonst sprengt sie die Zeile und laesst sich nicht vergleichen.
+            method.Description.ShouldBe("Die Methode 'addiere' ist vorhanden");
+            method.ExpectedOutput.ShouldBe("public static int addiere(int a, int b)");
+            method.ActualOutput.ShouldBe("nicht gefunden");
 
             outcome.ErrorTip.ShouldNotBeNull().ShouldContain("public static int addiere(int a, int b)");
         }

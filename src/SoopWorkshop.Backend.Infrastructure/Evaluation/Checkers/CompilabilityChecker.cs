@@ -83,7 +83,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var result = new TestCaseResult
             {
                 Id = Guid.NewGuid(),
-                Description = "Code kompiliert fehlerfrei",
+                Description = "Der Code kompiliert",
                 Passed = success,
                 ActualOutput = errorOutput
             };

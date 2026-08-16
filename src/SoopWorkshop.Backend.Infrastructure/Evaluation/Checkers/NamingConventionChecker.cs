@@ -41,13 +41,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = "Klassennamen in PascalCase",
+                    Description = "Klassennamen sind in PascalCase geschrieben",
                     Passed = classNamesValid
                 },
                 new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = "Variablen- und Methodennamen in camelCase",
+                    Description = "Variablen- und Methodennamen sind in camelCase geschrieben",
                     Passed = noSnakeCase
                 }
             };

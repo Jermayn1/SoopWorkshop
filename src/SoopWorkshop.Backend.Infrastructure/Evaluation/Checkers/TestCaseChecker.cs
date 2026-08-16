@@ -65,6 +65,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             foreach (var test in tests)
             {
                 var actualOutput = await RunProgramAsync(compilation, test.Input, cancellationToken);
+                var passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput);
 
                 results.Add(new TestCaseResult
                 {
@@ -72,8 +73,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     Description = test.Description,
                     Input = test.Input,
                     ExpectedOutput = test.ExpectedOutput,
-                    ActualOutput = actualOutput,
-                    Passed = NormalizeOutput(actualOutput) == NormalizeOutput(test.ExpectedOutput)
+
+                    // Erst vergleichen, dann beschriften: gibt das Programm gar
+                    // nichts aus, stuende in der Anzeige sonst nur "Erwartet" und
+                    // darunter nichts - der Teilnehmer sieht dann nicht, ob die
+                    // Ausgabe fehlte oder die Anzeige kaputt ist.
+                    ActualOutput = string.IsNullOrWhiteSpace(actualOutput)
+                        ? "(keine Ausgabe)"
+                        : actualOutput,
+
+                    Passed = passed
                 });
             }
 

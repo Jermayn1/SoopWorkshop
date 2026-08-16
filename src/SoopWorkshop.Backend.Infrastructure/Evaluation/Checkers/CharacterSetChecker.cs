@@ -27,7 +27,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var result = new TestCaseResult
             {
                 Id = Guid.NewGuid(),
-                Description = "Kein Umlaut oder Sonderzeichen gefunden",
+                Description = "Der Code kommt ohne Umlaute und ohne ß aus",
                 Passed = !hasForbiddenCharacters
             };
 
