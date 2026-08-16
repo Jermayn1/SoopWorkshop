@@ -1,15 +1,15 @@
 using SoopWorkshop.Frontend.Web.Components;
 using MudBlazor.Services;
 using SoopWorkshop.Frontend.Services;
-using SoopWorkshop.Frontend.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5120";
 builder.Services.AddFrontendServices(apiBaseUrl);
 
-// Themes registrieren
-builder.Services.AddScoped<ThemeService>();
+// Wird nur beim Vorabrendern gebraucht: dort liest MainLayout die Theme-Wahl aus dem
+// Cookie, damit die Seite gleich in der richtigen Farbe erscheint.
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -28,8 +28,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Sonst not found bei submissions etc.
-// app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+// NotFoundPage in Routes.razor greift nur bei Navigation innerhalb einer laufenden
+// Verbindung. Wird eine unbekannte Adresse direkt aufgerufen oder neu geladen, endet die
+// Anfrage im Endpoint-Routing, bevor Blazor ueberhaupt laeuft - ohne diese Zeile kam dann
+// eine leere Seite mit Status 404 zurueck.
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();

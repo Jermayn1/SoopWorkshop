@@ -17,6 +17,7 @@ namespace SoopWorkshop.Frontend.Services
             services.AddHttpClient<AdminApiClient>(client => client.BaseAddress = baseAddress);
 
             services.AddScoped<SubmissionPollingState>();
+            services.AddScoped<ThemeService>();
 
             return services;
         }
