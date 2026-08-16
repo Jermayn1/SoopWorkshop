@@ -2,7 +2,8 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-16 — Phase 0 bis 3 abgeschlossen, als Nächstes Phase 4.
+> Stand: 2026-08-16 — Phase 0 bis 3 und Etappe 4.1 abgeschlossen, als Nächstes Etappe 4.2.
+> Das Designsystem steht in `DESIGN.md`, die Regeln zur Umsetzung in §6.1.
 
 ---
 
@@ -438,6 +439,42 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
   Testet ein Test bewusst eine bekannte Schwäche, hält der Kommentar das als
   **Ist-Verhalten** fest und verweist auf das Finding in §9.
 
+### 6.1 Designsystem — `DESIGN.md` (seit Phase 4.1)
+
+Verbindliche Referenz ist **`DESIGN.md`** im Repo-Wurzelverzeichnis („Dub"-Stil: helles
+Canvas, ein Akzent, kompakte Dichte). Zwei Regeln, damit nichts auseinanderläuft:
+
+| Art von Token | Wohnort |
+|---|---|
+| **Farben** | `Frontend.Web/Services/AppThemes.cs` — MudBlazor erzeugt daraus die `--mud-palette-*` |
+| Radien, Typo-Skala, Spacing, Tints, Layout | `Frontend.Web/wwwroot/app.css` (`:root`) |
+| Komponenten-Feinschliff | `X.razor.css` (CSS-Isolation) |
+
+**Eigenes CSS nutzt ausschließlich `var(--mud-palette-…)`, niemals Hex-Werte.** Sonst gibt
+es eine zweite Farbliste, die still von der Palette abweicht.
+
+**Kanten statt Schatten.** DESIGN.md definiert Container über 1px-Hairlines
+(`--mud-palette-lines-default`), nicht über Elevation. Deshalb überall
+`Elevation="0" Outlined="true"`.
+
+**Die eine gefüllte Aktion pro Seite** liegt auf `Color.Dark` (schwarze Füllung hell /
+helle Füllung dunkel), nicht auf `Primary` — `Primary` ist das Akzentblau und färbt Links,
+Navigation und Fortschrittsbalken mit.
+
+**Akzentfarben nie als Schriftfarbe**, nur als Icon, Kante oder getönter Hintergrund.
+`#16a34a` auf Weiß liegt bei ~3,0:1 und reißt die Schwelle von 4,5:1. Präzedenzfall und
+Begründung stehen in `SubmissionResult.razor.css`.
+
+**Zwei bewusste Ergänzungen zu DESIGN.md**, weil das Dokument sie offenlässt:
+Fehlerrot (`#dc2626` / `#f87171`) und die komplette Dark-Ableitung. Beide in
+`AppThemes.cs` kommentiert.
+
+> **Achtung, einmal reingefallen:** eine `MainLayout.razor.css` mit `::deep`-Regeln auf
+> `.mud-appbar` war **still wirkungslos**. Die CSS-Isolation hängt ihr Scope-Attribut nur
+> an HTML-Elemente, die die Komponente selbst rendert — `MainLayout` besteht nur aus
+> MudBlazor-Komponenten, es gibt dort kein Element, an dem `::deep` ansetzen kann.
+> Globale Komponenten-Overrides gehören nach `app.css`.
+
 ---
 
 ## 7. Basis-Smoke-Test vor dem Merge
@@ -447,7 +484,8 @@ Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
 1. `.\scripts\stop-dev.ps1`, dann `.\scripts\start-dev.ps1` — Build ohne Warnungen,
    beide Dienste melden „bereit"
 2. `dotnet test SoopWorkshop.slnx` — grün
-3. Frontend öffnen, Theme dreimal umschalten (Light / Dark / OLED)
+3. Frontend öffnen, Theme umschalten (Light / Dark) und **F5 drücken** — die Wahl muss
+   den Neuladen überstehen, ohne dass die Seite kurz hell aufblitzt
 4. Aufgabe aus der Sidebar öffnen — Beschreibung, Schwierigkeitsgrad, Tipps sichtbar
 5. `.java` hochladen, abgeben, Ergebnisseite abwarten — Punkte und Kategorien erscheinen
 6. Browser-Konsole (F12) auf Fehler prüfen
@@ -630,33 +668,71 @@ eine Prüfung dort hätte das Anlegen jeder JUnit-Aufgabe unmöglich gemacht.
 
 ### Phase 4 — Frontend Teilnehmer-Sicht
 
-- [ ] `app.css` entrümpeln — enthält noch Bootstrap-Boilerplate aus der Projektvorlage
-- [ ] Favicon ergänzen — `wwwroot/` enthält nur `app.css`, `App.razor` verweist auf
-      keins; jeder Seitenaufruf erzeugt einen 404 in der Browser-Konsole
-- [ ] `NotFound.razor` und `Error.razor` auf MudBlazor umstellen (aktuell rohes HTML)
-- [ ] `ThemeService`: Auswahl in `localStorage` persistieren; Service startet mit `Light`,
-      `MainLayout` initialisiert aber `Dark` → Flackern beim ersten Render
-- [ ] Drawer ist fest `Open="true"` → Toggle im AppBar, Verhalten auf Mobil klären
-- [ ] Sidebar: Aufgaben innerhalb einer Kategorie nach `Order` sortieren (fehlt)
-- [ ] Zentrale Fehlerbehandlung: `GetFromJsonAsync` wirft bei nicht erreichbarer API
-      unbehandelt → Snackbar + Retry statt weißer Seite
-- [ ] Lade- und Leerzustände vereinheitlichen (Skeletons statt nackter Spinner)
+Drei Etappen. Zusätzlich zur ursprünglichen Liste kam **`DESIGN.md`** dazu (siehe §6.1),
+und **OLED entfällt** — es bleiben Light und Dark.
+
+**Etappe 4.1 — Designsystem & Fundament** ✅
+*Branch `phase-4-1-fundament`. 221 Tests, grün. Build warnungsfrei.*
+
+- [x] Designsystem nach `DESIGN.md`: Palette in `AppThemes.cs` (Light **und** Dark in
+      **einem** `MudTheme`, `IsDarkMode` wählt aus), Nicht-Farb-Token in `app.css`,
+      Typo-Skala und Radien-Vokabular gesetzt. Regeln in §6.1
+- [x] Border-first: `Elevation="0" Outlined="true"` durchgehend, Hairlines an AppBar
+      und Drawer, Seitenbreite 1200px, Buttons ohne Versalien
+- [x] Schriften: Google-CDN-Link entfernt (workshop-intern, ggf. ohne Internet), Inter
+      als bevorzugte Schrift mit Systemstapel als Rückfall
+- [x] `app.css` entrümpelt — von 38 Zeilen Bootstrap-Boilerplate blieb `h1:focus`
+- [x] Favicon (`wwwroot/favicon.svg`) — der 404 pro Seitenaufruf ist weg
+- [x] `NotFound.razor` und `Error.razor` auf MudBlazor und Deutsch, `Error` mit
+      Code-Behind — das war die letzte `@code`-Verletzung im Repo
+- [x] `UseStatusCodePagesWithReExecute` wieder aktiviert: `NotFoundPage` in
+      `Routes.razor` greift **nur** bei Navigation im laufenden Circuit; ein direkter
+      Aufruf endete vorher mit leerer Seite und Status 404 (nachgemessen)
+- [x] Theme auf Light/Dark reduziert, `ThemeService` nach
+      `Frontend.Services/StateManagement/`, Persistenz über Cookie statt `localStorage` —
+      der Server kennt die Wahl schon beim Vorabrendern, damit **kein Flackern**;
+      Übergabe an den Circuit über `PersistentComponentState`
+- [x] Drawer: `@bind-Open` + `DrawerVariant.Responsive` + Toggle im AppBar
+- [x] Sortierung nach `Order` — in `TaskCategoryService.MapToDto` **und** in der Sidebar
+- [x] Zentrale Fehlerbehandlung: `ApiResult<T>` trennt Erfolg / nicht vorhanden /
+      fehlgeschlagen, `ErrorBoundary` im Layout, Retry in Sidebar und `TaskDetail`,
+      Upload-Fehlermeldung des Servers erreicht den Teilnehmer im Wortlaut
+- [x] Lade- und Leerzustände: `MudSkeleton` statt nackter Spinner
+
+**Etappe 4.2 — Inhalte** (offen)
+
+- [ ] Shared/Backend: `TaskItemId` auf `SubmissionStatusDto`, `DifficultyNames` in
+      `Shared/Constants` (Schwierigkeitsgrad steht noch auf Englisch)
+- [ ] `TaskDetail`: Aufgaben-Vertrag anzeigen (`ExpectedClassName`, `ExpectedMethods`,
+      `VisibleUnitTestFiles`) — wird geprüft, aber nirgends gezeigt; schließt §10.3
+- [ ] `TaskDetail`: Schwierigkeitsgrad als Pill-Badge statt vollflächigem Chip
 - [ ] `TaskDetail`: Drag & Drop, Dateiliste mit Entfernen-Button — `MudFileUpload` bringt
       `DragAndDrop`, `SelectedTemplate` und `RemoveFileAsync` bereits mit, nichts davon
       selbst bauen. `MaxFileSize`/`MaximumFileCount`/`Accept` sind seit Phase 2 gesetzt
       und kommen aus `SubmissionUploadLimits`; die Fehlermeldung dazu fehlt noch
 - [ ] `SubmissionResult`: `Pending` und `Running` im Text unterscheiden — seit Phase 2 wird
-      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". `Failed` zeigt
-      bereits die Fehlermeldung. Offen bleiben „Erneut versuchen" und der Zurück-Link zur
-      *richtigen* Aufgabe (geht aktuell nach `/`)
-- [ ] `SubmissionResult`: JUnit-Ergebnisse darstellen — Testmethode, Erwartung, Fehlermeldung
-- [ ] Sortierte Anzeige der Kategorien und Teilprüfungen (setzt Phase 3 voraus)
+      der Status geliefert, angezeigt wird aber nur „Auswertung laeuft". Braucht ein
+      `OnStatusChanged` im `SubmissionPollingState`, das es noch nicht gibt
+- [ ] `SubmissionResult`: „Erneut versuchen" und Zurück-Link zur *richtigen* Aufgabe
+      (geht aktuell nach `/`); Polling-Start von `OnInitializedAsync` nach
+      `OnParametersSetAsync` verlegen, sonst bricht genau dieser neue Link
+- [ ] `SubmissionResult`: Punktzahl als Display-Größe in Textfarbe, Wertung über
+      Status-Badge statt eingefärbter Zahl
+- [ ] Aufgabenübersicht als eigene Seite unter `/tasks` (nicht nur Sidebar)
 - [x] `SubmissionPollingState` sauber verdrahtet (injiziert statt `new`'d, Abbruch nach
       150 Versuchen ≈ 5 Minuten) — in Phase 2 mitgenommen, weil das Status-Polling ohne
       diesen Umbau nicht prüfbar gewesen wäre
-- [ ] Aufgabenübersicht als eigene Seite (nicht nur Sidebar)
+- [x] Sortierte Anzeige der Kategorien und Teilprüfungen — war in `SubmissionResult`
+      bereits mit Phase 3 erledigt; offen war nur die Sidebar, siehe 4.1
+- [x] JUnit-Ergebnisse darstellen — durch Phase 3.1 erledigt: seit `AssertionMessage`
+      zerlegt wird, sehen Unit-Test-Prüfungen genauso aus wie Konsolen-Testfälle.
+      Offen ist nur noch der Feinschliff (Monospace, Umbruch langer Ausgaben)
+
+**Etappe 4.3 — Feinschliff** (offen)
+
 - [ ] Responsive-Durchgang: Mobil, Tablet, Desktop
-- [ ] Barrierefreiheit: Fokus-Reihenfolge, Kontraste in allen drei Themes
+- [ ] Barrierefreiheit: Fokus-Reihenfolge, `aria-label`, Kontraste in **beiden** Themes
+      messen — besonders die in 4.1 abgeleiteten Dark-Werte und die Tint-Badges
 
 ### Phase 5 — Admin-Panel
 
@@ -821,8 +897,33 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   was `GetByIdAsync` nicht mitlädt, sieht die Auswertung als „nicht vorhanden" und
   bewertet entsprechend. Beim Ergänzen von `CategoryWeights` und `UnitTestFiles` war das
   jeweils die stillste denkbare Fehlerquelle — bei neuen Navigationen daran denken
-- 2026-08-15 — `Application/Tasks/Services/TaskCategoryService.cs` — `MapToDto` sortiert Tasks nicht nach `Order` — Phase 4
+- ~~2026-08-15 — `Application/Tasks/Services/TaskCategoryService.cs` — `MapToDto` sortiert Tasks nicht nach `Order`~~ — erledigt in Phase 4.1
 - 2026-08-15 — `Backend.API/Controllers/Admin/*` — keinerlei Zugriffsschutz — Phase 5
+- 2026-08-16 — `Frontend.Web/Components/Layout/MainLayout.razor.css` — eine isolierte
+  CSS-Datei mit `::deep`-Regeln auf `.mud-appbar` war **still wirkungslos**. Die
+  CSS-Isolation hängt ihr Scope-Attribut nur an HTML-Elemente, die die Komponente selbst
+  rendert; `MainLayout` besteht ausschließlich aus MudBlazor-Komponenten, es gibt dort
+  kein Element, an dem `::deep` ansetzen könnte. Nur aufgefallen, weil die berechneten
+  Stile im Browser nachgemessen wurden — die Datei sah völlig plausibel aus. Behoben:
+  globale Komponenten-Overrides stehen in `app.css`. **Lehre:** CSS gilt erst als
+  umgesetzt, wenn `getComputedStyle` es bestätigt
+- 2026-08-16 — `Frontend.Web/Program.cs` — `UseStatusCodePagesWithReExecute` war mit der
+  Begründung „Sonst not found bei submissions etc." auskommentiert. Nachgemessen: der
+  Nebeneffekt tritt nicht (mehr) auf, dafür lieferte **jede** direkt aufgerufene
+  unbekannte Adresse eine komplett leere Seite mit Status 404. `NotFoundPage` in
+  `Routes.razor` greift nur bei Navigation innerhalb eines laufenden Circuits. Wieder
+  aktiviert. **Lehre:** eine auskommentierte Zeile mit Begründung ist eine Behauptung,
+  kein Beleg — vor dem Übernehmen nachprüfen
+- 2026-08-16 — `Frontend.Services/HttpClients/TaskApiClient.cs` — `null` als einziges
+  Fehlersignal warf „gibt es nicht" und „ist nicht erreichbar" zusammen. Bei gestopptem
+  Backend stand auf der Aufgabenseite „Diese Aufgabe gibt es nicht (mehr)", obwohl es sie
+  gibt — die denkbar irreführendste Auskunft. Behoben durch `ApiResult<T>` mit drei
+  Ausgängen. **Merken:** bei jedem neuen API-Aufruf zuerst fragen, wie viele
+  unterscheidbare Ausgänge er hat
+- 2026-08-16 — `Frontend.Web/Services/AppThemes.cs` — jedes der drei Themes füllte nur
+  *eine* der beiden MudBlazor-Paletten. Lief `IsDarkMode` dagegen, kamen kommentarlos die
+  MudBlazor-Standardfarben heraus statt eines sichtbaren Fehlers. Behoben: ein Theme mit
+  beiden Paletten
 
 ---
 
@@ -845,3 +946,13 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
    → Vorschlag: v1 mit Timeouts und Prozesslimits, Hinweis in der README.
 5. **Datenbank in Tests.** Testcontainers (realistisch, braucht Docker) oder
    EF InMemory (schnell, weicht aber von PostgreSQL ab)?
+6. ~~**Wie viele Themes?**~~ **Entschieden in Phase 4.1:** Light und Dark. OLED ist
+   ersatzlos entfallen — es unterschied sich nur in drei Grauwerten vom Dark-Theme und
+   verdreifachte den Aufwand bei jeder Kontrastprüfung. `AppTheme` hat noch zwei Werte,
+   der Umschalter im AppBar ist ein Schalter statt eines Menüs.
+7. ~~**Theme-Persistenz.**~~ **Entschieden in Phase 4.1:** Cookie statt `localStorage`.
+   Blazor Server rendert die Seite vorab, bevor JavaScript läuft — an `localStorage`
+   kommt der Server zu diesem Zeitpunkt nicht heran, und die Seite baut sich erst hell
+   und dann dunkel auf. Das Cookie wird serverseitig gelesen und über
+   `PersistentComponentState` an den Circuit weitergereicht; geschrieben wird es im
+   Browser, weil es zu diesem Zeitpunkt keine HTTP-Antwort mehr gibt.
