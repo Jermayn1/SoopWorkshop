@@ -65,7 +65,7 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
         </NavLink>
       </div>
 
-      <nav className="p-4 space-y-6">
+      <nav className="p-4 space-y-1">
         {loading && (
           <div className="space-y-2" aria-hidden="true">
             {[0, 1, 2].map((i) => (
@@ -108,9 +108,6 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
                 >
                   {categoryIcon(category.name)}
                   <span className="flex-1 text-left">{category.name}</span>
-                  <span className="tabular-nums normal-case tracking-normal text-slate-500">
-                    {category.tasks.length}
-                  </span>
                   <span
                     className={`text-slate-500 transition-transform duration-200 ${
                       isOpen ? '' : '-rotate-90'
