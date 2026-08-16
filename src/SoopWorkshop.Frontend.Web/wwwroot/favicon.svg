@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <!-- Haken auf Akzentblau (#2563eb aus DESIGN.md). Bewusst eine einfache Form:
+         im Browser-Tab ist das Zeichen 16px gross, alles Feinere zerfaellt dort. -->
+    <rect width="32" height="32" rx="8" fill="#2563eb"/>
+    <path d="M9 16.5l5 5 9-11" fill="none" stroke="#ffffff" stroke-width="3.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
