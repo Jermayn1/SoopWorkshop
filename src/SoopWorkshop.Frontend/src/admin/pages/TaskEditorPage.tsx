@@ -13,6 +13,7 @@ import { StringListEditor } from '../components/StringListEditor'
 import { ExpectedTypesEditor } from '../components/ExpectedTypesEditor'
 import { TestCaseEditor } from '../components/TestCaseEditor'
 import { UnitTestFileEditor } from '../components/UnitTestFileEditor'
+import { TrialRun } from '../components/TrialRun'
 import { WeightEditor } from '../components/WeightEditor'
 import {
   WEIGHTED_CATEGORIES,
@@ -410,7 +411,16 @@ export function TaskEditorPage() {
           Übersicht
         </Link>
 
-        <h1 className="mt-3 text-2xl font-bold text-slate-800">{draft.title || 'Aufgabe'}</h1>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-800">{draft.title || 'Aufgabe'}</h1>
+          <Link
+            to={`/admin/aufgaben/${taskId}/vorschau`}
+            className="ml-auto flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+          >
+            <Eye className="w-4 h-4" aria-hidden="true" />
+            Teilnehmer-Vorschau
+          </Link>
+        </div>
 
         {problems.length > 0 && (
           <ul
@@ -523,6 +533,20 @@ export function TaskEditorPage() {
 
           <Card title="Gewichtung">
             <WeightEditor values={weights} onChange={setWeights} />
+          </Card>
+
+          <Card
+            title="Probelauf"
+            hint="Eigene Lösung hochladen und die Bewertung sehen — ohne die Aufgabe freizuschalten. So fällt eine kaputte JUnit-Datei hier auf und nicht erst im Workshop."
+          >
+            {dirty ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                Erst speichern — ein Probelauf wird gegen den gespeicherten Stand ausgewertet,
+                nicht gegen das, was hier gerade im Formular steht.
+              </p>
+            ) : (
+              <TrialRun taskItemId={taskId} />
+            )}
           </Card>
 
           <Card title="Sichtbarkeit">

@@ -3,7 +3,8 @@
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
 > Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 bis
-> 5.4 stehen: Auth, Gerüst, Kategorien/Aufgaben, JUnit-Editor, Bestands-Transfer).
+> 5.5 stehen: Auth, Gerüst, Kategorien/Aufgaben, JUnit-Editor, Bestands-Transfer,
+> Vorschau und Probelauf). Offen ist die Abnahme 5.6.
 > Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
@@ -241,7 +242,8 @@ archive/SoopWorkshop.Frontend.*      stillgelegtes Blazor-Frontend, nicht in der
 ```
 src/api/         schema.d.ts (erzeugt) · types.ts · mappers.ts · client.ts ·
                  endpoints.ts · uploadLimits.ts · labels.ts
-src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark
+src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark ·
+                 TaskView · SubmissionForm · ResultView
 src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
 src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
@@ -251,9 +253,10 @@ src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
                  NumberInput · Select · Checkbox · formStyles · SaveBar ·
                  ConfirmDialog · IconPickerDialog · OrderButtons ·
                  StringListEditor · ExpectedTypesEditor · TestCaseEditor ·
-                 WeightEditor · LineNumberedEditor · UnitTestFileEditor
+                 WeightEditor · LineNumberedEditor · UnitTestFileEditor ·
+                 TrialRun
   pages/         LoginPage · OverviewPage · CategoriesPage · NewTaskPage ·
-                 TaskEditorPage · TransferPage
+                 TaskEditorPage · TaskPreviewPage · TransferPage
 ```
 
 **Warum zwischen `schema.d.ts` und der Oberfläche noch `mappers.ts` steht:** .NET gibt
@@ -1006,10 +1009,23 @@ Querschnitt:
       Transaktion des Projekts**. 270 Tests
 - [x] Gewichtung der Bewertungskategorien pro Aufgabe einstellbar — 5.2, mit
       Live-Vorschau der Normierung auf 100
-- [ ] Reihenfolge (`Order`) bearbeitbar — idealerweise Drag & Drop
-- [ ] Vorschau: Aufgabe so anzeigen, wie Teilnehmer sie sehen
-- [ ] **Probelauf:** eigene Musterlösung hochladen und Bewertung prüfen, ohne die
-      Aufgabe sichtbar zu schalten — sonst merkt man kaputte JUnit-Dateien erst live
+- [x] **Etappe 5.5 — Vorschau und Probelauf.** Zwei Umstrukturierungen statt neuer
+      Endpunkte: `TaskView` und `ResultView` sind aus `TaskPage` und `ResultPage`
+      herausgelöst, `SubmissionForm` ebenfalls. Vorschau und Probelauf benutzen
+      **dieselben Komponenten** wie die Teilnehmersicht — eine nachgebaute Vorschau
+      liefe beim ersten Umbau auseinander, und man merkte es erst, wenn ein
+      Teilnehmer etwas anderes sieht
+- [x] Reihenfolge (`Order`) bearbeitbar — 5.2 über Hoch/Runter-Knöpfe. **Bewusst
+      kein Drag & Drop:** es löst dasselbe schlechter, weil es mit der Tastatur nicht
+      bedienbar ist
+- [x] Vorschau: Aufgabe so anzeigen, wie Teilnehmer sie sehen — 5.5. Lädt über
+      `GET api/admin/tasks/{id}`, und der liefert **denselben DTO** wie der
+      öffentliche Endpunkt, samt derselben Filterung auf freigeschaltete
+      JUnit-Dateien. Die Vorschau ist damit ehrlich durch Konstruktion
+- [x] **Probelauf:** eigene Musterlösung hochladen und Bewertung prüfen, ohne die
+      Aufgabe sichtbar zu schalten — 5.5. Braucht keinen eigenen Endpunkt: die
+      Abgabe-Kette prüft die Sichtbarkeit ohnehin nicht. Ein Probelauf erzeugt eine
+      **echte** Abgabe; der Hinweis dazu steht in der Karte
 - [ ] Bestätigungsdialoge vor dem Löschen
 - [ ] Formularvalidierung gegen die DataAnnotations aus `Shared/DTOs/Admin`
 - [ ] Optional: Submissions-Übersicht mit Auswertungshistorie

@@ -10,6 +10,7 @@ import { OverviewPage } from './admin/pages/OverviewPage'
 import { CategoriesPage } from './admin/pages/CategoriesPage'
 import { NewTaskPage } from './admin/pages/NewTaskPage'
 import { TaskEditorPage } from './admin/pages/TaskEditorPage'
+import { TaskPreviewPage } from './admin/pages/TaskPreviewPage'
 import { TransferPage } from './admin/pages/TransferPage'
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           {/* "neu" steht vor ":taskId" — sonst schluckt der Parameter das Wort. */}
           <Route path="aufgaben/neu" element={<NewTaskPage />} />
           <Route path="aufgaben/:taskId" element={<TaskEditorPage />} />
+          <Route path="aufgaben/:taskId/vorschau" element={<TaskPreviewPage />} />
           <Route path="transfer" element={<TransferPage />} />
         </Route>
       </Route>
