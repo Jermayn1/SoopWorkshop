@@ -2,14 +2,13 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 bis
-> 5.5 stehen: Auth, Gerüst, Kategorien/Aufgaben, JUnit-Editor, Bestands-Transfer,
-> Vorschau und Probelauf). Offen ist die Abnahme 5.6.
-> Das Frontend heißt **Soop Judge**
+> Stand: 2026-08-17 — Phase 0 bis 5 abgeschlossen. Das Admin-Panel steht: Anmeldung,
+> Kategorien und Aufgaben, JUnit-Editor, Bestands-Transfer, Vorschau und Probelauf.
+> Als Nächstes kommt Phase 6 (Testabdeckung). Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Als Nächstes kommt Etappe 5.5 (Vorschau und Probelauf).
+> siehe §6.1. Die Abnahme von Phase 5 steht in `tests/manual/abnahme-phase5.md`.
 
 ---
 
@@ -945,7 +944,10 @@ Querschnitt:
 - [x] Barrierefreiheit: Fokus-Reihenfolge, sichtbarer Fokus, Beschriftungen für
       Bedienelemente ohne Text, Kontraste in beiden Erscheinungsbildern **gemessen**
 
-### Phase 5 — Admin-Panel
+### Phase 5 — Admin-Panel ✅
+*Abgeschlossen am 2026-08-17, Branch `phase-5-admin-panel`, sieben Etappen.
+270 Tests, grün. Build warnungsfrei, Typprüfung und Linter sauber.
+Abnahme-Anleitung: `tests/manual/abnahme-phase5.md`.*
 
 > **Im selben Frontend wie die Teilnehmer-Sicht** (§10 Punkt 13). Das Gerüst steht:
 > React + Vite + TypeScript + Tailwind, API-Client mit vier Ausgängen, erzeugte Typen.
@@ -1026,9 +1028,12 @@ Querschnitt:
       Aufgabe sichtbar zu schalten — 5.5. Braucht keinen eigenen Endpunkt: die
       Abgabe-Kette prüft die Sichtbarkeit ohnehin nicht. Ein Probelauf erzeugt eine
       **echte** Abgabe; der Hinweis dazu steht in der Karte
-- [ ] Bestätigungsdialoge vor dem Löschen
-- [ ] Formularvalidierung gegen die DataAnnotations aus `Shared/DTOs/Admin`
-- [ ] Optional: Submissions-Übersicht mit Auswertungshistorie
+- [x] Bestätigungsdialoge vor dem Löschen — 5.2, über das native `<dialog>`
+- [x] Formularvalidierung gegen die DataAnnotations — 5.1 in `admin/validation.ts`,
+      serverseitig zusätzlich in `TaskBundleValidator` für den Import
+- [ ] **Bewusst auf Phase 6 geschoben:** Submissions-Übersicht mit
+      Auswertungshistorie. Sie braucht neue Endpunkte und hilft beim Pflegen der
+      Aufgaben nicht — der Probelauf deckt den Bedarf des Betreuers ab
 
 ### Phase 6 — Projekt-Testabdeckung ausbauen
 
