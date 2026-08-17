@@ -44,7 +44,7 @@ function CategoryBlock({ category, index }: { category: Category; index: number 
           {category.tasks.map((task) => (
             <li key={task.id}>
               <Link
-                to={`/verwaltung/aufgaben/${task.id}`}
+                to={`/admin/aufgaben/${task.id}`}
                 className="flex flex-wrap items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
               >
                 <span className="w-6 shrink-0 text-sm tabular-nums text-slate-400">

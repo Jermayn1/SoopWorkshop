@@ -35,7 +35,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
   return (
     <div className="flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50">
       <div className="border-b border-slate-200 bg-white p-6">
-        <NavLink to="/verwaltung" className="flex items-center gap-2 text-xl font-bold text-slate-800">
+        <NavLink to="/admin" className="flex items-center gap-2 text-xl font-bold text-slate-800">
           <BrandMark size={32} />
           Soop Judge
         </NavLink>
@@ -47,7 +47,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
       </div>
 
       <nav className="space-y-1 p-4">
-        <NavLink to="/verwaltung" end className={linkClass}>
+        <NavLink to="/admin" end className={linkClass}>
           <span className="flex items-center gap-2">
             <LayoutList className="w-4 h-4" aria-hidden="true" />
             Übersicht
@@ -84,7 +84,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
           !error &&
           categories.map((category) => {
             const isOpen = !collapsed.has(category.id)
-            const regionId = `verwaltung-kategorie-${category.id}`
+            const regionId = `admin-kategorie-${category.id}`
 
             return (
               <div key={category.id}>
@@ -114,7 +114,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
                     {category.tasks.map((task) => (
                       <NavLink
                         key={task.id}
-                        to={`/verwaltung/aufgaben/${task.id}`}
+                        to={`/admin/aufgaben/${task.id}`}
                         className={linkClass}
                       >
                         <span className="flex items-center gap-2">

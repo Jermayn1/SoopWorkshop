@@ -36,7 +36,7 @@ export function TaskEditorPage() {
             Sie steht nicht im geladenen Bestand. Vielleicht wurde sie gelöscht.
           </p>
           <Link
-            to="/verwaltung"
+            to="/admin"
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:underline"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
@@ -51,7 +51,7 @@ export function TaskEditorPage() {
     <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
       <div className="mx-auto w-full max-w-3xl anim-auf">
         <Link
-          to="/verwaltung"
+          to="/admin"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
         >
           <ArrowLeft className="w-4 h-4" aria-hidden="true" />

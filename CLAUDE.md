@@ -134,7 +134,7 @@ Erstmalige Einrichtung: `.env.example` nach `.env` kopieren, `POSTGRES_PASSWORD`
 `Admin__Password`** setzen, `docker compose up -d`, dann Migrationen anwenden (siehe unten).
 
 **`Admin__Password` ist Pflicht.** Fehlt der Wert, bricht der Start mit einer Meldung ab,
-statt still ohne Zugangsschutz zu laufen. Das Passwort schützt `/verwaltung` und alle
+statt still ohne Zugangsschutz zu laufen. Das Passwort schützt `/admin` und alle
 `api/admin/*` (§10 Punkt 11).
 
 **Die `.env` wird bewusst als letzte Quelle geladen und schlägt damit auch
@@ -921,14 +921,14 @@ Querschnitt:
       hat `ApiResult` dafür einen fünften Ausgang `unauthorized` bekommen; ohne ihn liefe
       ein abgelaufenes Cookie als `rejected` durch und die Anmeldung käme nie. Schließt
       §10 Punkt 11
-- [x] **Etappe 5.1 — Gerüst.** Routing unter `/verwaltung`, `AdminLayout` als eigener
+- [x] **Etappe 5.1 — Gerüst.** Routing unter `/admin`, `AdminLayout` als eigener
       Rahmen mit eigener Seitenleiste (zeigt **auch die verborgenen** Kategorien und
       Aufgaben), Übersichtsseite mit echten Daten, Formularbausteine,
       `admin/validation.ts` mit den gespiegelten DataAnnotations-Grenzen.
       `@tailwindcss/typography` nachinstalliert — die `prose`-Klassen in `TaskPage`
       waren seit Phase 4 wirkungslos. Die Enum-Beschriftungen liegen jetzt in
       `api/labels.ts`, weil Teilnehmersicht und Verwaltung dieselben Wörter brauchen
-- [ ] Eigener Admin-Bereich unter `/admin` mit eigener Navigation
+- [x] Eigener Admin-Bereich unter `/admin` mit eigener Navigation — erledigt in 5.1
 - [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
 - [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
 - [ ] Konsolen-Testfälle: CRUD pro Aufgabe

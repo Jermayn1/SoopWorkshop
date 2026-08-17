@@ -26,7 +26,7 @@ export default function App() {
       {/* Eigener Zweig mit eigenem Rahmen: die Verwaltung teilt sich mit der
           Teilnehmersicht weder Seitenleiste noch Kopfzeile. RequireAdmin zeigt
           davor die Anmeldung, ohne die Adresse zu wechseln. */}
-      <Route path="/verwaltung" element={<RequireAdmin />}>
+      <Route path="/admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<OverviewPage />} />
           <Route path="aufgaben/:taskId" element={<TaskEditorPage />} />
