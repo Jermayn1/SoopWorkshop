@@ -181,6 +181,40 @@ export async function fetchTaskUnitTestFiles(
   return mapResult(result, (dtos) => dtos.map(toUnitTestFile).sort((a, b) => a.order - b.order))
 }
 
+export type UnitTestFileDraft = Pick<
+  UnitTestFile,
+  'fileName' | 'content' | 'isVisibleToParticipant'
+>
+
+// Blockspeicherung: was nicht mitkommt, wird geloescht. Die Reihenfolge ergibt
+// sich aus der Position in der Liste.
+//
+// Achtung: der Server vergibt dabei NEUE Ids (SaveAllAsync). Wer die Antwort
+// nicht uebernimmt, arbeitet danach mit veralteten Schluesseln weiter.
+export async function saveTaskUnitTestFiles(
+  taskItemId: string,
+  files: UnitTestFileDraft[],
+  signal?: AbortSignal,
+): Promise<ApiResult<UnitTestFile[]>> {
+  const body: Schemas['SaveTaskUnitTestFilesDto'] = {
+    taskItemId,
+    files: files.map((file, index) => ({
+      fileName: file.fileName.trim(),
+      content: file.content,
+      order: index + 1,
+      isVisibleToParticipant: file.isVisibleToParticipant,
+    })),
+  }
+
+  const result = await jsonRequest<Schemas['TaskUnitTestFileDto'][]>(
+    `/api/admin/tasks/${taskItemId}/unittests`,
+    'PUT',
+    body,
+    signal,
+  )
+  return mapResult(result, (dtos) => dtos.map(toUnitTestFile).sort((a, b) => a.order - b.order))
+}
+
 // ── Gewichte ───────────────────────────────────────────────────────────
 
 export async function fetchTaskWeights(

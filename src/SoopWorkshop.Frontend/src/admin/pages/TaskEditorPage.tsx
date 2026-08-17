@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { AlertCircle, ArrowLeft, Eye, EyeOff, FileCode2, RefreshCw, Trash2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Eye, EyeOff, RefreshCw, Trash2 } from 'lucide-react'
 import { useAdminCatalog } from '../adminOutlet'
 import { TextInput } from '../components/TextInput'
 import { TextArea } from '../components/TextArea'
@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { StringListEditor } from '../components/StringListEditor'
 import { ExpectedTypesEditor } from '../components/ExpectedTypesEditor'
 import { TestCaseEditor } from '../components/TestCaseEditor'
+import { UnitTestFileEditor } from '../components/UnitTestFileEditor'
 import { WeightEditor } from '../components/WeightEditor'
 import {
   WEIGHTED_CATEGORIES,
@@ -26,13 +27,21 @@ import {
   fetchTaskUnitTestFiles,
   fetchTaskWeights,
   saveTaskTests,
+  saveTaskUnitTestFiles,
   saveTaskWeights,
   toggleTaskVisibility,
   updateTask,
   type TaskDraft,
   type TaskTestDraft,
+  type UnitTestFileDraft,
 } from '../api/tasks'
-import { FIELD_LIMITS, checkMaxLength, checkRequired, collect } from '../validation'
+import {
+  FIELD_LIMITS,
+  checkJavaFileName,
+  checkMaxLength,
+  checkRequired,
+  collect,
+} from '../validation'
 import { DIFFICULTY_LABELS, MODE_LABELS } from '../../api/labels'
 import type { SaveState } from '../saveState'
 import type { Difficulty, EvaluationMode } from '../../api/types'
@@ -75,7 +84,7 @@ export function TaskEditorPage() {
   const [tests, setTests] = useState<TaskTestDraft[]>([])
   const [weights, setWeights] = useState<WeightValues>(defaultWeights())
   const [isVisible, setIsVisible] = useState(false)
-  const [unitTestFileCount, setUnitTestFileCount] = useState(0)
+  const [unitTestFiles, setUnitTestFiles] = useState<UnitTestFileDraft[]>([])
 
   // Vergleichsstand zum Erkennen von Aenderungen. Als Zeichenkette, weil hier
   // nur "gleich oder nicht" zaehlt und die Formen flach sind.
@@ -87,7 +96,12 @@ export function TaskEditorPage() {
   const [visibilityProblem, setVisibilityProblem] = useState<string | null>(null)
 
   const snapshot = useCallback(
-    (d: TaskDraft | null, t: TaskTestDraft[], w: WeightValues) => JSON.stringify([d, t, w]),
+    (
+      d: TaskDraft | null,
+      t: TaskTestDraft[],
+      w: WeightValues,
+      u: UnitTestFileDraft[],
+    ) => JSON.stringify([d, t, w, u]),
     [],
   )
 
@@ -141,12 +155,21 @@ export function TaskEditorPage() {
         const nextWeights =
           weightsResult.kind === 'ok' ? toWeightValues(weightsResult.value) : defaultWeights()
 
+        const nextFiles: UnitTestFileDraft[] =
+          filesResult.kind === 'ok'
+            ? filesResult.value.map((file) => ({
+                fileName: file.fileName,
+                content: file.content,
+                isVisibleToParticipant: file.isVisibleToParticipant,
+              }))
+            : []
+
         setDraft(nextDraft)
         setTests(nextTests)
         setWeights(nextWeights)
         setIsVisible(task.isVisible)
-        setUnitTestFileCount(filesResult.kind === 'ok' ? filesResult.value.length : 0)
-        setBaseline(snapshot(nextDraft, nextTests, nextWeights))
+        setUnitTestFiles(nextFiles)
+        setBaseline(snapshot(nextDraft, nextTests, nextWeights, nextFiles))
         setSave({ kind: 'idle' })
         setProblems([])
         setVisibilityProblem(null)
@@ -160,7 +183,8 @@ export function TaskEditorPage() {
     return () => controller.abort()
   }, [taskId, attempt, snapshot])
 
-  const dirty = state.kind === 'ok' && snapshot(draft, tests, weights) !== baseline
+  const dirty =
+    state.kind === 'ok' && snapshot(draft, tests, weights, unitTestFiles) !== baseline
 
   const patch = (values: Partial<TaskDraft>) =>
     setDraft((current) => (current ? { ...current, ...values } : current))
@@ -178,7 +202,7 @@ export function TaskEditorPage() {
     if (needsConsole && tests.length === 0)
       return `Der Auswertungsmodus „${MODE_LABELS[draft.evaluationMode]}“ verlangt mindestens einen Konsolen-Testfall.`
 
-    if (needsUnit && unitTestFileCount === 0)
+    if (needsUnit && unitTestFiles.length === 0)
       return `Der Auswertungsmodus „${MODE_LABELS[draft.evaluationMode]}“ verlangt mindestens eine JUnit-Datei.`
 
     return null
@@ -230,6 +254,21 @@ export function TaskEditorPage() {
         found.push(`Das Gewicht für ${entry.label} muss größer als 0 sein.`)
     }
 
+    unitTestFiles.forEach((file, index) => {
+      const problem = checkJavaFileName('junit', file.fileName)
+      if (problem) found.push(`JUnit-Datei ${index + 1}: ${problem.message}`)
+
+      if (file.content.trim().length === 0)
+        found.push(`JUnit-Datei ${index + 1}: Der Inhalt darf nicht leer sein.`)
+    })
+
+    // Gleicher Name zweimal: im Arbeitsverzeichnis wuerde die eine Datei die
+    // andere ueberschreiben. Der Server lehnt das ohnehin ab.
+    const namen = unitTestFiles.map((file) => file.fileName.trim().toLowerCase())
+    const doppelt = namen.find((name, index) => name.length > 0 && namen.indexOf(name) !== index)
+    if (doppelt)
+      found.push(`Der Dateiname '${doppelt}' kommt mehrfach vor.`)
+
     return found
   }
 
@@ -255,6 +294,7 @@ export function TaskEditorPage() {
         run: () => updateTask(taskId, draft, isVisible),
       },
       { name: 'Die Testfälle', run: () => saveTaskTests(taskId, tests) },
+      { name: 'Die JUnit-Dateien', run: () => saveTaskUnitTestFiles(taskId, unitTestFiles) },
       {
         name: 'Die Gewichte',
         run: () =>
@@ -279,7 +319,7 @@ export function TaskEditorPage() {
       }
     }
 
-    setBaseline(snapshot(draft, tests, weights))
+    setBaseline(snapshot(draft, tests, weights, unitTestFiles))
     setSave({ kind: 'saved' })
     reload()
   }
@@ -474,16 +514,11 @@ export function TaskEditorPage() {
             <TestCaseEditor tests={tests} onChange={setTests} />
           </Card>
 
-          <Card title="JUnit-Dateien">
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <FileCode2 className="w-5 h-5 shrink-0 text-slate-500" aria-hidden="true" />
-              <p className="text-sm text-slate-700">
-                {unitTestFileCount === 0
-                  ? 'Keine JUnit-Datei hinterlegt.'
-                  : `${unitTestFileCount} ${unitTestFileCount === 1 ? 'Datei' : 'Dateien'} hinterlegt.`}{' '}
-                <span className="text-slate-500">Bearbeiten folgt in Etappe 5.3.</span>
-              </p>
-            </div>
+          <Card
+            title="JUnit-Dateien"
+            hint="Werden zusammen mit der Abgabe übersetzt und ausgeführt. Eine Testdatei darf mehrere Klassen der Abgabe benutzen."
+          >
+            <UnitTestFileEditor files={unitTestFiles} onChange={setUnitTestFiles} />
           </Card>
 
           <Card title="Gewichtung">
