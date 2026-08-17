@@ -631,9 +631,19 @@ gegen die laufende API und sind unabhängig voneinander mehrfach ausführbar:
 .\tests\manual\seed-pyramide.ps1
 ```
 
+```bash
+.\tests\manual\seed-oop.ps1
+```
+
 Das erste legt drei Aufgaben über alle drei Auswertungsmodi an, das zweite die
 Kategorie „Schleifen" mit der Pyramiden-Aufgabe (`UnitTestOnly`, Testdatei für
-Teilnehmer sichtbar).
+Teilnehmer sichtbar), das dritte die Kategorie „OOP" mit „Bankkonto" — **zwei
+Klassen, die voneinander abhängen**, und ein Vertrag, der jede Methode ihrer
+Klasse zuordnet.
+
+**Alle drei melden sich selbst an** (seit Etappe 5.0 verlangt `api/admin/*` das).
+Das Passwort kommt aus der `.env`, oder über `-AdminPassword`. Die gemeinsame
+Anmeldung steht in `tests/manual/admin-anmeldung.ps1`.
 
 Von Hand geht es auch über `/scalar`: Kategorie und Aufgabe anlegen, Testfälle bzw.
 JUnit-Dateien ergänzen, **danach** per `PATCH .../visibility` sichtbar schalten. Die
@@ -1251,6 +1261,19 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   `cancel` folgte trotzdem nicht. Behoben mit einem eigenen Listener für **beide**
   Wege. **Lehre:** dieselbe wie in §6.1 — die Messung braucht so viel Misstrauen wie
   der Code, und was sich nicht messen lässt, wird abgesichert statt geglaubt
+- 2026-08-17 — `tests/manual/seed-*.ps1` — die Seed-Skripte liefen seit Etappe 5.0
+  **gar nicht mehr**: `api/admin/*` verlangt eine Anmeldung, die Skripte kannten
+  keine. Beim Absichern der Endpunkte mitgedacht, aber nicht mitgeprüft — und §7
+  nennt genau diese Skripte als den Weg zu Testdaten. Behoben mit
+  `admin-anmeldung.ps1`. **Lehre:** wer einen Endpunkt absichert, muss auch die
+  Werkzeuge nachziehen, die ihn benutzen
+- 2026-08-17 — `tests/manual/admin-anmeldung.ps1` — beim Nachziehen zweimal in
+  dieselbe Falle getappt, die weiter oben schon steht: das Cookie ist `Secure`
+  (der .NET-Speicher schickt es über `http` nicht zurück), **und**
+  `Invoke-RestMethod` verwirft einen von Hand gesetzten `Cookie`-Kopf still. Beides
+  zusammen ergibt einen 401, der wie ein kaputter Server aussieht. Der Ausweg ist
+  ein selbst gebautes `System.Net.Cookie` in einer `WebRequestSession` — das ist
+  standardmäßig nicht `Secure` und geht damit auch über `http` hinaus
 - 2026-08-17 — `Migrations/…_SplitExpectedContractIntoTypes` — das erzeugte Gerüst
   **hätte den gesamten Vertrag gelöscht**: es wirft `ExpectedClassName` weg und
   benennt `TaskItemId` in `TaskExpectedTypeId` um, ohne die Typen anzulegen — die

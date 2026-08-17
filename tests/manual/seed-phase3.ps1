@@ -27,13 +27,16 @@
 
 [CmdletBinding()]
 param(
-    [string]$ApiBaseUrl = 'http://localhost:5120'
+    [string]$ApiBaseUrl = 'http://localhost:5120',
+    [string]$AdminPassword
 )
 
 $ErrorActionPreference = 'Stop'
 
 $categoryName = 'Phase 3 - Beispiele'
 $junitRoot = Join-Path $PSScriptRoot 'junit'
+
+. (Join-Path $PSScriptRoot 'admin-anmeldung.ps1')
 
 function Invoke-Api {
     param(
@@ -45,14 +48,14 @@ function Invoke-Api {
     $uri = "$ApiBaseUrl$Path"
 
     if ($null -eq $Body) {
-        return Invoke-RestMethod -Method $Method -Uri $uri
+        return Invoke-RestMethod -Method $Method -Uri $uri -WebSession $script:sitzung
     }
 
     # Body als UTF-8-Bytes statt als String: Windows PowerShell 5.1 kodiert
     # Strings sonst in der Codepage des Systems und zerlegt damit Umlaute.
     $bytes = [System.Text.Encoding]::UTF8.GetBytes(($Body | ConvertTo-Json -Depth 8))
 
-    return Invoke-RestMethod -Method $Method -Uri $uri -Body $bytes -ContentType 'application/json; charset=utf-8'
+    return Invoke-RestMethod -Method $Method -Uri $uri -WebSession $script:sitzung -Body $bytes -ContentType 'application/json; charset=utf-8'
 }
 
 function Get-JUnitFile {
@@ -72,6 +75,9 @@ function Get-JUnitFile {
 }
 
 Write-Host "Lege Beispieldaten gegen $ApiBaseUrl an." -ForegroundColor Cyan
+
+$script:sitzung = Connect-Admin -ApiBaseUrl $ApiBaseUrl -AdminPassword $AdminPassword -ScriptRoot $PSScriptRoot
+Write-Host '  angemeldet'
 
 # Aufraeumen, damit ein zweiter Lauf nicht die Sidebar zumuellt. Es wird
 # ausschliesslich auf den exakten Namen dieses Skripts gefiltert - fremde
