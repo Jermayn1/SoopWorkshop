@@ -243,12 +243,13 @@ src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark
 src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
 src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
-                 saveState · weights
+                 saveState · weights · icons
   api/           session · catalog · tasks
   components/    AdminLayout · AdminSidebar · Field · TextInput · TextArea ·
                  NumberInput · Select · Checkbox · formStyles · SaveBar ·
-                 ConfirmDialog · OrderButtons · StringListEditor ·
-                 ExpectedTypesEditor · TestCaseEditor · WeightEditor
+                 ConfirmDialog · IconPickerDialog · OrderButtons ·
+                 StringListEditor · ExpectedTypesEditor · TestCaseEditor ·
+                 WeightEditor
   pages/         LoginPage · OverviewPage · CategoriesPage · NewTaskPage ·
                  TaskEditorPage
 ```
@@ -974,7 +975,11 @@ Querschnitt:
       **Blockspeicherung für Konsolen-Testfälle** (`PUT .../tests`). Im Frontend
       Kategorienverwaltung, Aufgaben-Editor und das Anlegen. 244 Tests
 - [x] Eigener Admin-Bereich unter `/admin` mit eigener Navigation — erledigt in 5.1
-- [x] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten — 5.2
+- [x] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten — 5.2.
+      Dazu ein **eigenes Symbol je Kategorie** (`IconName`, gewählt aus 135 Symbolen
+      in `admin/icons.ts`). Vorher erriet die Seitenleiste es aus dem Namen — beim
+      Umbenennen wechselte es damit stillschweigend, und neue Kategorien bekamen nie
+      ein eigenes
 - [x] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode` — 5.2
 - [x] Konsolen-Testfälle: CRUD pro Aufgabe — 5.2, als Blockspeicherung
 - [ ] **JUnit-Dateien: CRUD pro Aufgabe mit Code-Editor** (monospace + Zeilennummern;

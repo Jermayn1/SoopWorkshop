@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown, EyeOff, FolderTree, LayoutList, RefreshCw } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { BrandMark } from '../../components/BrandMark'
+import { iconByName } from '../icons'
 import type { Category } from '../../api/types'
 
 type AdminSidebarProps = {
@@ -92,6 +93,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
           categories.map((category) => {
             const isOpen = !collapsed.has(category.id)
             const regionId = `admin-kategorie-${category.id}`
+            const Icon = iconByName(category.iconName)
 
             return (
               <div key={category.id}>
@@ -102,6 +104,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
                   aria-controls={regionId}
                   className="mb-1 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
                 >
+                  <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span className="flex-1 text-left">{category.name}</span>
                   {!category.isVisible && (
                     <EyeOff className="w-3.5 h-3.5 shrink-0" aria-label="verborgen" />

@@ -93,6 +93,11 @@ export type Category = {
   order: number
   /** Ob die Kategorie fuer Teilnehmer freigeschaltet ist. */
   isVisible: boolean
+  /**
+   * Name des Symbols in der Seitenleiste, z. B. "Layers". Leer heisst "kein
+   * eigenes"; welche Namen es gibt, steht in admin/icons.ts.
+   */
+  iconName: string
   tasks: Task[]
 }
 

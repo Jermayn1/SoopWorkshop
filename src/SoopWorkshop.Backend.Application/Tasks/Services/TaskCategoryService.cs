@@ -45,6 +45,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Order = dto.Order,
+                IconName = dto.IconName,
                 IsVisible = false
             };
 
@@ -63,6 +64,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             category.Name = dto.Name;
             category.Order = dto.Order;
+            category.IconName = dto.IconName;
             category.IsVisible = dto.IsVisible;
 
             await _repository.UpdateAsync(category);
@@ -109,6 +111,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             Name = category.Name,
             Order = category.Order,
             IsVisible = category.IsVisible,
+            IconName = category.IconName,
             // Nach Order sortieren: die Aufgaben einer Kategorie bauen aufeinander auf.
             // Ohne das kam heraus, was die Datenbank gerade zurueckgab - und das ist
             // keine Reihenfolge, auf die man sich verlassen kann.

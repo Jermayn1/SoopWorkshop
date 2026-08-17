@@ -1,23 +1,9 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, ChevronDown, Code, Layers, RefreshCw, Repeat, Terminal } from 'lucide-react'
+import { ChevronDown, RefreshCw } from 'lucide-react'
 import { NavLink, useParams } from 'react-router-dom'
 import { BrandMark } from './BrandMark'
+import { iconByName } from '../admin/icons'
 import type { Category } from '../api/types'
-
-function categoryIcon(name: string) {
-  switch (name.toLowerCase()) {
-    case 'grundlagen':
-      return <Terminal className="w-4 h-4" />
-    case 'oop':
-      return <Layers className="w-4 h-4" />
-    case 'arrays':
-      return <Code className="w-4 h-4" />
-    case 'schleifen':
-      return <Repeat className="w-4 h-4" />
-    default:
-      return <BookOpen className="w-4 h-4" />
-  }
-}
 
 type SidebarProps = {
   categories: Category[]
@@ -96,6 +82,9 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
           categories.map((category) => {
             const isOpen = !collapsed.has(category.id)
             const regionId = `kategorie-${category.id}`
+            // Das Symbol steht an der Kategorie. Frueher wurde es aus ihrem
+            // Namen erraten - beim Umbenennen wechselte es damit stillschweigend.
+            const Icon = iconByName(category.iconName)
 
             return (
               <div key={category.id}>
@@ -106,7 +95,7 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
                   aria-controls={regionId}
                   className="w-full flex items-center gap-2 px-3 py-1.5 mb-1 rounded-md text-xs font-semibold text-slate-500 uppercase tracking-wider transition-colors hover:bg-slate-200 hover:text-slate-700"
                 >
-                  {categoryIcon(category.name)}
+                  <Icon className="w-4 h-4" aria-hidden="true" />
                   <span className="flex-1 text-left">{category.name}</span>
                   <span
                     className={`text-slate-500 transition-transform duration-200 ${

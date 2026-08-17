@@ -3,6 +3,8 @@ import { Check, Eye, EyeOff, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-r
 import { useAdminCatalog } from '../adminOutlet'
 import { OrderButtons } from '../components/OrderButtons'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { IconPickerDialog } from '../components/IconPickerDialog'
+import { iconByName } from '../icons'
 import {
   createCategory,
   deleteCategory,
@@ -23,6 +25,7 @@ export function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [pendingDelete, setPendingDelete] = useState<Category | null>(null)
+  const [pendingIcon, setPendingIcon] = useState<Category | null>(null)
 
   // Jeder schreibende Aufruf laeuft hierdurch: einmal sperren, Meldung des
   // Servers im Wortlaut uebernehmen, danach neu laden. Ohne das gemeinsame
@@ -237,6 +240,24 @@ export function CategoriesPage() {
                   </>
                 ) : (
                   <>
+                    {/* Zeigt das aktuelle Symbol und ist zugleich der Knopf, um
+                        es zu wechseln — ein getrennter "Bearbeiten"-Knopf dafür
+                        wäre ein Klick mehr für dieselbe Sache. */}
+                    {(() => {
+                      const Icon = iconByName(category.iconName)
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setPendingIcon(category)}
+                          disabled={busy}
+                          aria-label={`Symbol für ${category.name} wählen`}
+                          className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50"
+                        >
+                          <Icon className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      )
+                    })()}
+
                     <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">
                       {category.name}
                     </span>
@@ -299,6 +320,19 @@ export function CategoriesPage() {
           </ul>
         )}
       </div>
+
+      {pendingIcon && (
+        <IconPickerDialog
+          value={pendingIcon.iconName}
+          categoryName={pendingIcon.name}
+          onCancel={() => setPendingIcon(null)}
+          onSelect={async (iconName) => {
+            const ziel = pendingIcon
+            setPendingIcon(null)
+            await run(() => updateCategory({ ...ziel, iconName }))
+          }}
+        />
+      )}
 
       {pendingDelete && (
         <ConfirmDialog

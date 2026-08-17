@@ -113,6 +113,7 @@ export function toCategory(dto: Schemas['TaskCategoryDto']): Category {
     name: dto.name ?? '',
     order: toNumber(dto.order),
     isVisible: dto.isVisible ?? false,
+    iconName: dto.iconName ?? '',
     tasks: (dto.tasks ?? []).map(toTask).sort((a, b) => a.order - b.order),
   }
 }

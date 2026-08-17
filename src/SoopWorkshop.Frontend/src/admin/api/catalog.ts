@@ -42,7 +42,7 @@ export async function createCategory(
 }
 
 export async function updateCategory(
-  category: Pick<Category, 'id' | 'name' | 'order' | 'isVisible'>,
+  category: Pick<Category, 'id' | 'name' | 'order' | 'isVisible' | 'iconName'>,
   signal?: AbortSignal,
 ): Promise<ApiResult<Category>> {
   const body: Schemas['UpdateTaskCategoryDto'] = {
@@ -50,6 +50,7 @@ export async function updateCategory(
     name: category.name,
     order: category.order,
     isVisible: category.isVisible,
+    iconName: category.iconName,
   }
   const result = await jsonRequest<Schemas['TaskCategoryDto']>(
     `/api/admin/categories/${category.id}`,

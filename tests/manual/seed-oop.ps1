@@ -84,8 +84,9 @@ for ($i = 0; $i -lt $antwort.Count; $i++) {
 }
 
 $category = Invoke-Api -Method Post -Path '/api/admin/categories' -Body @{
-    name  = $categoryName
-    order = 92
+    name     = $categoryName
+    order    = 92
+    iconName = 'Layers'
 }
 Invoke-Api -Method Patch -Path "/api/admin/categories/$($category.id)/visibility" | Out-Null
 Write-Host "Kategorie angelegt: $($category.id)"

@@ -13,7 +13,11 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         
         [Range(0, int.MaxValue, ErrorMessage = "Die Reihenfolge darf nicht negativ sein.")]
         public int Order { get; set; }
-        
+
         public bool IsVisible { get; set; }
+
+        // Leer lassen fuer "kein eigenes Symbol".
+        [MaxLength(50, ErrorMessage = "Der Symbolname darf maximal 50 Zeichen lang sein.")]
+        public string IconName { get; set; } = string.Empty;
     }
 }

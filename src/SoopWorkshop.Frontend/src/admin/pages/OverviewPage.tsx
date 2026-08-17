@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Eye, EyeOff, PencilLine, Plus, RefreshCw } from 'lucide-react'
 import { useAdminCatalog } from '../adminOutlet'
 import { DIFFICULTY_CLASSES, DIFFICULTY_LABELS, MODE_LABELS } from '../../api/labels'
+import { iconByName } from '../icons'
 import type { Category } from '../../api/types'
 
 // Kleines Schild fuer den Sichtbarkeitszustand. Bewusst mit Symbol UND Wort:
@@ -22,12 +23,15 @@ function VisibilityBadge({ visible }: { visible: boolean }) {
 }
 
 function CategoryBlock({ category, index }: { category: Category; index: number }) {
+  const Icon = iconByName(category.iconName)
+
   return (
     <section
       className="rounded-2xl border border-slate-200 bg-white shadow-sm anim-auf"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4">
+        <Icon className="w-5 h-5 shrink-0 text-slate-500" aria-hidden="true" />
         <h2 className="text-lg font-bold text-slate-800">{category.name}</h2>
         <VisibilityBadge visible={category.isVisible} />
         <span className="ml-auto text-sm tabular-nums text-slate-500">

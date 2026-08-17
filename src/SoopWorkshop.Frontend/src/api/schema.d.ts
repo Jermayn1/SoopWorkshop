@@ -1464,6 +1464,7 @@ export interface components {
             name: string;
             /** Format: int32 */
             order?: number | string;
+            iconName?: string;
         };
         CreateTaskItemDto: {
             /** Format: uuid */
@@ -1589,6 +1590,7 @@ export interface components {
             /** Format: int32 */
             order?: number | string;
             isVisible?: boolean;
+            iconName?: string;
             tasks?: components["schemas"]["TaskItemDto"][];
         };
         TaskCategoryWeightDto: {
@@ -1673,6 +1675,7 @@ export interface components {
             /** Format: int32 */
             order?: number | string;
             isVisible?: boolean;
+            iconName?: string;
         };
         UpdateTaskItemDto: {
             /** Format: uuid */

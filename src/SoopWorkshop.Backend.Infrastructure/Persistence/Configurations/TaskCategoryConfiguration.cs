@@ -15,6 +15,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
+            // Reichlich Platz fuer einen Symbolnamen; die laengsten in der
+            // Sammlung haben rund 20 Zeichen.
+            entityTypeBuilder.Property(c => c.IconName)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasDefaultValue(string.Empty);
+
             entityTypeBuilder.HasMany(c => c.Tasks)
                 .WithOne(t => t.Category)
                 .HasForeignKey(t => t.TaskCategoryId)
