@@ -13,13 +13,11 @@ namespace SoopWorkshop.Shared.DTOs.Tasks
         public bool IsVisible { get; set; }
         public EvaluationMode EvaluationMode { get; set; }
 
-        // Der Vertrag: wie die Klasse heissen muss und welche Methoden erwartet
-        // werden. Wird geprueft und dem Teilnehmer angezeigt.
-        public string? ExpectedClassName { get; set; }
-
-        // Vollstaendige Signaturen zur Anzeige, z. B.
-        // "public static int addiere(int ersteZahl, int zweiteZahl)".
-        public List<string> ExpectedMethods { get; set; } = [];
+        // Der Vertrag: welche Klassen es geben muss und welche Methoden in
+        // welcher davon. Wird geprueft und dem Teilnehmer angezeigt.
+        //
+        // Leer, wenn die Aufgabe keine Namen vorgibt.
+        public List<TaskExpectedTypeDto> ExpectedTypes { get; set; } = [];
 
         public List<TaskHintDto> Hints { get; set; } = [];
 

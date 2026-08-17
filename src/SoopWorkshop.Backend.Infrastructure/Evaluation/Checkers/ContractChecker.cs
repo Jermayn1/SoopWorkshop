@@ -8,13 +8,18 @@ using SoopWorkshop.Shared.Enums;
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
     // Prueft, ob die Abgabe die von der Aufgabe geforderten Namen ueberhaupt
-    // verwendet - die Klasse und die verlangten Methoden.
+    // verwendet - die Klassen und die Methoden darin.
     //
     // Warum eigens: Java erzwingt nur, dass Dateiname und Klassenname
     // zusammenpassen, nicht dass sie heissen wie gefordert. Eine Aufgabe verlangt
     // 'Main' mit 'addiere', jemand gibt 'Rechner.java' mit 'class Rechner' ab -
     // das kompiliert, die Konsolen-Testfaelle laufen durch, und die Abgabe besteht.
     // Bei JUnit faellt es zwar auf, aber erst als Compilerfehler.
+    //
+    // Seit dem Umbau auf mehrere Klassen wird die Methode im Rumpf IHRER Klasse
+    // gesucht. Vorher lief die Suche ueber den gesamten Quelltext: 'einzahlen'
+    // zaehlte auch dann als vorhanden, wenn es in 'Kunde' statt in 'Konto' stand.
+    // Fuer die OOP-Aufgaben am Ende des Workshops war das zu grob.
     //
     // Laeuft vor dem Kompilieren und braucht nur den Quelltext.
     public class ContractChecker : IEvaluationChecker
@@ -26,57 +31,64 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
         public int Order => EvaluationCheckerOrder.Contract;
 
         // Nur wenn die Aufgabe ueberhaupt Namen vorgibt.
-        public bool IsApplicable(EvaluationContext context) =>
-            !string.IsNullOrWhiteSpace(context.Task.ExpectedClassName)
-            || context.Task.ExpectedMethods.Count > 0;
+        public bool IsApplicable(EvaluationContext context) => context.Task.ExpectedTypes.Count > 0;
 
         public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
             // Nur echter Code: eine Klasse, die bloss im Kommentar erwaehnt wird,
-            // ist nicht deklariert.
+            // ist nicht deklariert. Das Bereinigen ist zugleich die Voraussetzung
+            // dafuer, dass unten Klammern gezaehlt werden duerfen.
             var code = string.Join(
                 "\n",
                 context.Files.Select(file => JavaSourceText.StripCommentsAndLiterals(file.Content)));
 
+            var declaredNames = JavaTypeBodies.DeclaredNames(code);
             var results = new List<TestCaseResult>();
             var missing = new List<string>();
 
-            var expectedClassName = context.Task.ExpectedClassName;
-            if (!string.IsNullOrWhiteSpace(expectedClassName))
+            foreach (var type in context.Task.ExpectedTypes.OrderBy(type => type.Order))
             {
-                var found = DeclaresType(code, expectedClassName);
+                var body = JavaTypeBodies.BodyOf(code, type.Name);
+                var found = body is not null;
 
                 results.Add(new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = "Die geforderte Klasse ist vorhanden",
-                    ExpectedOutput = expectedClassName,
-                    ActualOutput = found ? expectedClassName : DescribeFoundTypes(code),
+                    Description = $"Die Klasse '{type.Name}' ist vorhanden",
+                    ExpectedOutput = type.Name,
+                    ActualOutput = found
+                        ? type.Name
+                        : declaredNames.Count == 0 ? "keine Klasse gefunden" : string.Join(", ", declaredNames),
                     Passed = found
                 });
 
                 if (!found)
-                    missing.Add($"die Klasse '{expectedClassName}'");
-            }
+                    missing.Add($"die Klasse '{type.Name}'");
 
-            foreach (var method in context.Task.ExpectedMethods.OrderBy(method => method.Order))
-            {
-                var found = DeclaresMethod(code, method.Name);
-
-                // Der Name in der Ueberschrift, die vollstaendige Signatur in der
-                // Zeile darunter - dort steht sie neben "Erhalten" und laesst
-                // sich vergleichen, statt die Ueberschrift zu sprengen.
-                results.Add(new TestCaseResult
+                foreach (var method in type.Methods.OrderBy(method => method.Order))
                 {
-                    Id = Guid.NewGuid(),
-                    Description = $"Die Methode '{method.Name}' ist vorhanden",
-                    ExpectedOutput = method.Signature,
-                    ActualOutput = found ? method.Signature : "nicht gefunden",
-                    Passed = found
-                });
+                    // Fehlt die Klasse, fehlt auch ihre Methode. Das trotzdem als
+                    // eigene Teilpruefung zu zeigen ist richtig: die Aufgabe hat
+                    // sie verlangt, und eine verschwiegene Pruefung waere eine
+                    // stillschweigend mildere Bewertung.
+                    var declared = found && DeclaresMethod(body!, method.Name);
 
-                if (!found)
-                    missing.Add($"die Methode '{method.Signature}'");
+                    results.Add(new TestCaseResult
+                    {
+                        Id = Guid.NewGuid(),
+                        // Die Klasse gehoert in die Ueberschrift - sonst stehen bei
+                        // mehreren Klassen zwei gleichnamige Pruefungen nebeneinander.
+                        Description = $"Die Methode '{method.Name}' steht in '{type.Name}'",
+                        ExpectedOutput = method.Signature,
+                        ActualOutput = declared
+                            ? method.Signature
+                            : found ? "in dieser Klasse nicht gefunden" : $"Klasse '{type.Name}' fehlt",
+                        Passed = declared
+                    });
+
+                    if (!declared && found)
+                        missing.Add($"die Methode '{method.Signature}' in '{type.Name}'");
+                }
             }
 
             if (missing.Count == 0)
@@ -89,30 +101,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 [.. results]));
         }
 
-        // class, interface, enum und record zaehlen gleichermassen - welche Bauform
-        // die Aufgabe verlangt, steht in ihrer Beschreibung.
-        private static bool DeclaresType(string code, string typeName) =>
-            Regex.IsMatch(code, $@"\b(?:class|interface|enum|record)\s+{Regex.Escape(typeName)}\b");
-
         // Geprueft wird die reine Anwesenheit des Namens vor einer Klammer.
-        // Ist-Verhalten: ein blosser Aufruf 'addiere(1, 2)' im selben Quelltext
+        // Ist-Verhalten: ein blosser Aufruf 'addiere(1, 2)' im selben Rumpf
         // zaehlt bereits als Treffer. Das ist hingenommen - wer die Methode
         // aufruft, hat sie meistens auch. Die exakte Signatur prueft ohnehin der
         // Java-Compiler beim Uebersetzen der JUnit-Datei.
-        private static bool DeclaresMethod(string code, string methodName) =>
+        private static bool DeclaresMethod(string body, string methodName) =>
             !string.IsNullOrWhiteSpace(methodName)
-            && Regex.IsMatch(code, $@"(?<![.\w]){Regex.Escape(methodName)}\s*\(");
-
-        // Hilft dem Teilnehmer, den Unterschied selbst zu sehen: "erwartet Main,
-        // gefunden Rechner".
-        private static string DescribeFoundTypes(string code)
-        {
-            var found = Regex.Matches(code, @"\b(?:class|interface|enum|record)\s+([A-Za-z_][A-Za-z0-9_]*)")
-                .Select(match => match.Groups[1].Value)
-                .Distinct()
-                .ToList();
-
-            return found.Count == 0 ? string.Empty : string.Join(", ", found);
-        }
+            && Regex.IsMatch(body, $@"(?<![.\w]){Regex.Escape(methodName)}\s*\(");
     }
 }

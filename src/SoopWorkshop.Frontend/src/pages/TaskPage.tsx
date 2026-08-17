@@ -130,7 +130,7 @@ export function TaskPage() {
 
   const { task } = state
   const totalBytes = files.reduce((sum, f) => sum + f.size, 0)
-  const hasContract = task.expectedClassName !== null || task.expectedMethods.length > 0
+  const hasContract = task.expectedTypes.length > 0
 
   return (
     <div className="flex-1 bg-white flex flex-col p-8 overflow-y-auto">
@@ -168,25 +168,28 @@ export function TaskPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
               Was geprüft wird
             </h2>
+            {/* Je geforderte Klasse ein Block mit IHREN Methoden. Eine flache
+                Liste daneben liesse offen, welche Methode wohin gehoert — und
+                genau danach wird bewertet. */}
             <dl className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100 shadow-sm">
-              {task.expectedClassName && (
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-5 py-3">
-                  <dt className="text-sm text-slate-500 sm:w-40 shrink-0">Klasse</dt>
-                  <dd className="font-mono text-sm text-slate-900">{task.expectedClassName}</dd>
-                </div>
-              )}
-              {task.expectedMethods.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-5 py-3">
-                  <dt className="text-sm text-slate-500 sm:w-40 shrink-0">Methoden</dt>
-                  <dd className="font-mono text-sm text-slate-900 space-y-1 min-w-0">
-                    {task.expectedMethods.map((signature) => (
-                      <div key={signature} className="break-words">
-                        {signature}
-                      </div>
-                    ))}
+              {task.expectedTypes.map((type) => (
+                <div key={type.id} className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-5 py-3">
+                  <dt className="font-mono text-sm text-slate-900 sm:w-40 shrink-0">{type.name}</dt>
+                  <dd className="min-w-0 space-y-1 font-mono text-sm text-slate-700">
+                    {type.methods.length === 0 ? (
+                      <span className="font-sans text-slate-500 italic">
+                        keine bestimmten Methoden gefordert
+                      </span>
+                    ) : (
+                      type.methods.map((signature) => (
+                        <div key={signature} className="break-words">
+                          {signature}
+                        </div>
+                      ))
+                    )}
                   </dd>
                 </div>
-              )}
+              ))}
             </dl>
           </section>
         )}

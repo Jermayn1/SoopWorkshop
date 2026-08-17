@@ -71,8 +71,9 @@ export function NewTaskPage() {
       difficulty,
       order: nextOrder,
       evaluationMode,
-      expectedClassName: null,
-      expectedMethods: [],
+      // Der Vertrag entsteht im Editor: beim Anlegen weiss man oft noch nicht,
+      // wie die Klassen heissen sollen.
+      expectedTypes: [],
       hints: [],
     })
 

@@ -24,13 +24,10 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         // ohne hinterlegte JUnit-Datei speichern.
         public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
 
-        // Leer lassen, wenn die Aufgabe keinen bestimmten Klassennamen verlangt.
-        [MaxLength(200, ErrorMessage = "Der Klassenname darf maximal 200 Zeichen lang sein.")]
-        public string? ExpectedClassName { get; set; }
-
-        // Je Eintrag eine Signatur, wie sie in der Aufgabenstellung steht.
-        // Der geprüfte Methodenname wird daraus abgeleitet.
-        public List<string> ExpectedMethods { get; set; } = [];
+        // Der Vertrag: welche Klassen die Abgabe enthalten muss und welche
+        // Methoden in welcher davon. Leer lassen, wenn die Aufgabe keine Namen
+        // vorgibt.
+        public List<ExpectedTypeInputDto> ExpectedTypes { get; set; } = [];
 
         // Erspart den zusaetzlichen PATCH-Aufruf nach dem Anlegen.
         public bool IsVisible { get; set; }

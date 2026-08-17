@@ -57,6 +57,16 @@ export type TaskCategoryWeight = {
   weight: number
 }
 
+// Eine geforderte Klasse samt der Methoden, die IN IHR stehen muessen. Die
+// Zuordnung ist der Punkt: "einzahlen" gehoert zu 'Konto' und nicht irgendwohin.
+export type ExpectedType = {
+  id: string
+  name: string
+  order: number
+  /** Vollstaendige Signaturen zur Anzeige. */
+  methods: string[]
+}
+
 export type Task = {
   id: string
   categoryId: string
@@ -67,10 +77,11 @@ export type Task = {
   /** Ob die Aufgabe fuer Teilnehmer freigeschaltet ist. */
   isVisible: boolean
   evaluationMode: EvaluationMode
-  /** Wie die Klasse heissen muss. null, wenn die Aufgabe nichts vorgibt. */
-  expectedClassName: string | null
-  /** Vollstaendige Signaturen zur Anzeige. */
-  expectedMethods: string[]
+  /**
+   * Der Vertrag: welche Klassen es geben muss und welche Methoden in welcher
+   * davon. Leer, wenn die Aufgabe keine Namen vorgibt.
+   */
+  expectedTypes: ExpectedType[]
   hints: Hint[]
   /** Nur die JUnit-Dateien, die der Admin freigeschaltet hat. */
   visibleUnitTestFiles: UnitTestFile[]

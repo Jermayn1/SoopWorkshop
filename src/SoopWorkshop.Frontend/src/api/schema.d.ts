@@ -1474,8 +1474,7 @@ export interface components {
             /** Format: int32 */
             order?: number | string;
             evaluationMode?: components["schemas"]["EvaluationMode"];
-            expectedClassName?: null | string;
-            expectedMethods?: string[];
+            expectedTypes?: components["schemas"]["ExpectedTypeInputDto"][];
             isVisible?: boolean;
             hints?: string[];
         };
@@ -1513,6 +1512,10 @@ export interface components {
             /** Format: int32 */
             maxScore?: number | string;
             categoryResults?: components["schemas"]["CategoryResultDto"][];
+        };
+        ExpectedTypeInputDto: {
+            name: string;
+            methods?: string[];
         };
         /** Format: binary */
         IFormFile: string;
@@ -1597,6 +1600,14 @@ export interface components {
             /** Format: double */
             weight?: number | string;
         };
+        TaskExpectedTypeDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: int32 */
+            order?: number | string;
+            methods?: string[];
+        };
         TaskHintDto: {
             /** Format: uuid */
             id?: string;
@@ -1618,8 +1629,7 @@ export interface components {
             order?: number | string;
             isVisible?: boolean;
             evaluationMode?: components["schemas"]["EvaluationMode"];
-            expectedClassName?: null | string;
-            expectedMethods?: string[];
+            expectedTypes?: components["schemas"]["TaskExpectedTypeDto"][];
             hints?: components["schemas"]["TaskHintDto"][];
             visibleUnitTestFiles?: components["schemas"]["TaskUnitTestFileDto"][];
         };
@@ -1676,8 +1686,7 @@ export interface components {
             order?: number | string;
             isVisible?: boolean;
             evaluationMode?: components["schemas"]["EvaluationMode"];
-            expectedClassName?: null | string;
-            expectedMethods?: string[];
+            expectedTypes?: components["schemas"]["ExpectedTypeInputDto"][];
             hints?: string[];
         };
         UpdateTaskTestDto: {

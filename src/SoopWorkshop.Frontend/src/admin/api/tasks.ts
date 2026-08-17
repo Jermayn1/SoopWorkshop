@@ -14,6 +14,13 @@ export async function fetchAdminTask(id: string, signal?: AbortSignal): Promise<
   return mapResult(result, toTask)
 }
 
+// Eine geforderte Klasse im Formular. Ohne Id: beim Speichern wird der Vertrag
+// als Ganzes ersetzt, eine Identitaet braucht er dabei nicht.
+export type ExpectedTypeDraft = {
+  name: string
+  methods: string[]
+}
+
 // Was in beiden Richtungen gleich aussieht — beim Anlegen und beim Aendern.
 export type TaskDraft = {
   taskCategoryId: string
@@ -22,9 +29,19 @@ export type TaskDraft = {
   difficulty: Task['difficulty']
   order: number
   evaluationMode: Task['evaluationMode']
-  expectedClassName: string | null
-  expectedMethods: string[]
+  expectedTypes: ExpectedTypeDraft[]
   hints: string[]
+}
+
+// Leere Zeilen fallen hier heraus statt beim Server: ein Formular hat fast
+// immer eine angefangene, noch leere Zeile am Ende.
+function toExpectedTypes(draft: TaskDraft): Schemas['ExpectedTypeInputDto'][] {
+  return draft.expectedTypes
+    .filter((type) => type.name.trim().length > 0)
+    .map((type) => ({
+      name: type.name.trim(),
+      methods: type.methods.map((m) => m.trim()).filter((m) => m.length > 0),
+    }))
 }
 
 export async function createTask(
@@ -38,8 +55,7 @@ export async function createTask(
     difficulty: draft.difficulty,
     order: draft.order,
     evaluationMode: draft.evaluationMode,
-    expectedClassName: draft.expectedClassName,
-    expectedMethods: draft.expectedMethods,
+    expectedTypes: toExpectedTypes(draft),
     hints: draft.hints,
     // Immer verborgen anlegen. Beim Anlegen gibt es die Testfaelle noch nicht,
     // und IsVisible umgeht im Backend die Pruefung auf passende Testdaten —
@@ -71,8 +87,7 @@ export async function updateTask(
     difficulty: draft.difficulty,
     order: draft.order,
     evaluationMode: draft.evaluationMode,
-    expectedClassName: draft.expectedClassName,
-    expectedMethods: draft.expectedMethods,
+    expectedTypes: toExpectedTypes(draft),
     hints: draft.hints,
     // Unveraendert durchreichen: umgeschaltet wird ueber den eigenen Endpunkt,
     // der die Testdaten dabei prueft.

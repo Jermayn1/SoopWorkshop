@@ -248,7 +248,7 @@ src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
   components/    AdminLayout · AdminSidebar · Field · TextInput · TextArea ·
                  NumberInput · Select · Checkbox · formStyles · SaveBar ·
                  ConfirmDialog · OrderButtons · StringListEditor ·
-                 TestCaseEditor · WeightEditor
+                 ExpectedTypesEditor · TestCaseEditor · WeightEditor
   pages/         LoginPage · OverviewPage · CategoriesPage · NewTaskPage ·
                  TaskEditorPage
 ```
@@ -343,9 +343,9 @@ Bewusst dort und nicht beim Anlegen — beim Anlegen existieren die Testfälle n
 ```
 TaskItem
   ├─ EvaluationMode          ConsoleOnly | UnitTestOnly | Both
-  ├─ ExpectedClassName       wie die Klasse heißen muss (nullable)
-  ├─ ExpectedMethods         → erwartete Methoden: Signatur zur Anzeige,
-  │                            daraus abgeleiteter Name zur Prüfung
+  ├─ ExpectedTypes           → geforderte Klassen, je mit
+  │     └─ Methods              ihren erwarteten Methoden: Signatur zur Anzeige,
+  │                             daraus abgeleiteter Name zur Prüfung
   ├─ Hints
   ├─ Tests                   → Konsolen-Testfälle
   ├─ UnitTestFiles           → JUnit-Quelldateien: FileName, Content, Order,
@@ -360,10 +360,28 @@ Verlangt die Aufgabe `Main` und jemand gibt `Rechner.java` mit `class Rechner` a
 kompiliert das, die Konsolen-Testfälle laufen durch, und die Abgabe bestand früher
 klaglos mit voller Punktzahl.
 
+**Mehrere Klassen, und Methoden gehören zu ihrer Klasse** (seit Phase 5.2). Für die
+OOP-Aufgaben am Ende des Workshops hängen mehrere Klassen voneinander ab; der Vertrag
+bildet das ab. `JavaTypeBodies.BodyOf` schneidet den Rumpf der geforderten Klasse
+heraus, und nur dort wird die Methode gesucht. Vorher lief die Suche über den
+gesamten Quelltext: `einzahlen` zählte auch dann als vorhanden, wenn es in `Kunde`
+statt in `Konto` stand.
+
+> Das Klammernzählen darin ist nur zulässig, weil vorher
+> `JavaSourceText.StripCommentsAndLiterals` läuft — sonst zählte eine geschweifte
+> Klammer in einer Zeichenkette mit. **Bekanntes Ist-Verhalten:** eine innere Klasse
+> liegt im Rumpf der äußeren, ihre Methoden zählen also auch für diese.
+
 Geprüft wird die **Anwesenheit** der Namen, nicht die vollständige Signatur: die
 prüft der Compiler beim Übersetzen der JUnit-Datei ohnehin exakt, und ein Regex über
 Java-Quelltext würde daran nur unzuverlässig scheitern. Bekannte Folge davon: ein
 bloßer Aufruf `addiere(1, 2)` zählt bereits als Treffer — als Ist-Verhalten getestet.
+
+**Mehrklassige Abgaben funktionieren durchgängig, ohne Einstellung:** bis zu 10
+`.java`-Dateien gehen in **einem** `javac`-Aufruf zusammen ins Arbeitsverzeichnis
+(`CompilabilityChecker`), Abhängigkeiten zwischen den Klassen lösen sich damit auf.
+Der `JUnitChecker` legt die Testdateien daneben und übersetzt mit `-cp <jar>:.` —
+eine Testklasse darf also `Konto` und `Kunde` gemeinsam benutzen.
 
 ### 5.3 Ausführung der JUnit-Tests
 
@@ -932,6 +950,13 @@ Querschnitt:
       `@tailwindcss/typography` nachinstalliert — die `prose`-Klassen in `TaskPage`
       waren seit Phase 4 wirkungslos. Die Enum-Beschriftungen liegen jetzt in
       `api/labels.ts`, weil Teilnehmersicht und Verwaltung dieselben Wörter brauchen
+- [x] **Etappe 5.2a — Vertrag über mehrere Klassen.** `ExpectedClassName` und die
+      flache Methodenliste sind zu `TaskItem → TaskExpectedType → TaskExpectedMethod`
+      geworden. Der `ContractChecker` sucht die Methode jetzt **im Rumpf ihrer
+      Klasse**. Migration zieht den Bestand verlustfrei um (nachgemessen).
+      Ende zu Ende belegt: zwei abhängige Klassen abgegeben, `getStand` absichtlich
+      in der falschen Klasse — genau diese Teilprüfung fällt durch, die übrigen
+      bestehen
 - [x] **Etappe 5.2 — Kategorien und Aufgaben bearbeiten.** Sechs Backend-Lücken
       geschlossen (Fremdschlüssel-Prüfungen statt 500, `TaskCategoryId` auf
       `UpdateTaskItemDto`, `CategoryWeights` im Include, `Description` auf die
@@ -1226,6 +1251,14 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   `cancel` folgte trotzdem nicht. Behoben mit einem eigenen Listener für **beide**
   Wege. **Lehre:** dieselbe wie in §6.1 — die Messung braucht so viel Misstrauen wie
   der Code, und was sich nicht messen lässt, wird abgesichert statt geglaubt
+- 2026-08-17 — `Migrations/…_SplitExpectedContractIntoTypes` — das erzeugte Gerüst
+  **hätte den gesamten Vertrag gelöscht**: es wirft `ExpectedClassName` weg und
+  benennt `TaskItemId` in `TaskExpectedTypeId` um, ohne die Typen anzulegen — die
+  Methoden hätten danach auf nicht existierende Zeilen gezeigt. EF warnt zwar
+  („may result in the loss of data"), sagt aber nicht, was genau. Von Hand zu einem
+  Umzug umgeschrieben und nachgemessen (5 Methoden vorher, 5 nachher, keine Waisen).
+  **Lehre:** eine Migration, die eine Spalte löscht oder umbenennt, wird gelesen
+  bevor sie läuft — und vorher wird die Datenbank gesichert
 - 2026-08-17 — `Frontend/src/admin/pages/NewTaskPage.tsx` — die Vorauswahl der
   Kategorie stand im Anfangswert von `useState`. Der läuft nur beim ersten Rendern,
   und da lädt das Layout die Kategorien noch: die Auswahl blieb leer, das Anlegen
@@ -1243,10 +1276,13 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 2. ~~**JUnit-Dateien für Teilnehmer sichtbar?**~~ **Entschieden in Phase 3:** pro Datei
    über `IsVisibleToParticipant` schaltbar, Standard `false`. Die öffentliche API liefert
    nur freigeschaltete Dateien aus; die Darstellung im Frontend fehlt noch — Phase 4.
-3. ~~**Aufgaben-Vertrag.**~~ **Entschieden in Phase 3.1:** strukturiert als
-   `ExpectedClassName` und `ExpectedMethods` auf `TaskItem`, geprüft vom
-   `ContractChecker` als Teilprüfung der Kompilierbarkeit. Hervorgehobene Darstellung
-   (Phase 4) und das Eingabefeld im Admin-Panel (Phase 5) fehlen noch.
+3. ~~**Aufgaben-Vertrag.**~~ **Entschieden in Phase 3.1, erweitert in Phase 5.2:**
+   strukturiert als `TaskExpectedType` (geforderte Klasse) mit je eigenen
+   `TaskExpectedMethod`, geprüft vom `ContractChecker` als Teilprüfung der
+   Kompilierbarkeit. Anzeige beim Teilnehmer und Editor im Panel sind da.
+   **Offen geblieben:** die Methode wird im Klassenrumpf gesucht, aber weiterhin nur
+   dem Namen nach — Parametertypen prüft allein der Compiler beim Übersetzen der
+   JUnit-Datei.
 4. **Sandbox-Tiefe.** Docker Compose containerisiert die *Anwendung*, isoliert aber
    nicht die einzelne Abgabe — `javac`/`java` laufen im Backend-Container.
    Für einen workshop-internen Betrieb vertretbar. Echte Isolation pro Abgabe

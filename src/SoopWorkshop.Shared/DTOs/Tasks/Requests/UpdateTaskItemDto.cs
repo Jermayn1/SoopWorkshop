@@ -30,10 +30,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 
         public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
 
-        [MaxLength(200, ErrorMessage = "Der Klassenname darf maximal 200 Zeichen lang sein.")]
-        public string? ExpectedClassName { get; set; }
-
-        public List<string> ExpectedMethods { get; set; } = [];
+        public List<ExpectedTypeInputDto> ExpectedTypes { get; set; } = [];
 
         public List<string> Hints { get; set; } = [];
     }

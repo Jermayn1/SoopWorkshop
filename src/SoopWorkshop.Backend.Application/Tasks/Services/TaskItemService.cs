@@ -53,8 +53,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 Order = dto.Order,
                 IsVisible = dto.IsVisible,
                 EvaluationMode = dto.EvaluationMode,
-                ExpectedClassName = dto.ExpectedClassName,
-                ExpectedMethods = BuildExpectedMethods(dto.ExpectedMethods),
+                ExpectedTypes = BuildExpectedTypes(dto.ExpectedTypes),
                 Hints = dto.Hints.Select((content, index) => new TaskHint
                 {
                     Id = Guid.NewGuid(),
@@ -86,13 +85,14 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             item.Order = dto.Order;
             item.IsVisible = dto.IsVisible;
             item.EvaluationMode = dto.EvaluationMode;
-            item.ExpectedClassName = dto.ExpectedClassName;
 
-            item.ExpectedMethods.Clear();
-            foreach (var method in BuildExpectedMethods(dto.ExpectedMethods))
+            // Ersetzen statt Abgleichen: der Vertrag kommt als Ganzes herein, und
+            // was nicht mehr drinsteht, gilt nicht mehr.
+            item.ExpectedTypes.Clear();
+            foreach (var type in BuildExpectedTypes(dto.ExpectedTypes))
             {
-                method.TaskItemId = item.Id;
-                item.ExpectedMethods.Add(method);
+                type.TaskItemId = item.Id;
+                item.ExpectedTypes.Add(type);
             }
 
 
@@ -156,12 +156,23 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<bool>.Ok(item.IsVisible);
         }
 
-        // Der geprüfte Name wird aus der Signatur abgeleitet, damit der Admin nur
-        // einmal aufschreiben muss, was ohnehin in der Aufgabenstellung steht.
+        // Der geprüfte Methodenname wird aus der Signatur abgeleitet, damit der
+        // Admin nur einmal aufschreiben muss, was ohnehin in der Aufgabenstellung
+        // steht.
         //
-        // Ohne Id, aus demselben Grund wie bei den Tipps oben: beim Aendern ist
-        // die Aufgabe verfolgt, und ein gesetzter Schluessel laesst den neuen
-        // Eintrag wie eine bestehende Zeile aussehen.
+        // Durchgehend ohne Id, aus demselben Grund wie bei den Tipps oben: beim
+        // Aendern ist die Aufgabe verfolgt, und ein gesetzter Schluessel laesst
+        // den neuen Eintrag wie eine bestehende Zeile aussehen.
+        private static List<TaskExpectedType> BuildExpectedTypes(List<ExpectedTypeInputDto> types) =>
+            [.. types
+                .Where(type => !string.IsNullOrWhiteSpace(type.Name))
+                .Select((type, index) => new TaskExpectedType
+                {
+                    Name = type.Name.Trim(),
+                    Order = index + 1,
+                    Methods = BuildExpectedMethods(type.Methods)
+                })];
+
         private static List<TaskExpectedMethod> BuildExpectedMethods(List<string> signatures) =>
             [.. signatures
                 .Where(signature => !string.IsNullOrWhiteSpace(signature))
@@ -204,10 +215,17 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             Order = item.Order,
             IsVisible = item.IsVisible,
             EvaluationMode = item.EvaluationMode,
-            ExpectedClassName = item.ExpectedClassName,
-            ExpectedMethods = [.. item.ExpectedMethods
-                .OrderBy(method => method.Order)
-                .Select(method => method.Signature)],
+            ExpectedTypes = [.. item.ExpectedTypes
+                .OrderBy(type => type.Order)
+                .Select(type => new TaskExpectedTypeDto
+                {
+                    Id = type.Id,
+                    Name = type.Name,
+                    Order = type.Order,
+                    Methods = [.. type.Methods
+                        .OrderBy(method => method.Order)
+                        .Select(method => method.Signature)]
+                })],
             Hints = item.Hints
                 .OrderBy(h => h.Order)
                 .Select(h => new TaskHintDto

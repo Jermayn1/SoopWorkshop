@@ -2,10 +2,13 @@ namespace SoopWorkshop.Backend.Domain.Entities
 {
     // Eine Methode, die die Aufgabe verlangt. Der Admin schreibt die Signatur so
     // auf, wie sie in der Aufgabenstellung steht; der Name wird daraus abgeleitet.
+    //
+    // Haengt an der Klasse, nicht an der Aufgabe: nur so laesst sich pruefen, ob
+    // die Methode auch dort steht, wo sie hingehoert.
     public class TaskExpectedMethod
     {
         public Guid Id { get; set; }
-        public Guid TaskItemId { get; set; }
+        public Guid TaskExpectedTypeId { get; set; }
 
         // Vollstaendig, fuer Anzeige und Fehlermeldung:
         // "public static int addiere(int ersteZahl, int zweiteZahl)"
@@ -19,6 +22,6 @@ namespace SoopWorkshop.Backend.Domain.Entities
 
         public int Order { get; set; }
 
-        public TaskItem Task { get; set; } = null!;
+        public TaskExpectedType Type { get; set; } = null!;
     }
 }

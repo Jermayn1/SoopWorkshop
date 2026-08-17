@@ -107,10 +107,14 @@ Die Regeln:
     difficulty        = 1
     order             = 1
     evaluationMode    = 1
-    expectedClassName = 'Main'
-    expectedMethods   = @(
-        'public static String zeichnePyramide(int hoehe)',
-        'public static void main(String[] args)'
+    expectedTypes     = @(
+        @{
+            name    = 'Main'
+            methods = @(
+                'public static String zeichnePyramide(int hoehe)',
+                'public static void main(String[] args)'
+            )
+        }
     )
     hints             = @(
         'Zwei Schleifen ineinander: die äußere zählt die Zeilen, die innere setzt die Zeichen.',

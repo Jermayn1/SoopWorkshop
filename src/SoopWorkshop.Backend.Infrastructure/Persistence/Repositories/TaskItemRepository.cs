@@ -27,7 +27,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .Include(t => t.Hints)
                 .Include(t => t.Tests)
                 .Include(t => t.UnitTestFiles)
-                .Include(t => t.ExpectedMethods)
+                .Include(t => t.ExpectedTypes)
+                    .ThenInclude(type => type.Methods)
                 // CategoryWeights fehlte hier. Was nicht mitgeladen wird, sieht
                 // die Auswertung als "nicht vorhanden" und bewertet entsprechend -
                 // die stillste denkbare Fehlerquelle.

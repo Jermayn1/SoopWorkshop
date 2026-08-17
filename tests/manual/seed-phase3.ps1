@@ -113,8 +113,9 @@ $konsole = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
     difficulty        = 0
     order             = 1
     evaluationMode    = 0
-    expectedClassName = 'Main'
-    expectedMethods   = @('public static void main(String[] args)')
+    expectedTypes     = @(
+        @{ name = 'Main'; methods = @('public static void main(String[] args)') }
+    )
     hints             = @('System.out.println gibt eine Zeile aus.')
 }
 
@@ -137,8 +138,9 @@ $unitOnly = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
     difficulty        = 0
     order             = 2
     evaluationMode    = 1
-    expectedClassName = 'Main'
-    expectedMethods   = @('public static void main(String[] args)')
+    expectedTypes     = @(
+        @{ name = 'Main'; methods = @('public static void main(String[] args)') }
+    )
     hints             = @('Der Test ruft deine main auf und liest mit, was du ausgibst.')
 }
 
@@ -165,10 +167,14 @@ $both = Invoke-Api -Method Post -Path '/api/admin/tasks' -Body @{
     difficulty        = 1
     order             = 3
     evaluationMode    = 2
-    expectedClassName = 'Main'
-    expectedMethods   = @(
-        'public static int addiere(int ersteZahl, int zweiteZahl)',
-        'public static void main(String[] args)'
+    expectedTypes     = @(
+        @{
+            name    = 'Main'
+            methods = @(
+                'public static int addiere(int ersteZahl, int zweiteZahl)',
+                'public static void main(String[] args)'
+            )
+        }
     )
     hints             = @('Scanner liest Zahlen mit nextInt().', 'Die Methode muss static sein, damit der Test sie ohne Objekt aufrufen kann.')
 }

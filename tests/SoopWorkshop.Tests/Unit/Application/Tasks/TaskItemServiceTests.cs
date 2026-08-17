@@ -128,7 +128,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
         // Den Fehler selbst kann dieser Test nicht ausloesen - dazu braeuchte er
         // eine echte Datenbank (Phase 6, §10.5). Er haelt aber die Ursache fest.
         [Fact]
-        public async Task UpdateAsync_NeueTippsUndSignaturen_KommenOhneVorgegebeneIdInDieSammlung()
+        public async Task UpdateAsync_NeueTippsUndKlassen_KommenOhneVorgegebeneIdInDieSammlung()
         {
             var item = GivenExistingTask(GivenExistingCategory());
 
@@ -139,13 +139,60 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Title = "Rechner",
                 Description = "Addiere zwei Zahlen.",
                 Hints = ["Denk an negative Zahlen."],
-                ExpectedMethods = ["public static int addiere(int a, int b)"]
+                ExpectedTypes =
+                [
+                    new ExpectedTypeInputDto
+                    {
+                        Name = "Rechner",
+                        Methods = ["public static int addiere(int a, int b)"]
+                    }
+                ]
             });
 
             result.IsSuccess.ShouldBeTrue();
 
             item.Hints.ShouldHaveSingleItem().Id.ShouldBe(Guid.Empty);
-            item.ExpectedMethods.ShouldHaveSingleItem().Id.ShouldBe(Guid.Empty);
+
+            var type = item.ExpectedTypes.ShouldHaveSingleItem();
+            type.Id.ShouldBe(Guid.Empty);
+            type.Methods.ShouldHaveSingleItem().Id.ShouldBe(Guid.Empty);
+        }
+
+        // Der Methodenname wird aus der Signatur abgeleitet, damit der Admin ihn
+        // nicht zweimal aufschreiben muss.
+        [Fact]
+        public async Task UpdateAsync_MehrereKlassen_UebernimmtStrukturUndLeitetNamenAb()
+        {
+            var item = GivenExistingTask(GivenExistingCategory());
+
+            var result = await CreateService().UpdateAsync(new UpdateTaskItemDto
+            {
+                Id = item.Id,
+                TaskCategoryId = item.TaskCategoryId,
+                Title = "Bankkonto",
+                Description = "Konto und Kunde.",
+                ExpectedTypes =
+                [
+                    new ExpectedTypeInputDto { Name = "Konto", Methods = ["public void einzahlen(double betrag)"] },
+                    new ExpectedTypeInputDto { Name = "Kunde", Methods = [] }
+                ]
+            });
+
+            result.IsSuccess.ShouldBeTrue();
+
+            item.ExpectedTypes.Count.ShouldBe(2);
+
+            var konto = item.ExpectedTypes.First();
+            konto.Name.ShouldBe("Konto");
+            konto.Order.ShouldBe(1);
+            konto.Methods.ShouldHaveSingleItem().Name.ShouldBe("einzahlen");
+
+            var kunde = item.ExpectedTypes.Last();
+            kunde.Name.ShouldBe("Kunde");
+            kunde.Order.ShouldBe(2);
+            kunde.Methods.ShouldBeEmpty();
+
+            result.Value!.ExpectedTypes.Select(type => type.Name).ShouldBe(["Konto", "Kunde"]);
         }
 
         [Fact]

@@ -10,6 +10,7 @@ import { Select } from '../components/Select'
 import { SaveBar } from '../components/SaveBar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { StringListEditor } from '../components/StringListEditor'
+import { ExpectedTypesEditor } from '../components/ExpectedTypesEditor'
 import { TestCaseEditor } from '../components/TestCaseEditor'
 import { WeightEditor } from '../components/WeightEditor'
 import {
@@ -121,8 +122,10 @@ export function TaskEditorPage() {
           difficulty: task.difficulty,
           order: task.order,
           evaluationMode: task.evaluationMode,
-          expectedClassName: task.expectedClassName,
-          expectedMethods: task.expectedMethods,
+          expectedTypes: task.expectedTypes.map((type) => ({
+            name: type.name,
+            methods: type.methods,
+          })),
           hints: task.hints.map((hint) => hint.content),
         }
 
@@ -188,13 +191,27 @@ export function TaskEditorPage() {
       checkRequired('title', 'Der Titel', draft.title),
       checkMaxLength('title', 'Der Titel', draft.title, FIELD_LIMITS.taskTitle),
       checkRequired('description', 'Die Beschreibung', draft.description),
-      checkMaxLength(
-        'expectedClassName',
-        'Der Klassenname',
-        draft.expectedClassName ?? '',
-        FIELD_LIMITS.expectedClassName,
-      ),
     ).map((problem) => problem.message)
+
+    // Klassen ohne Namen sind kein Fehler — der Editor legt eine leere Zeile an,
+    // wenn man "Klasse hinzufuegen" drueckt, und sie faellt beim Senden heraus.
+    // Zu lange Namen dagegen wuerden erst der Server ablehnen.
+    draft.expectedTypes.forEach((type, index) => {
+      const problem = checkMaxLength(
+        'expectedType',
+        `Der Name der ${index + 1}. Klasse`,
+        type.name,
+        FIELD_LIMITS.expectedClassName,
+      )
+      if (problem) found.push(problem.message)
+
+      // Eine Methode ohne Klasse kann nicht geprueft werden — sie haette keinen
+      // Rumpf, in dem gesucht wird.
+      if (type.name.trim().length === 0 && type.methods.some((m) => m.trim().length > 0))
+        found.push(
+          `Die ${index + 1}. Klasse hat Methoden, aber keinen Namen. Ohne Klassennamen lässt sich nicht prüfen, wo die Methode stehen muss.`,
+        )
+    })
 
     tests.forEach((test, index) => {
       if (test.description.trim().length === 0)
@@ -233,13 +250,9 @@ export function TaskEditorPage() {
     // statt pauschal "Speichern fehlgeschlagen" zu behaupten.
     const steps: { name: string; run: () => Promise<{ kind: string; message?: string }> }[] = [
       {
+        // Leere Klassen- und Signaturzeilen raeumt updateTask selbst weg.
         name: 'Die Grunddaten',
-        run: () =>
-          updateTask(
-            taskId,
-            { ...draft, expectedClassName: draft.expectedClassName?.trim() || null },
-            isVisible,
-          ),
+        run: () => updateTask(taskId, draft, isVisible),
       },
       { name: 'Die Testfälle', run: () => saveTaskTests(taskId, tests) },
       {
@@ -435,29 +448,12 @@ export function TaskEditorPage() {
 
           <Card
             title="Aufgaben-Vertrag"
-            hint="Wird geprüft, nicht nur angezeigt — und der Teilnehmer bekommt ihn zu lesen."
+            hint="Welche Klassen die Abgabe enthalten muss und welche Methoden in welcher davon. Wird geprüft, nicht nur angezeigt — und der Teilnehmer bekommt ihn zu lesen."
           >
-            <div className="space-y-4">
-              <TextInput
-                label="Geforderter Klassenname"
-                hint="Leer lassen, wenn die Aufgabe keinen bestimmten Namen verlangt."
-                value={draft.expectedClassName ?? ''}
-                onChange={(value) => patch({ expectedClassName: value })}
-                placeholder="z. B. Rechner"
-                maxLength={FIELD_LIMITS.expectedClassName}
-              />
-
-              <StringListEditor
-                label="Erwartete Methoden"
-                hint="Je Zeile eine Signatur, wie sie in der Aufgabenstellung steht. Geprüft wird daraus nur der Name — die Signatur prüft der Compiler beim Übersetzen der JUnit-Datei."
-                itemNoun="Signatur"
-                values={draft.expectedMethods}
-                onChange={(values) => patch({ expectedMethods: values })}
-                placeholder="public static int addiere(int a, int b)"
-                mono
-                addLabel="Signatur hinzufügen"
-              />
-            </div>
+            <ExpectedTypesEditor
+              types={draft.expectedTypes}
+              onChange={(expectedTypes) => patch({ expectedTypes })}
+            />
           </Card>
 
           <Card title="Tipps" hint="Beim Teilnehmer eingeklappt, in dieser Reihenfolge.">

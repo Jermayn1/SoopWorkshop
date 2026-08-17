@@ -3,6 +3,7 @@ import type {
   Category,
   CategoryResult,
   EvaluationResult,
+  ExpectedType,
   Hint,
   Submission,
   SubmissionState,
@@ -75,6 +76,15 @@ export function toTaskCategoryWeight(
   }
 }
 
+function toExpectedType(dto: Schemas['TaskExpectedTypeDto']): ExpectedType {
+  return {
+    id: dto.id ?? '',
+    name: dto.name ?? '',
+    order: toNumber(dto.order),
+    methods: dto.methods ?? [],
+  }
+}
+
 export function toTask(dto: Schemas['TaskItemDto']): Task {
   return {
     id: dto.id ?? '',
@@ -85,8 +95,9 @@ export function toTask(dto: Schemas['TaskItemDto']): Task {
     order: toNumber(dto.order),
     isVisible: dto.isVisible ?? false,
     evaluationMode: dto.evaluationMode ?? 'ConsoleOnly',
-    expectedClassName: dto.expectedClassName ?? null,
-    expectedMethods: dto.expectedMethods ?? [],
+    expectedTypes: (dto.expectedTypes ?? [])
+      .map(toExpectedType)
+      .sort((a, b) => a.order - b.order),
     // Die API liefert bereits sortiert. Das Frontend sortiert trotzdem selbst:
     // Sortieren ist billig, eine wechselnde Reihenfolge verwirrt.
     hints: (dto.hints ?? []).map(toHint).sort((a, b) => a.order - b.order),
