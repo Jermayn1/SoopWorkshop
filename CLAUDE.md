@@ -3,11 +3,12 @@
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
 > Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 bis
-> 5.3 stehen: Auth, Gerüst, Kategorien/Aufgaben, JUnit-Editor). Das Frontend heißt **Soop Judge**
+> 5.4 stehen: Auth, Gerüst, Kategorien/Aufgaben, JUnit-Editor, Bestands-Transfer).
+> Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Als Nächstes kommt Etappe 5.4 (Import und Export des Bestands).
+> siehe §6.1. Als Nächstes kommt Etappe 5.5 (Vorschau und Probelauf).
 
 ---
 
@@ -216,7 +217,8 @@ SoopWorkshop.Shared                  DTOs, Enums, Constants — von allen refere
 SoopWorkshop.Backend.Domain          Entities, ValueObjects — kennt nur Shared
 SoopWorkshop.Backend.Application     Services, Interfaces, Result<T> — kennt Domain + Shared
 SoopWorkshop.Backend.Infrastructure  EF Core, Repositories, Java-Checker, ProcessRunner,
-                                     Warteschlange + Worker — kennt Application
+                                     Warteschlange + Worker, Bestands-Transfer —
+                                     kennt Application
 SoopWorkshop.Backend.API             Controller, Middleware — kennt Application + Infrastructure
 tests/SoopWorkshop.Tests             xUnit (Projekt-Tests)
 
@@ -244,14 +246,14 @@ src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
 src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
                  saveState · weights · icons · junitTemplates
-  api/           session · catalog · tasks
+  api/           session · catalog · tasks · transfer
   components/    AdminLayout · AdminSidebar · Field · TextInput · TextArea ·
                  NumberInput · Select · Checkbox · formStyles · SaveBar ·
                  ConfirmDialog · IconPickerDialog · OrderButtons ·
                  StringListEditor · ExpectedTypesEditor · TestCaseEditor ·
                  WeightEditor · LineNumberedEditor · UnitTestFileEditor
   pages/         LoginPage · OverviewPage · CategoriesPage · NewTaskPage ·
-                 TaskEditorPage
+                 TaskEditorPage · TransferPage
 ```
 
 **Warum zwischen `schema.d.ts` und der Oberfläche noch `mappers.ts` steht:** .NET gibt
@@ -992,7 +994,18 @@ Querschnitt:
       **Bewusst ohne „stdin simulieren"** — das hat Phase 3.1 abgeschafft: eine im
       Testcode versteckte Eingabe kann die Anzeige nicht kennen, Eingaben gehören in
       Konsolen-Testfälle (§5.7)
-- [ ] Gewichtung der Bewertungskategorien pro Aufgabe einstellbar
+- [x] **Etappe 5.4 — Import und Export des Bestands.** Der ganze Aufgabenbestand als
+      **eine JSON-Datei**: Kategorien, Aufgaben, Vertrag, Tipps, Testfälle,
+      JUnit-Dateien und Gewichte. **Ohne Abgaben** — das sind Workshop-Daten, keine
+      Konfiguration. Zwei Modi (`Merge`/`Replace`) mit **Vorschau vor dem Ausführen**;
+      beim Ersetzen nennt der Dialog die Zahl der Abgaben, die per Cascade mitgehen.
+      Die **GUIDs wandern mit**, deshalb verdoppelt ein erneuter Import nichts.
+      Aufgeteilt nach dem Vorbild des `EvaluationScorer`: `TaskBundleValidator` und
+      `ImportPlanner` sind **reine Funktionen** in Application (ohne Datenbank
+      testbar), `TaskTransferService` in Infrastructure führt aus — in der **ersten
+      Transaktion des Projekts**. 270 Tests
+- [x] Gewichtung der Bewertungskategorien pro Aufgabe einstellbar — 5.2, mit
+      Live-Vorschau der Normierung auf 100
 - [ ] Reihenfolge (`Order`) bearbeitbar — idealerweise Drag & Drop
 - [ ] Vorschau: Aufgabe so anzeigen, wie Teilnehmer sie sehen
 - [ ] **Probelauf:** eigene Musterlösung hochladen und Bewertung prüfen, ohne die

@@ -1438,6 +1438,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/transfer/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TaskBundleDto"];
+                        "application/json": components["schemas"]["TaskBundleDto"];
+                        "text/json": components["schemas"]["TaskBundleDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/transfer/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ImportRequestDto"];
+                    "text/json": components["schemas"]["ImportRequestDto"];
+                    "application/*+json": components["schemas"]["ImportRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportReportDto"];
+                        "application/json": components["schemas"]["ImportReportDto"];
+                        "text/json": components["schemas"]["ImportReportDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/transfer/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ImportRequestDto"];
+                    "text/json": components["schemas"]["ImportRequestDto"];
+                    "application/*+json": components["schemas"]["ImportRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportReportDto"];
+                        "application/json": components["schemas"]["ImportReportDto"];
+                        "text/json": components["schemas"]["ImportReportDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1520,6 +1676,31 @@ export interface components {
         };
         /** Format: binary */
         IFormFile: string;
+        /** @enum {unknown} */
+        ImportMode: "Merge" | "Replace";
+        ImportReportDto: {
+            errors?: string[];
+            warnings?: string[];
+            /** Format: int32 */
+            categoriesCreated?: number | string;
+            /** Format: int32 */
+            categoriesUpdated?: number | string;
+            /** Format: int32 */
+            categoriesDeleted?: number | string;
+            /** Format: int32 */
+            tasksCreated?: number | string;
+            /** Format: int32 */
+            tasksUpdated?: number | string;
+            /** Format: int32 */
+            tasksDeleted?: number | string;
+            /** Format: int32 */
+            submissionsDeleted?: number | string;
+            isValid?: boolean;
+        };
+        ImportRequestDto: {
+            bundle: components["schemas"]["TaskBundleDto"];
+            mode?: components["schemas"]["ImportMode"];
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1582,6 +1763,62 @@ export interface components {
             /** Format: date-time */
             submittedAt?: string;
             errorMessage?: string;
+        };
+        TaskBundleCategoryDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: int32 */
+            order?: number | string;
+            isVisible?: boolean;
+            iconName?: string;
+            tasks?: components["schemas"]["TaskBundleTaskDto"][];
+        };
+        TaskBundleDto: {
+            /** Format: int32 */
+            formatVersion?: number | string;
+            /** Format: date-time */
+            exportedAt?: string;
+            categories?: components["schemas"]["TaskBundleCategoryDto"][];
+        };
+        TaskBundleExpectedTypeDto: {
+            name?: string;
+            methods?: string[];
+        };
+        TaskBundleTaskDto: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            description?: string;
+            difficulty?: components["schemas"]["Difficulty"];
+            /** Format: int32 */
+            order?: number | string;
+            isVisible?: boolean;
+            evaluationMode?: components["schemas"]["EvaluationMode"];
+            hints?: string[];
+            expectedTypes?: components["schemas"]["TaskBundleExpectedTypeDto"][];
+            tests?: components["schemas"]["TaskBundleTestDto"][];
+            unitTestFiles?: components["schemas"]["TaskBundleUnitTestFileDto"][];
+            weights?: components["schemas"]["TaskBundleWeightDto"][];
+        };
+        TaskBundleTestDto: {
+            input?: string;
+            expectedOutput?: string;
+            description?: string;
+            /** Format: int32 */
+            order?: number | string;
+        };
+        TaskBundleUnitTestFileDto: {
+            fileName?: string;
+            content?: string;
+            /** Format: int32 */
+            order?: number | string;
+            isVisibleToParticipant?: boolean;
+        };
+        TaskBundleWeightDto: {
+            category?: components["schemas"]["EvaluationCategory"];
+            /** Format: double */
+            weight?: number | string;
         };
         TaskCategoryDto: {
             /** Format: uuid */

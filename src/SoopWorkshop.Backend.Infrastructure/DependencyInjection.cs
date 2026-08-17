@@ -9,6 +9,8 @@ using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Infrastructure.Evaluation;
 using SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers;
 using SoopWorkshop.Backend.Infrastructure.Processes;
+using SoopWorkshop.Backend.Application.Transfer.Interfaces;
+using SoopWorkshop.Backend.Infrastructure.Transfer;
 
 namespace SoopWorkshop.Backend.Infrastructure
 {
@@ -58,6 +60,11 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<IEvaluationChecker, JUnitChecker>();
 
             services.AddScoped<IJavaAnalyzer, JavaAnalyzer>();
+
+            // Liegt hier und nicht in Application: der Import braucht eine
+            // Transaktion ueber den DbContext, die Repositories committen
+            // einzeln.
+            services.AddScoped<ITaskTransferService, TaskTransferService>();
 
             return services;
         }
