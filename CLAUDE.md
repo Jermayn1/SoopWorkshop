@@ -2,12 +2,12 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 Auth
-> und 5.1 Gerüst stehen, `api/admin/*` ist nicht mehr offen). Das Frontend heißt **Soop Judge**
+> Stand: 2026-08-17 — Phase 0 bis 4 abgeschlossen, Phase 5 in Arbeit (Etappen 5.0 Auth,
+> 5.1 Gerüst und 5.2 Kategorien/Aufgaben stehen). Das Frontend heißt **Soop Judge**
 > und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Als Nächstes kommt Etappe 5.2 (Kategorien und Aufgaben bearbeiten).
+> siehe §6.1. Als Nächstes kommt Etappe 5.3 (JUnit-Editor, Upload, Vorlagen).
 
 ---
 
@@ -242,11 +242,15 @@ src/api/         schema.d.ts (erzeugt) · types.ts · mappers.ts · client.ts ·
 src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark
 src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
-src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation
-  api/           session · catalog
+src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
+                 saveState · weights
+  api/           session · catalog · tasks
   components/    AdminLayout · AdminSidebar · Field · TextInput · TextArea ·
-                 NumberInput · Select · Checkbox · formStyles
-  pages/         LoginPage · OverviewPage · TaskEditorPage
+                 NumberInput · Select · Checkbox · formStyles · SaveBar ·
+                 ConfirmDialog · OrderButtons · StringListEditor ·
+                 TestCaseEditor · WeightEditor
+  pages/         LoginPage · OverviewPage · CategoriesPage · NewTaskPage ·
+                 TaskEditorPage
 ```
 
 **Warum zwischen `schema.d.ts` und der Oberfläche noch `mappers.ts` steht:** .NET gibt
@@ -928,10 +932,16 @@ Querschnitt:
       `@tailwindcss/typography` nachinstalliert — die `prose`-Klassen in `TaskPage`
       waren seit Phase 4 wirkungslos. Die Enum-Beschriftungen liegen jetzt in
       `api/labels.ts`, weil Teilnehmersicht und Verwaltung dieselben Wörter brauchen
+- [x] **Etappe 5.2 — Kategorien und Aufgaben bearbeiten.** Sechs Backend-Lücken
+      geschlossen (Fremdschlüssel-Prüfungen statt 500, `TaskCategoryId` auf
+      `UpdateTaskItemDto`, `CategoryWeights` im Include, `Description` auf die
+      wahren 500 Zeichen, Whitelist auf die drei aktiven Kategorien) plus
+      **Blockspeicherung für Konsolen-Testfälle** (`PUT .../tests`). Im Frontend
+      Kategorienverwaltung, Aufgaben-Editor und das Anlegen. 244 Tests
 - [x] Eigener Admin-Bereich unter `/admin` mit eigener Navigation — erledigt in 5.1
-- [ ] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten
-- [ ] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode`
-- [ ] Konsolen-Testfälle: CRUD pro Aufgabe
+- [x] Kategorien: Liste, Anlegen, Bearbeiten, Löschen, Sichtbarkeit umschalten — 5.2
+- [x] Aufgaben: CRUD inkl. Hints, Schwierigkeitsgrad und `EvaluationMode` — 5.2
+- [x] Konsolen-Testfälle: CRUD pro Aufgabe — 5.2, als Blockspeicherung
 - [ ] **JUnit-Dateien: CRUD pro Aufgabe mit Code-Editor** (monospace + Zeilennummern;
       Monaco als spätere Ausbaustufe)
 - [ ] **Vorlagen-Bibliothek** für häufige Testmuster: Konsolenausgabe prüfen,
@@ -1189,7 +1199,39 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   wurden die Rahmenzeichen `──` zu `â”€â”€`. Dieselbe Falle wie bei den Seed-Skripten,
   nur andersherum: gelesen wurde UTF-8 ohne BOM als ANSI, geschrieben dann als UTF-8.
   **Lehre:** vor dem Ändern einer Textdatei per PowerShell eine byte-genaue Kopie
-  anlegen (`Copy-Item`), nicht auf das Zurückschreiben vertrauen
+  anlegen (`Copy-Item`), nicht auf das Zurückschreiben vertrauen. Umkehrbar ist der
+  Schaden über „als UTF-8 lesen, als Windows-1252 kodieren, als UTF-8 dekodieren"
+- 2026-08-17 — `Application/Tasks/Services/TaskItemService.cs` — **jedes** Ändern einer
+  Aufgabe mit Tipps oder erwarteten Methoden endete in einem 500er. `UpdateAsync`
+  leert die Sammlungen und füllt sie mit neuen Entitäten, denen es `Guid.NewGuid()`
+  mitgibt. Die Aufgabe ist zu diesem Zeitpunkt aber **bereits von EF verfolgt**, und
+  an einem gesetzten Schlüssel erkennt die Änderungsverfolgung eine *bestehende*
+  Zeile: sie schickt ein `UPDATE` auf etwas, das es nicht gibt, zählt null betroffene
+  Zeilen und wirft `DbUpdateConcurrencyException`. Behoben, indem neue Kinder **ohne
+  Id** in die Sammlung wandern. Nie aufgefallen, weil die Seed-Skripte nur anlegen —
+  der Aufgaben-Editor aus 5.2 war der erste Aufrufer von `PUT api/admin/tasks/{id}`.
+  **Lehre:** beim Anlegen ist ein eigener Guid harmlos, beim Ändern an einem
+  verfolgten Graphen ist er eine Falschaussage über die Datenlage
+- 2026-08-17 — `Infrastructure/.../TaskItemRepository.cs` — `UpdateAsync` rief
+  `Update(item)` auf einer Entität, die aus `GetByIdAsync` kommt und damit schon
+  verfolgt ist. Das markiert den **ganzen geladenen Graphen** als geändert und
+  schreibt bei jedem Speichern auch jeden Testfall, jede JUnit-Datei und jedes
+  Gewicht neu. Jetzt nur noch bei tatsächlich losgelöster Entität
+- 2026-08-17 — `Frontend/src/admin/components/ConfirmDialog.tsx` — zwei Fallen beim
+  nativen `<dialog>`. Erstens: **React verdrahtet `onCancel` nicht.** Das Ereignis
+  blubbert nicht, und Reacts Delegation am Wurzelknoten sieht es deshalb nie — der
+  Dialog blieb bei Escape offen, obwohl der Handler plausibel aussah. Zweitens:
+  Chrome behandelt Escape für `<dialog>` über den CloseWatcher, und der springt bei
+  synthetischen Eingaben nicht an — die Taste kam als `isTrusted: true` an, ein
+  `cancel` folgte trotzdem nicht. Behoben mit einem eigenen Listener für **beide**
+  Wege. **Lehre:** dieselbe wie in §6.1 — die Messung braucht so viel Misstrauen wie
+  der Code, und was sich nicht messen lässt, wird abgesichert statt geglaubt
+- 2026-08-17 — `Frontend/src/admin/pages/NewTaskPage.tsx` — die Vorauswahl der
+  Kategorie stand im Anfangswert von `useState`. Der läuft nur beim ersten Rendern,
+  und da lädt das Layout die Kategorien noch: die Auswahl blieb leer, das Anlegen
+  scheiterte an der eigenen Prüfung — während im Auswahlfeld sichtbar eine Kategorie
+  stand. **Lehre:** ein Anfangswert aus geladenen Daten ist keine Vorauswahl, sondern
+  eine Wette auf die Ladereihenfolge
 
 ---
 

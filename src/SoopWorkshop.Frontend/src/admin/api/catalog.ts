@@ -1,13 +1,13 @@
 import type { components } from '../../api/schema'
 import { jsonRequest, request, type ApiResult } from '../../api/client'
-import { toCategory, toTask } from '../../api/mappers'
-import type { Category, Task } from '../../api/types'
+import { toCategory } from '../../api/mappers'
+import type { Category } from '../../api/types'
 
 type Schemas = components['schemas']
 
 // Gleicher Helfer wie in api/endpoints.ts: hebt eine Umsetzung in ApiResult
 // hinein, ohne die Fehlerfaelle anzufassen. Die bleiben unterscheidbar.
-function map<A, B>(result: ApiResult<A>, project: (value: A) => B): ApiResult<B> {
+export function mapResult<A, B>(result: ApiResult<A>, project: (value: A) => B): ApiResult<B> {
   return result.kind === 'ok' ? { kind: 'ok', value: project(result.value) } : result
 }
 
@@ -21,12 +21,50 @@ function map<A, B>(result: ApiResult<A>, project: (value: A) => B): ApiResult<B>
 // den Rest ueber die eigenen Endpunkte.
 export async function fetchAdminCategories(signal?: AbortSignal): Promise<ApiResult<Category[]>> {
   const result = await request<Schemas['TaskCategoryDto'][]>('/api/admin/categories', { signal })
-  return map(result, (dtos) => dtos.map(toCategory).sort((a, b) => a.order - b.order))
+  return mapResult(result, (dtos) => dtos.map(toCategory).sort((a, b) => a.order - b.order))
 }
 
-export async function fetchAdminTask(id: string, signal?: AbortSignal): Promise<ApiResult<Task>> {
-  const result = await request<Schemas['TaskItemDto']>(`/api/admin/tasks/${id}`, { signal })
-  return map(result, toTask)
+export async function createCategory(
+  name: string,
+  order: number,
+  signal?: AbortSignal,
+): Promise<ApiResult<Category>> {
+  // Kein IsVisible im Anlege-DTO: der Service setzt neue Kategorien hart auf
+  // verborgen. Freigeschaltet wird bewusst in einem zweiten Schritt.
+  const body: Schemas['CreateTaskCategoryDto'] = { name, order }
+  const result = await jsonRequest<Schemas['TaskCategoryDto']>(
+    '/api/admin/categories',
+    'POST',
+    body,
+    signal,
+  )
+  return mapResult(result, toCategory)
+}
+
+export async function updateCategory(
+  category: Pick<Category, 'id' | 'name' | 'order' | 'isVisible'>,
+  signal?: AbortSignal,
+): Promise<ApiResult<Category>> {
+  const body: Schemas['UpdateTaskCategoryDto'] = {
+    id: category.id,
+    name: category.name,
+    order: category.order,
+    isVisible: category.isVisible,
+  }
+  const result = await jsonRequest<Schemas['TaskCategoryDto']>(
+    `/api/admin/categories/${category.id}`,
+    'PUT',
+    body,
+    signal,
+  )
+  return mapResult(result, toCategory)
+}
+
+// Achtung: loescht per Cascade die gesamte Kategorie samt Aufgaben, Testfaellen,
+// JUnit-Dateien, Gewichten UND allen Abgaben darunter. Der Aufrufer muss das
+// vorher sagen.
+export function deleteCategory(id: string, signal?: AbortSignal): Promise<ApiResult<void>> {
+  return jsonRequest<void>(`/api/admin/categories/${id}`, 'DELETE', undefined, signal)
 }
 
 // Umschalten statt Setzen: der Endpunkt kennt nur PATCH ohne Rumpf und
@@ -39,18 +77,6 @@ export function toggleCategoryVisibility(
 ): Promise<ApiResult<Schemas['VisibilityStateDto']>> {
   return jsonRequest<Schemas['VisibilityStateDto']>(
     `/api/admin/categories/${id}/visibility`,
-    'PATCH',
-    undefined,
-    signal,
-  )
-}
-
-export function toggleTaskVisibility(
-  id: string,
-  signal?: AbortSignal,
-): Promise<ApiResult<Schemas['VisibilityStateDto']>> {
-  return jsonRequest<Schemas['VisibilityStateDto']>(
-    `/api/admin/tasks/${id}/visibility`,
     'PATCH',
     undefined,
     signal,

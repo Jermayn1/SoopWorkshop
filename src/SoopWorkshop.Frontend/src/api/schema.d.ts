@@ -1022,7 +1022,47 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SaveTaskTestsDto"];
+                    "text/json": components["schemas"]["SaveTaskTestsDto"];
+                    "application/*+json": components["schemas"]["SaveTaskTestsDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TaskTestDto"][];
+                        "application/json": components["schemas"]["TaskTestDto"][];
+                        "text/json": components["schemas"]["TaskTestDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
         post: {
             parameters: {
                 query?: never;
@@ -1494,6 +1534,18 @@ export interface components {
             taskItemId: string;
             weights?: components["schemas"]["SaveTaskCategoryWeightEntryDto"][];
         };
+        SaveTaskTestEntryDto: {
+            input?: string;
+            expectedOutput: string;
+            description: string;
+            /** Format: int32 */
+            order?: number | string;
+        };
+        SaveTaskTestsDto: {
+            /** Format: uuid */
+            taskItemId: string;
+            tests?: components["schemas"]["SaveTaskTestEntryDto"][];
+        };
         SaveTaskUnitTestFileEntryDto: {
             fileName: string;
             content: string;
@@ -1615,6 +1667,8 @@ export interface components {
         UpdateTaskItemDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            taskCategoryId: string;
             title: string;
             description: string;
             difficulty?: components["schemas"]["Difficulty"];

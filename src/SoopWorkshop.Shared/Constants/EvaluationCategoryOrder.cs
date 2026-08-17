@@ -15,6 +15,18 @@ namespace SoopWorkshop.Shared.Constants
             EvaluationCategory.Functionality
         ];
 
+        // Dieselbe Liste, aber als Aussage darueber, welche Kategorien ueberhaupt
+        // noch vergeben werden. Die uebrigen Enum-Werte sind Altlast (§5.6) und
+        // stehen nur noch da, weil sie als int in der Datenbank liegen.
+        //
+        // Wer aufgabenspezifische Gewichte setzt, darf nur diese treffen: ein
+        // Gewicht auf TestCases wuerde nie gelesen und waere damit stille
+        // Konfiguration, die nichts tut.
+        public static IReadOnlyList<EvaluationCategory> Active => DisplayOrder;
+
+        public static bool IsActive(EvaluationCategory category) =>
+            Array.IndexOf(DisplayOrder, category) >= 0;
+
         // Kategorien, die nicht mehr vergeben werden (Zeichensatz, Namenskonventionen,
         // Testfaelle und Unit-Tests aus frueheren Auswertungen), landen hinten statt
         // zu verschwinden.

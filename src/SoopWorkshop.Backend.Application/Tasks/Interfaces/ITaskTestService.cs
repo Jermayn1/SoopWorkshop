@@ -10,5 +10,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Interfaces
         Task<Result<TaskTestDto>> CreateAsync(CreateTaskTestDto dto);
         Task<Result<TaskTestDto>> UpdateAsync(UpdateTaskTestDto dto);
         Task<Result<bool>> DeleteAsync(Guid id);
+
+        // Ersetzt alle Testfaelle einer Aufgabe in einem Aufruf.
+        Task<Result<List<TaskTestDto>>> SaveAllAsync(SaveTaskTestsDto dto);
     }
 }

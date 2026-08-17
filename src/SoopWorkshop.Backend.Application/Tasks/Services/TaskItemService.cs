@@ -11,9 +11,11 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 {
     public class TaskItemService(
         ITaskItemRepository repository,
+        ITaskCategoryRepository categoryRepository,
         ILogger<TaskItemService> logger) : ITaskItemService
     {
         private readonly ITaskItemRepository _repository = repository;
+        private readonly ITaskCategoryRepository _categoryRepository = categoryRepository;
         private readonly ILogger<TaskItemService> _logger = logger;
 
         public async Task<Result<List<TaskItemDto>>> GetAllAsync()
@@ -34,6 +36,13 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         public async Task<Result<TaskItemDto>> CreateAsync(CreateTaskItemDto dto)
         {
+            // Ohne diese Pruefung schlaegt erst die Fremdschluesselbedingung zu.
+            // Daraus wird eine DbUpdateException, aus der die Middleware ein
+            // "Ein unerwarteter Fehler ist aufgetreten." mit Status 500 macht -
+            // eine Auskunft, die nicht sagt, was falsch war.
+            if (!await _categoryRepository.ExistsAsync(dto.TaskCategoryId, CancellationToken.None))
+                return Result<TaskItemDto>.Fail("Die angegebene Kategorie gibt es nicht.");
+
             var item = new TaskItem
             {
                 Id = Guid.NewGuid(),
@@ -67,6 +76,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (item is null)
                 return Result<TaskItemDto>.Fail("Aufgabe nicht gefunden.");
 
+            if (!await _categoryRepository.ExistsAsync(dto.TaskCategoryId, CancellationToken.None))
+                return Result<TaskItemDto>.Fail("Die angegebene Kategorie gibt es nicht.");
+
+            item.TaskCategoryId = dto.TaskCategoryId;
             item.Title = dto.Title;
             item.Description = dto.Description;
             item.Difficulty = dto.Difficulty;
@@ -88,7 +101,11 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             {
                 item.Hints.Add(new TaskHint
                 {
-                    Id = Guid.NewGuid(),
+                    // Bewusst OHNE Id: die Aufgabe ist hier bereits verfolgt, und
+                    // an einem gesetzten Schluessel erkennt die Aenderungsverfolgung
+                    // eine BESTEHENDE Zeile. Sie schickt dann ein UPDATE auf eine
+                    // Zeile, die es nicht gibt, und wirft DbUpdateConcurrency-
+                    // Exception. Ohne Id gilt der Eintrag als neu und wird eingefuegt.
                     TaskItemId = item.Id,
                     Content = content,
                     Order = index + 1
@@ -141,12 +158,15 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         // Der geprüfte Name wird aus der Signatur abgeleitet, damit der Admin nur
         // einmal aufschreiben muss, was ohnehin in der Aufgabenstellung steht.
+        //
+        // Ohne Id, aus demselben Grund wie bei den Tipps oben: beim Aendern ist
+        // die Aufgabe verfolgt, und ein gesetzter Schluessel laesst den neuen
+        // Eintrag wie eine bestehende Zeile aussehen.
         private static List<TaskExpectedMethod> BuildExpectedMethods(List<string> signatures) =>
             [.. signatures
                 .Where(signature => !string.IsNullOrWhiteSpace(signature))
                 .Select((signature, index) => new TaskExpectedMethod
                 {
-                    Id = Guid.NewGuid(),
                     Signature = signature.Trim(),
                     Name = JavaSignature.ExtractMethodName(signature),
                     Order = index + 1

@@ -11,11 +11,16 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
     public class TaskTestService : ITaskTestService
     {
         private readonly ITaskTestRepository _repository;
+        private readonly ITaskItemRepository _taskItemRepository;
         private readonly ILogger<TaskTestService> _logger;
 
-        public TaskTestService(ITaskTestRepository repository, ILogger<TaskTestService> logger)
+        public TaskTestService(
+            ITaskTestRepository repository,
+            ITaskItemRepository taskItemRepository,
+            ILogger<TaskTestService> logger)
         {
             _repository = repository;
+            _taskItemRepository = taskItemRepository;
             _logger = logger;
         }
 
@@ -27,6 +32,11 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         public async Task<Result<TaskTestDto>> CreateAsync(CreateTaskTestDto dto)
         {
+            // Sonst kommt die Fremdschluesselbedingung als 500 zurueck statt als
+            // Satz, der die Ursache nennt.
+            if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
+                return Result<TaskTestDto>.Fail("Die angegebene Aufgabe gibt es nicht.");
+
             var test = new TaskTest
             {
                 Id = Guid.NewGuid(),
@@ -74,6 +84,46 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             _logger.LogInformation("Testfall {TaskTestId} geloescht.", id);
 
             return Result<bool>.Ok(true);
+        }
+
+        // Ersetzt alle Testfaelle einer Aufgabe. Gegenstueck zu
+        // TaskUnitTestFileService.SaveAllAsync und nach demselben Muster gebaut.
+        public async Task<Result<List<TaskTestDto>>> SaveAllAsync(SaveTaskTestsDto dto)
+        {
+            if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
+                return Result<List<TaskTestDto>>.Fail("Die angegebene Aufgabe gibt es nicht.");
+
+            // Die Reihenfolge bestimmt, in welcher Folge der Teilnehmer die
+            // Teilpruefungen liest. Zwei Testfaelle auf derselben Position machen
+            // die Anzeige von der Datenbank abhaengig, statt von der Vorgabe.
+            var duplicate = dto.Tests
+                .GroupBy(test => test.Order)
+                .FirstOrDefault(group => group.Count() > 1);
+
+            if (duplicate is not null)
+                return Result<List<TaskTestDto>>.Fail(
+                    $"Mehrere Testfaelle haben die Reihenfolge {duplicate.Key}.");
+
+            var tests = dto.Tests
+                .Select(entry => new TaskTest
+                {
+                    Id = Guid.NewGuid(),
+                    TaskItemId = dto.TaskItemId,
+                    Input = entry.Input,
+                    ExpectedOutput = entry.ExpectedOutput,
+                    Description = entry.Description,
+                    Order = entry.Order
+                })
+                .OrderBy(test => test.Order)
+                .ToList();
+
+            await _repository.ReplaceForTaskItemAsync(dto.TaskItemId, tests);
+
+            _logger.LogInformation(
+                "Testfaelle von Aufgabe {TaskItemId} ersetzt: {Count} Stueck.",
+                dto.TaskItemId, tests.Count);
+
+            return Result<List<TaskTestDto>>.Ok(tests.Select(MapToDto).ToList());
         }
 
         private static TaskTestDto MapToDto(TaskTest test) => new()

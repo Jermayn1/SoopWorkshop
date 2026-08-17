@@ -45,6 +45,26 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
                 : BadRequest(result.ErrorMessage);
         }
 
+        // Setzt alle Testfaelle der Aufgabe auf einmal. Was nicht im Body steht,
+        // wird geloescht - gedacht fuer einen Editor, der die Testfaelle einer
+        // Aufgabe als Block bearbeitet und zusammen speichert.
+        [HttpPut]
+        [ProducesResponseType<List<TaskTestDto>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<TaskTestDto>>> SaveAll(
+            Guid taskItemId,
+            [FromBody] SaveTaskTestsDto dto)
+        {
+            if (taskItemId != dto.TaskItemId)
+                return BadRequest("Die TaskItemId in der URL stimmt nicht mit der ID im Body überein.");
+
+            var result = await _taskTestService.SaveAllAsync(dto);
+
+            return result.IsSuccess
+                ? Ok(result.Value)
+                : BadRequest(result.ErrorMessage);
+        }
+
         [HttpPut("{id:guid}")]
         [ProducesResponseType<TaskTestDto>(StatusCodes.Status200OK)]
         [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]

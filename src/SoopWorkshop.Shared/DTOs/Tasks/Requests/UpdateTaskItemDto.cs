@@ -7,7 +7,13 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
     {
         [Required]
         public Guid Id { get; set; }
-        
+
+        // Erlaubt das Umhaengen in eine andere Kategorie. Fehlte bis Phase 5.2,
+        // damit war eine falsch einsortierte Aufgabe ueber die API nicht mehr zu
+        // verschieben - nur ueber Loeschen und Neuanlegen.
+        [Required]
+        public Guid TaskCategoryId { get; set; }
+
         [Required(ErrorMessage = "Der Titel ist erforderlich.")]
         [MaxLength(200, ErrorMessage = "Der Titel darf maximal 200 Zeichen lang sein.")]
         public string Title { get; set; } = string.Empty;

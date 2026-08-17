@@ -28,6 +28,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .Include(t => t.Tests)
                 .Include(t => t.UnitTestFiles)
                 .Include(t => t.ExpectedMethods)
+                // CategoryWeights fehlte hier. Was nicht mitgeladen wird, sieht
+                // die Auswertung als "nicht vorhanden" und bewertet entsprechend -
+                // die stillste denkbare Fehlerquelle.
+                .Include(t => t.CategoryWeights)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -44,7 +48,17 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(TaskItem item)
         {
-            _context.TaskItems.Update(item);
+            // Kommt die Aufgabe aus GetByIdAsync, ist sie schon verfolgt - dann
+            // erledigt die Aenderungsverfolgung alles, auch das Anlegen neuer und
+            // das Loeschen entfernter Kindzeilen.
+            //
+            // Update() waere dann nicht falsch, aber verschwenderisch: es markiert
+            // den GANZEN geladenen Graphen als geaendert und schreibt bei jedem
+            // Speichern auch jeden Testfall, jede JUnit-Datei und jedes Gewicht
+            // neu, obwohl sich davon nichts angefasst wurde.
+            if (_context.Entry(item).State == EntityState.Detached)
+                _context.TaskItems.Update(item);
+
             await _context.SaveChangesAsync();
         }
 

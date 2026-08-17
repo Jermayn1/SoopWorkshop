@@ -13,13 +13,16 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
         private const string JavaExtension = ".java";
 
         private readonly ITaskUnitTestFileRepository _repository;
+        private readonly ITaskItemRepository _taskItemRepository;
         private readonly ILogger<TaskUnitTestFileService> _logger;
 
         public TaskUnitTestFileService(
             ITaskUnitTestFileRepository repository,
+            ITaskItemRepository taskItemRepository,
             ILogger<TaskUnitTestFileService> logger)
         {
             _repository = repository;
+            _taskItemRepository = taskItemRepository;
             _logger = logger;
         }
 
@@ -34,6 +37,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             var error = ValidateFileName(dto.FileName);
             if (error is not null)
                 return Result<TaskUnitTestFileDto>.Fail(error);
+
+            // Sonst kommt die Fremdschluesselbedingung als 500 zurueck.
+            if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
+                return Result<TaskUnitTestFileDto>.Fail("Die angegebene Aufgabe gibt es nicht.");
 
             var file = new TaskUnitTestFile
             {
@@ -97,6 +104,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 if (error is not null)
                     return Result<List<TaskUnitTestFileDto>>.Fail(error);
             }
+
+            if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
+                return Result<List<TaskUnitTestFileDto>>.Fail("Die angegebene Aufgabe gibt es nicht.");
 
             var duplicate = dto.Files
                 .GroupBy(file => file.FileName, StringComparer.OrdinalIgnoreCase)

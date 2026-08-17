@@ -7,6 +7,8 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { AdminLayout } from './admin/components/AdminLayout'
 import { OverviewPage } from './admin/pages/OverviewPage'
+import { CategoriesPage } from './admin/pages/CategoriesPage'
+import { NewTaskPage } from './admin/pages/NewTaskPage'
 import { TaskEditorPage } from './admin/pages/TaskEditorPage'
 
 export default function App() {
@@ -29,6 +31,9 @@ export default function App() {
       <Route path="/admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<OverviewPage />} />
+          <Route path="kategorien" element={<CategoriesPage />} />
+          {/* "neu" steht vor ":taskId" — sonst schluckt der Parameter das Wort. */}
+          <Route path="aufgaben/neu" element={<NewTaskPage />} />
           <Route path="aufgaben/:taskId" element={<TaskEditorPage />} />
         </Route>
       </Route>

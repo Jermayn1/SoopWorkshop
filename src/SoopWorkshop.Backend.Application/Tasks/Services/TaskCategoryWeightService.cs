@@ -3,6 +3,7 @@ using SoopWorkshop.Backend.Application.Common;
 using SoopWorkshop.Backend.Application.Repositories;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Backend.Domain.Entities;
+using SoopWorkshop.Shared.Constants;
 using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
@@ -11,13 +12,16 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
     public class TaskCategoryWeightService : ITaskCategoryWeightService
     {
         private readonly ITaskCategoryWeightRepository _repository;
+        private readonly ITaskItemRepository _taskItemRepository;
         private readonly ILogger<TaskCategoryWeightService> _logger;
 
         public TaskCategoryWeightService(
             ITaskCategoryWeightRepository repository,
+            ITaskItemRepository taskItemRepository,
             ILogger<TaskCategoryWeightService> logger)
         {
             _repository = repository;
+            _taskItemRepository = taskItemRepository;
             _logger = logger;
         }
 
@@ -29,6 +33,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         public async Task<Result<List<TaskCategoryWeightDto>>> SaveAllAsync(SaveTaskCategoryWeightsDto dto)
         {
+            if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
+                return Result<List<TaskCategoryWeightDto>>.Fail("Die angegebene Aufgabe gibt es nicht.");
+
             var duplicate = dto.Weights
                 .GroupBy(weight => weight.Category)
                 .FirstOrDefault(group => group.Count() > 1);
@@ -36,6 +43,18 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (duplicate is not null)
                 return Result<List<TaskCategoryWeightDto>>.Fail(
                     $"Fuer die Kategorie {duplicate.Key} sind mehrere Gewichte angegeben.");
+
+            // Die abgeschafften Kategorien (Zeichensatz, Namenskonventionen,
+            // Testfaelle, Unit-Tests) nimmt der Scorer nie in die Hand. Ein Gewicht
+            // darauf waere Konfiguration, die aussieht als wuerde sie wirken, und
+            // nichts tut - deshalb hier abgelehnt statt still gespeichert.
+            var retired = dto.Weights.FirstOrDefault(
+                weight => !EvaluationCategoryOrder.IsActive(weight.Category));
+
+            if (retired is not null)
+                return Result<List<TaskCategoryWeightDto>>.Fail(
+                    $"Die Kategorie {retired.Category} wird nicht mehr bewertet. " +
+                    $"Moeglich sind: {string.Join(", ", EvaluationCategoryOrder.Active)}.");
 
             var invalid = dto.Weights.FirstOrDefault(weight => weight.Weight <= 0);
             if (invalid is not null)

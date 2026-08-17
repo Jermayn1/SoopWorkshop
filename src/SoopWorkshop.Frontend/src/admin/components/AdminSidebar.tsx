@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, EyeOff, LayoutList, RefreshCw } from 'lucide-react'
+import { ChevronDown, EyeOff, FolderTree, LayoutList, RefreshCw } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { BrandMark } from '../../components/BrandMark'
 import type { Category } from '../../api/types'
@@ -51,6 +51,13 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
           <span className="flex items-center gap-2">
             <LayoutList className="w-4 h-4" aria-hidden="true" />
             Übersicht
+          </span>
+        </NavLink>
+
+        <NavLink to="/admin/kategorien" className={linkClass}>
+          <span className="flex items-center gap-2">
+            <FolderTree className="w-4 h-4" aria-hidden="true" />
+            Kategorien
           </span>
         </NavLink>
 
