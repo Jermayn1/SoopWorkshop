@@ -4,13 +4,20 @@ Hilfsmittel für den Durchlauf vor einem Merge (Ablauf in `CLAUDE.md` §7).
 Kein Teil von `dotnet test` — hier liegt nur, was menschliche Augen oder ein
 laufendes System brauchen.
 
-## `abnahme-phase4.md`
+## `abnahme-phase6.md`
 
-Die Klickanleitung für die Abnahme von Phase 4. Zweigeteilt: was bereits
-automatisiert geprüft ist (und deshalb nicht nachgeklickt werden muss), und was
-menschliche Augen brauchen. Letzteres ist vor allem **Bewegung** — Animationen
-lassen sich aus einer nicht gezeichneten Browser-Ansicht heraus grundsätzlich
-nicht prüfen, siehe `CLAUDE.md` §6.1.
+Die Abnahme von Phase 6 (Testabdeckung). Sie ist kurz, weil diese Phase keine
+Funktionalität geändert hat — der Großteil dessen, was frühere Phasen von Hand
+nachklicken ließen, läuft jetzt automatisiert. Enthält die Zahlen, die
+gefahrene Gegenprobe und die vier Befunde.
+
+## `abnahme-phase5.md` und `abnahme-phase4.md`
+
+Die Klickanleitungen für die Abnahmen von Phase 5 und 4. Beide zweigeteilt: was
+bereits automatisiert geprüft ist (und deshalb nicht nachgeklickt werden muss),
+und was menschliche Augen brauchen. Letzteres ist vor allem **Bewegung** —
+Animationen lassen sich aus einer nicht gezeichneten Browser-Ansicht heraus
+grundsätzlich nicht prüfen, siehe `CLAUDE.md` §6.1.
 
 ## `pruefe-uploads.ps1`
 

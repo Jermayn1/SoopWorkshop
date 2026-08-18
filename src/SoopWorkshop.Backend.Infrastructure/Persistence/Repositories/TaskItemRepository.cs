@@ -53,10 +53,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
             // erledigt die Aenderungsverfolgung alles, auch das Anlegen neuer und
             // das Loeschen entfernter Kindzeilen.
             //
-            // Update() waere dann nicht falsch, aber verschwenderisch: es markiert
-            // den GANZEN geladenen Graphen als geaendert und schreibt bei jedem
-            // Speichern auch jeden Testfall, jede JUnit-Datei und jedes Gewicht
-            // neu, obwohl sich davon nichts angefasst wurde.
+            // Update() waere dann nicht falsch, aber verschwenderisch: es setzt
+            // die Aufgabenzeile auf Modified, und EF schreibt daraufhin alle ihre
+            // Spalten statt nur der geaenderten.
+            //
+            // Nur bei einer LOSGELOESTEN Aufgabe faerbt Update() den ganzen
+            // mitgegebenen Graphen und schreibt jede Kindzeile neu - da ist der
+            // Aufruf aber noetig, sonst geht das Speichern still ins Leere. Beide
+            // Faelle sind in TaskItemRepositoryTests nachgemessen.
             if (_context.Entry(item).State == EntityState.Detached)
                 _context.TaskItems.Update(item);
 

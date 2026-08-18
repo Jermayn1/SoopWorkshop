@@ -2,13 +2,17 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-17 — Phase 0 bis 5 abgeschlossen. Das Admin-Panel steht: Anmeldung,
-> Kategorien und Aufgaben, JUnit-Editor, Bestands-Transfer, Vorschau und Probelauf.
-> Als Nächstes kommt Phase 6 (Testabdeckung). Das Frontend heißt **Soop Judge**
-> und ist **React 19 + Vite + TypeScript + Tailwind 4** unter
+> Stand: 2026-08-18 — Phase 0 bis 6 abgeschlossen. Das Admin-Panel steht (Anmeldung,
+> Kategorien und Aufgaben, JUnit-Editor, Bestands-Transfer, Vorschau, Probelauf),
+> und die Testabdeckung ist ausgebaut: **386 Projekt-Tests** (davon 84 gegen ein
+> echtes PostgreSQL aus dem Container) und **145 Frontend-Tests**. Alle Prüfungen
+> laufen mit einem Befehl: `.\scripts\pruefe-alles.ps1`.
+> Als Nächstes kommt Phase 7 (Docker Compose, README, Abschluss) — dort auch
+> GitHub Actions. Das Frontend heißt **Soop Judge** und ist
+> **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Die Abnahme von Phase 5 steht in `tests/manual/abnahme-phase5.md`.
+> siehe §6.1. Die Abnahme von Phase 6 steht in `tests/manual/abnahme-phase6.md`.
 
 ---
 
@@ -79,6 +83,16 @@ Datenbank-Passwort an die `.env` angleichen (siehe unten):
 Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs lesbar bleiben.
 Fehlen die npm-Pakete, installiert das Skript sie einmalig selbst.
 
+Alle Prüfungen in einem Durchgang (Build, Projekt-Tests, Frontend-Build,
+Frontend-Tests, Linter) mit Zusammenfassung am Ende:
+
+```bash
+.\scripts\pruefe-alles.ps1
+```
+
+`-OhneDocker` lässt die Integrationstests aus, `-MitCoverage` schreibt Berichte
+nach `artifacts/coverage/`. Details in §7.
+
 Einzeln:
 
 ```bash
@@ -90,7 +104,18 @@ dotnet test SoopWorkshop.slnx
 ```
 
 ```bash
+npm --prefix src/SoopWorkshop.Frontend test
+```
+
+```bash
 npm --prefix src/SoopWorkshop.Frontend run dev
+```
+
+**Die Projekt-Tests brauchen Docker**, seit die Integrationstests gegen ein echtes
+PostgreSQL laufen (Testcontainers, §10.5). Ohne Docker geht der schnelle Lauf:
+
+```bash
+dotnet test SoopWorkshop.slnx --filter "Category!=Integration"
 ```
 
 | Dienst | HTTP | HTTPS |
@@ -609,21 +634,32 @@ Was unabhängig vom Geschmack gilt:
 
 Gilt für **jede** Phase. Phasenspezifische Schritte kommen jeweils dazu.
 
-1. `.\scripts\stop-dev.ps1`, dann `.\scripts\start-dev.ps1` — Build ohne Warnungen,
-   Backend und Frontend melden „bereit"
-2. `dotnet test SoopWorkshop.slnx` — grün
-3. `npm --prefix src/SoopWorkshop.Frontend run build` — durchläuft; darin steckt
-   `tsc -b`, die Typprüfung gegen den erzeugten API-Vertrag
-4. `http://localhost:5173` öffnen: Aufgabenliste erscheint, eine Aufgabe anklicken,
+**Die Schritte 1 bis 3 erledigt seit Phase 6 ein Befehl** — er baut, testet,
+baut das Frontend (darin `tsc -b`), lässt die Frontend-Tests laufen und prüft
+den Linter, und nennt am Ende jeden Schritt mit Ergebnis und Dauer:
+
+```bash
+.\scripts\pruefe-alles.ps1
+```
+
+Er bricht **nicht** beim ersten Fehler ab: wer fünf Prüfungen laufen lässt, will
+alle fünf Ergebnisse sehen. Läuft das Backend noch, sagt er das vorher, statt in
+`CS2012 … used by another process` zu laufen. `-OhneDocker` lässt die
+Integrationstests aus, `-MitCoverage` schreibt Berichte nach `artifacts/coverage/`.
+
+1. `.\scripts\stop-dev.ps1`, dann `.\scripts\pruefe-alles.ps1` — alles grün
+2. `.\scripts\start-dev.ps1` — Backend und Frontend melden „bereit"
+3. `http://localhost:5173` öffnen: Aufgabenliste erscheint, eine Aufgabe anklicken,
    `.java`-Datei abgeben, Ergebnis erscheint nach dem Pollen
-5. **Backend stoppen, Seite neu laden** — es muss „Der Server ist nicht erreichbar"
+4. **Backend stoppen, Seite neu laden** — es muss „Der Server ist nicht erreichbar"
    stehen, **nicht** „Diese Aufgabe gibt es nicht". Danach eine erfundene GUID
    aufrufen: dort muss „gibt es nicht" stehen
-6. Eine `.txt` und eine zu große Datei abgeben — die Ablehnung erscheint im Wortlaut
+5. Eine `.txt` und eine zu große Datei abgeben — die Ablehnung erscheint im Wortlaut
    des Servers, keine Datei verschwindet kommentarlos
-7. Solution zusätzlich in Visual Studio bzw. Rider öffnen und bauen — die
-   Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` nicht ab
-8. `git status` sauber, `.env` und `node_modules` tauchen **nicht** auf
+6. Solution zusätzlich in Visual Studio bzw. Rider öffnen und bauen — die
+   Kommandozeile deckt IDE-eigene Auflösung von `Directory.Build.props` und
+   `Directory.Packages.props` nicht ab
+7. `git status` sauber; `.env`, `node_modules` und `artifacts/` tauchen **nicht** auf
 
 **Testdaten:** Ist die Datenbank leer, gibt es nichts zu klicken. Beide Skripte laufen
 gegen die laufende API und sind unabhängig voneinander mehrfach ausführbar:
@@ -1035,28 +1071,81 @@ Abnahme-Anleitung: `tests/manual/abnahme-phase5.md`.*
       Auswertungshistorie. Sie braucht neue Endpunkte und hilft beim Pflegen der
       Aufgaben nicht — der Probelauf deckt den Bedarf des Betreuers ab
 
-### Phase 6 — Projekt-Testabdeckung ausbauen
+### Phase 6 — Projekt-Testabdeckung ✅
+*Abgeschlossen am 2026-08-18, Branch `phase-6-testabdeckung`, acht Etappen.
+386 Projekt-Tests (302 Unit, 84 Integration) und 145 Frontend-Tests, alle grün.
+Build warnungsfrei, Typprüfung und Linter sauber.
+Abnahme-Anleitung: `tests/manual/abnahme-phase6.md`.*
 
-- [ ] Aus Phase 1 verschoben: `Microsoft.AspNetCore.Mvc.Testing` ergänzen, Ordner
-      `Integration/` anlegen. `WebApplicationFactory` braucht in `Backend.API/Program.cs`
-      einen `public partial class Program`-Shim (Top-Level-Statements) und eine Antwort
-      auf §10.5
-- [ ] **Frontend-Tests: Vitest + Testing Library** (bUnit ist mit Blazor hinfällig).
-      Vorrangig die Stellen, die in Phase 4 auffällig waren: der Polling-Hook, die vier
-      API-Ausgänge, `checkFiles` gegen die Upload-Grenzen und die Darstellungsregeln
-      aus §5.7
-- [ ] Unit: alle Checker inkl. `JUnitChecker` (über `IProcessRunner` aus Phase 2)
-- [ ] Unit: `TaskCategoryService`, `TaskItemService`, `TaskTestService`,
-      `SubmissionService`, `EvaluationService` mit gemockten Repositories
-- [ ] Unit: Punkteberechnung mit Randfällen (0 Tests, alle bestanden, Restverteilung)
-- [ ] Unit: Mapping-Logik (Entity ↔ DTO)
-- [ ] Integration: Controller über `WebApplicationFactory`
-- [ ] Integration: Repositories gegen echte PostgreSQL (Testcontainers)
-- [ ] Component: Aufgabenliste, Aufgabenseite, Ergebnisseite, Admin-Formulare — Werkzeug
-      offen, siehe oben
-- [ ] GitHub Actions: Build + Test bei jedem Push (bei einem Frontend ausserhalb von .NET
-      zusätzlich dessen Toolchain)
-- [ ] Coverage-Report (coverlet ist bereits eingebunden)
+> **Diese Phase hat keine Funktionalität geändert.** Am bestehenden Produktivcode
+> steht genau eine neue Zeile — `public partial class Program;` als Anker für
+> `WebApplicationFactory` — plus ein korrigierter Kommentar. Alles andere ist neu.
+
+**Beim Antreten war mehr erledigt, als die Liste behauptete.** Bereits vor dieser
+Phase abgedeckt und hier nur nachgetragen: alle sechs Checker inklusive
+`JUnitChecker`, `TaskItemService`, `TaskTestService`, `SubmissionService`,
+`EvaluationService`, der `EvaluationScorer` mit Randfällen sowie
+`TaskBundleValidator` und `ImportPlanner`.
+
+- [x] **Etappe 6.0 — Die zwei echten Lücken in Application.** `TaskCategoryService`
+      und `TaskUnitTestFileService` mit gemockten Repositories. Das **Mapping**
+      wird über die öffentlichen Servicemethoden mit abgedeckt, statt die
+      `private static`-Methoden nur dem Test zuliebe herauszulösen
+- [x] **Etappe 6.1 — Integrationsfundament.** `Microsoft.AspNetCore.Mvc.Testing`,
+      `Testcontainers.PostgreSql` und `Respawn` zentral ergänzt, Ordner
+      `Integration/` mit `PostgresFixture`, `SoopWorkshopFactory` und
+      `IntegrationTestBase`. **Ein** Container je Testlauf, migriert über die
+      echten Migrationen, zwischen den Tests räumt Respawn auf. Alle
+      Integrationstests tragen `[Trait("Category", "Integration")]`
+- [x] **Etappe 6.2 — Repositories gegen echtes PostgreSQL.** Schwerpunkt auf den
+      `GetByIdAsync`-Includes („die stillste denkbare Fehlerquelle") und auf der
+      Kaskade bis hinunter zur Abgabe — die Zusicherung, auf der der
+      `Replace`-Import steht
+- [x] **Etappe 6.3 — `TaskTransferService`.** Bis dahin die größte ungetestete
+      Klasse (345 Zeilen) und die einzige mit einer Transaktion. Rundlauf,
+      idempotentes `Merge`, kaskadierendes `Replace`, Vorschau gleich Ausführung
+      und **Rollback**: bricht der Import nach dem Löschen ab, ist die Datenbank
+      unverändert. Genau dieser Test wäre gegen EF InMemory grün gewesen, ohne
+      irgendetwas zu belegen
+- [x] **Etappe 6.4 — Controller über HTTP, risikobasiert.** Nicht Endpunkt für
+      Endpunkt, sondern die Zusicherungen, die nur ein echter Aufruf zeigt:
+      401 statt 302, Anmelde-Cookie samt `HttpOnly`/`Secure`/`SameSite=None`,
+      Ablehnungen als `text/plain` **im Wortlaut**, Upload-Validierung,
+      Sichtbarkeits-Sperre, `ExceptionMiddleware` und der CORS-Preflight
+      inklusive Gegentest mit fremdem Ursprung
+- [x] **Etappe 6.5 — Frontend-Testfundament.** Vitest 4 (Vite 8 verlangt es),
+      jsdom, Testing Library. `globals: false` mit ausdrücklichen Importen —
+      damit braucht `tsconfig.app.json` keinen neuen `types`-Eintrag und `tsc -b`
+      prüft die Tests einfach mit. Dazu die reinen Funktionen: `checkFiles`,
+      die **fünf** API-Ausgänge, `mappers`, `validation`, `distributePoints`
+- [x] **Etappe 6.6 — Hook und Komponenten.** `useSubmissionPolling` mit Fake
+      Timers, die §5.7-Regeln in `CategoryCard`, Sortierung und Schwellen in
+      `ResultView`, `SubmissionForm` samt Ablehnungen im Wortlaut, und die
+      getrennten Texte für Warteschlange und laufende Prüfung in `ResultPage`
+- [x] **Etappe 6.7 — Sammelskript, Coverage, Abnahme.** `scripts/pruefe-alles.ps1`
+      führt alle fünf Prüfungen in einem Befehl aus und bricht **nicht** beim
+      ersten Fehler ab. Coverage über coverlet und ReportGenerator (als lokales
+      Werkzeug in `.config/dotnet-tools.json`) sowie `@vitest/coverage-v8`
+
+**Coverage wird gemessen, nicht erzwungen** (Entscheidung dieser Phase): Backend
+89 % Zeilen, Frontend 20 %. Die Frontend-Zahl ist ehrlich, nicht kaputt —
+`coverage.include` sorgt dafür, dass ungetestete Dateien mit 0 % in der Zahl
+stehen statt aus ihr zu verschwinden. Abgedeckt ist, was in Phase 4 und 5
+auffällig war; die Admin-Seiten sind es bewusst nicht.
+
+**Bewusst nicht umgesetzt:**
+
+- [ ] **GitHub Actions — auf Phase 7 verschoben.** Bei genau einem Betreuer
+      greift der Hauptnutzen von CI („bricht bei jemand anderem") kaum, und in
+      Phase 7 passt es zu den Dockerfiles. Das Sammelskript deckt den Alltag ab
+- [ ] **Keine Coverage-Schwelle.** Eine Prozentmarke fängt nichts von dem, was
+      dieses Projekt tatsächlich zu Fall gebracht hat (§9), erzeugt aber Arbeit
+      an trivialen DTOs
+- [ ] **Kein Playwright.** Der Durchlauf aus §7 bleibt der Ende-zu-Ende-Nachweis
+- [ ] **Komponententests für die Admin-Seiten.** Sie ändern sich noch und werden
+      vom Betreuer bedient, nicht von Teilnehmern
+- [ ] Aus Phase 5 weiterhin offen: **Submissions-Übersicht mit
+      Auswertungshistorie** — sie braucht neue Endpunkte und ist Feature-Arbeit
 
 ### Phase 7 — Docker Compose, README, Abschluss
 
@@ -1294,9 +1383,9 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   verfolgten Graphen ist er eine Falschaussage über die Datenlage
 - 2026-08-17 — `Infrastructure/.../TaskItemRepository.cs` — `UpdateAsync` rief
   `Update(item)` auf einer Entität, die aus `GetByIdAsync` kommt und damit schon
-  verfolgt ist. Das markiert den **ganzen geladenen Graphen** als geändert und
-  schreibt bei jedem Speichern auch jeden Testfall, jede JUnit-Datei und jedes
-  Gewicht neu. Jetzt nur noch bei tatsächlich losgelöster Entität
+  verfolgt ist. Jetzt nur noch bei tatsächlich losgelöster Entität.
+  **Die ursprüngliche Begründung dieses Eintrags war falsch — korrigiert in
+  Phase 6, siehe den Eintrag von 2026-08-18**
 - 2026-08-17 — `Frontend/src/admin/components/ConfirmDialog.tsx` — zwei Fallen beim
   nativen `<dialog>`. Erstens: **React verdrahtet `onCancel` nicht.** Das Ereignis
   blubbert nicht, und Reacts Delegation am Wurzelknoten sieht es deshalb nie — der
@@ -1334,6 +1423,84 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   stand. **Lehre:** ein Anfangswert aus geladenen Daten ist keine Vorauswahl, sondern
   eine Wette auf die Ladereihenfolge
 
+**Aus Phase 6:**
+
+- 2026-08-18 — `Infrastructure/.../TaskItemRepository.cs` — **der Eintrag vom
+  2026-08-17 hat den Schaden falsch beschrieben.** Er behauptet, `Update()` auf
+  einer verfolgten Entität markiere den ganzen geladenen Graphen und schreibe
+  jeden Testfall neu. Nachgemessen (Zustände der Änderungsverfolgung, danach die
+  `xmin`-Spalten der Zeilen): EFs Graph-Traversierung hält an bereits verfolgten
+  Knoten an, die Kinder bleiben `Unchanged`. Es wird genau **eine** Zeile
+  geschrieben, dafür mit allen Spalten statt nur den geänderten. Der beschriebene
+  Schaden tritt nur bei einer **losgelösten** Entität ein — und genau dort ist der
+  Aufruf nötig. Der Wächter bleibt also richtig, seine Begründung war es nicht;
+  Kommentar korrigiert, beide Fälle als Test festgehalten.
+  **Lehre:** eine plausible Erklärung für eine richtige Änderung ist trotzdem eine
+  Behauptung. Dieselbe Lehre wie beim `::deep`- und beim `prose`-Fund (§6.1) — nur
+  diesmal in der eigenen Dokumentation statt im Code
+- 2026-08-18 — `Frontend/src/api/uploadLimits.ts` gegen
+  `Backend.API/Validation/SubmissionUploadValidator.cs` — die beiden Seiten
+  vergleichen Dateinamen **unterschiedlich**: `checkFiles` bitgenau, der
+  Validator mit `OrdinalIgnoreCase`. `A.java` und `a.java` kommen im Browser ohne
+  Warnung durch und werden erst vom Server abgelehnt. Genau die Doppelpflege, vor
+  der der Kopfkommentar in `uploadLimits.ts` warnt. Beide Seiten sind als
+  Ist-Verhalten festgehalten; welche Schreibweise gelten soll, ist eine
+  Feature-Entscheidung — Phase 7
+- 2026-08-18 — `Backend.API/Controllers/Admin/AdminTasksController.cs` —
+  `ToggleVisibility` bildet **jeden** Fehlschlag auf `NotFound` ab, auch „die
+  Aufgabe hat keine JUnit-Datei". Die Aufgabe gibt es aber. Sichtbar wird das
+  heute nicht, weil `TaskEditorPage.onToggleVisibility` die Meldung unabhängig vom
+  Ausgang anzeigt — im Frontend käme sie allerdings als `notFound` an, und das ist
+  dieselbe Zusammenlegung, gegen die `ApiResult` gebaut wurde (§6). Sauber wäre
+  400. Als Ist-Verhalten festgehalten, weil eine Änderung des Statuscodes den
+  API-Vertrag betrifft — Phase 7
+- 2026-08-18 — `Application/Tasks/Services/TaskUnitTestFileService.cs` —
+  `SaveAllAsync` lehnt doppelte `Order`-Werte **nicht** ab, das Gegenstück
+  `TaskTestService.SaveAllAsync` dagegen schon. Bei gleichem Wert entscheidet die
+  Datenbank über die Anzeigereihenfolge — genau die Begründung, mit der es beim
+  Schwesterservice abgelehnt wird. Als Ist-Verhalten festgehalten
+- 2026-08-18 — `Frontend/src/admin/weights.ts` — **Verdacht geprüft, kein Befund.**
+  Die Restverteilung greift über `candidates[step % candidates.length]` zu, was
+  nach einer Doppelvergabe aussieht. Kann nicht eintreten: jeder Eintrag verliert
+  beim Abrunden weniger als 1, der Rest ist also stets kleiner als die Zahl der
+  Kandidaten. Das Backend rechnet in `EvaluationScorer.LargestRemainder`
+  identisch. Steht hier, damit niemand denselben Verdacht ein zweites Mal prüft
+- 2026-08-18 — `tests/.../Integration/` — `WebApplicationFactory` braucht vier
+  Vorkehrungen, die alle nicht offensichtlich sind und einzeln je einen halben
+  Nachmittag kosten: `UseEnvironment("Testing")`, sonst lädt `Program.cs` die
+  `.env` des Repositorys **als letzte Quelle** über die Testwerte;
+  `ConnectionStrings:DefaultConnection` und `Admin:Password` über `UseSetting`,
+  weil `AddInfrastructure` und `AddAdminAuthentication` sonst absichtlich werfen;
+  den `EvaluationWorker` entfernen, weil er beim Start verwaiste Abgaben auf
+  `Failed` setzt und damit Testdaten ändert; und die Basisadresse auf **https**,
+  weil das Anmelde-Cookie `Secure` ist und der `CookieContainer` von .NET es über
+  `http` nicht zurückschickt — dieselbe Falle wie bei `Invoke-WebRequest` in
+  Phase 5, nur eine Ebene tiefer
+- 2026-08-18 — Testcontainers — `Respawn` statt erneutem Migrieren zwischen den
+  Tests, und `__EFMigrationsHistory` muss dabei stehen bleiben: wird sie
+  mitgeleert, hält EF die Datenbank beim nächsten Zugriff für nicht migriert.
+  Migriert wird über die **echten** Migrationen statt über `EnsureCreated` — damit
+  prüft jeder Testlauf nebenbei, dass der Migrationsstand durchläuft. In Phase 5
+  musste eine Migration von Hand umgeschrieben werden; so etwas fällt sonst erst
+  im Betrieb auf
+- 2026-08-18 — `Frontend/src/components/SubmissionForm.test.tsx` — `user.upload`
+  aus Testing Library filtert die Dateien selbst gegen das `accept`-Attribut des
+  Eingabefelds. Eine `.txt` kommt damit gar nicht bei `checkFiles` an, und der
+  Test für die Ablehnung lief ins Leere, ohne etwas zu behaupten. Geprüft wird
+  jetzt über `fireEvent.drop` — und das ist kein Umweg, sondern der Weg, auf dem
+  eine falsche Datei real ankommt: beim Fallenlassen greift `accept` nicht
+- 2026-08-18 — `scripts/pruefe-alles.ps1` — dieselbe BOM-Falle wie bei den
+  Seed-Skripten, nur andersherum bemerkt: ohne BOM liest Windows PowerShell 5.1
+  die UTF-8-Datei als ANSI, und die Rahmenzeichen der Ausgabe kamen als `â”€`
+  heraus. Die Skripte unter `scripts/` hatten bisher keine BOM, weil sie ohne
+  Sonderzeichen auskamen. **Merken:** sobald ein PowerShell-Skript etwas mit
+  Umlauten oder Kästchenzeichen *ausgibt*, braucht die Datei eine BOM
+- 2026-08-18 — `Frontend/vite.config.ts` — `@vitest/coverage-v8` zählt ohne
+  `coverage.include` nur Dateien, die ein Test importiert hat. Die erste Messung
+  meldete 88 % und verschwieg dabei genau das, was fehlt; mit `include` sind es
+  ehrliche 20 %. **Lehre:** eine Coverage-Zahl ohne Angabe der Grundgesamtheit
+  ist keine Messung, sondern eine Selbstbestätigung
+
 ---
 
 ## 10. Offene Entscheidungen
@@ -1356,8 +1523,13 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
    Für einen workshop-internen Betrieb vertretbar. Echte Isolation pro Abgabe
    (eigener Container je Auswertung) wäre eine spätere Ausbaustufe.
    → Vorschlag: v1 mit Timeouts und Prozesslimits, Hinweis in der README.
-5. **Datenbank in Tests.** Testcontainers (realistisch, braucht Docker) oder
-   EF InMemory (schnell, weicht aber von PostgreSQL ab)?
+5. ~~**Datenbank in Tests.**~~ **Entschieden in Phase 6: Testcontainers.**
+   EF InMemory kennt weder Transaktionen noch Cascade-Delete noch
+   Fremdschlüsselbedingungen — also genau das, was der Bestands-Transfer aus
+   Etappe 5.4 trägt. Der Rollback-Test wäre dagegen grün gewesen, ohne
+   irgendetwas zu belegen. Kosten: **ein** Container je Testlauf, rund sechs
+   Sekunden; zwischen den Tests räumt Respawn in Millisekunden auf. Wer ohne
+   Docker arbeiten will, nimmt `--filter "Category!=Integration"`.
 6. ~~**Wie viele Themes?**~~ **Entschieden in Phase 4.1:** Light und Dark, kein OLED.
    Die Entscheidung gilt weiter — OLED unterschied sich nur in drei Grauwerten vom
    Dark-Theme und verdreifachte den Aufwand bei jeder Kontrastprüfung.
@@ -1397,5 +1569,9 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 
 14. **Übersichtsseite für Aufgaben.** Die Liste lebt derzeit nur in der Seitenleiste.
     Bei drei Kategorien reicht das; wächst der Bestand, braucht es eine eigene Seite.
-15. **Frontend-Tests.** Es gibt noch keine — Phase 6 nennt das Werkzeug nicht mehr,
-    seit bUnit hinfällig ist. Naheliegend wäre Vitest + Testing Library.
+15. ~~**Frontend-Tests.**~~ **Entschieden und umgesetzt in Phase 6:** Vitest 4
+    (Vite 8 verlangt diesen Major) + Testing Library + jsdom, Konfiguration im
+    `test`-Block von `vite.config.ts`. `globals: false` mit ausdrücklichen
+    Importen, damit `tsconfig.app.json` unangetastet bleibt und `tsc -b` die
+    Tests mitprüft. 145 Tests; abgedeckt ist, was in Phase 4 und 5 auffällig
+    war, die Admin-Seiten bewusst nicht.

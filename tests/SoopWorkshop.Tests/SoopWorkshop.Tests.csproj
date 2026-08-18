@@ -21,6 +21,16 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Integrationstests (Phase 6): echte Anwendung im Speicher gegen echtes
+       PostgreSQL im Container. Sie tragen alle [Trait("Category", "Integration")],
+       damit sich der Lauf per Filter "Category!=Integration" auch ohne Docker
+       durchfuehren laesst. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Respawn" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="Shouldly" />
     <Using Include="Xunit" />
