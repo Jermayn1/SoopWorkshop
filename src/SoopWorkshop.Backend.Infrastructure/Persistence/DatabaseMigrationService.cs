@@ -52,6 +52,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
             var versuche = Math.Max(1, _options.MigrationRetries);
             var pause = TimeSpan.FromSeconds(Math.Max(1, _options.MigrationRetryDelaySeconds));
 
+            // Die Schleife endet auf genau zwei Wegen: mit return nach einem
+            // erfolgreichen Lauf, oder mit der Ausnahme des LETZTEN Versuchs,
+            // die der Filter unten nicht mehr faengt. Hinter der Schleife steht
+            // deshalb bewusst nichts mehr - eine Zeile dort waere unerreichbar.
             for (var versuch = 1; versuch <= versuche; versuch++)
             {
                 try
@@ -59,6 +63,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
                     await MigrateAsync(cancellationToken);
                     return;
                 }
+                // Der Filter ist der Kern: beim letzten Versuch greift er nicht,
+                // die Ausnahme verlaesst StartAsync und bricht den Start ab.
+                // Ohne Schema beantwortet die API jede Anfrage mit einem 500er -
+                // ein weiterlaufender Server taeuschte Betriebsbereitschaft vor.
                 catch (Exception ex) when (versuch < versuche)
                 {
                     // Nicht still: der erste Versuch scheitert im Container-Verbund
@@ -75,10 +83,6 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
                     await Task.Delay(pause, cancellationToken);
                 }
             }
-
-            // Der letzte Versuch laeuft ausserhalb des catch-Filters und wirft
-            // damit weiter - mit der Originalausnahme als Ursache.
-            await MigrateAsync(cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

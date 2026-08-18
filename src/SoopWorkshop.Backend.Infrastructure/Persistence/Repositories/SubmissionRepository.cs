@@ -67,6 +67,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                     .ThenInclude(t => t.Category)
                 .Include(s => s.EvaluationResult)
                 .OrderByDescending(s => s.SubmittedAt)
+                // Zweites Kriterium, damit die Reihenfolge TOTAL ist. Ohne das
+                // entscheidet die Datenbank bei gleichem Zeitstempel, und zwar
+                // je Abfrage neu: dieselbe Zeile koennte auf Seite 1 und auf
+                // Seite 2 auftauchen, waehrend eine andere ganz ausfaellt.
+                // Ueber HTTP kollidieren die Zeitstempel praktisch nie, ein
+                // Seed-Skript legt seine Zeilen aber im selben Augenblick an.
+                .ThenByDescending(s => s.Id)
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync(cancellationToken);

@@ -1703,3 +1703,22 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
     Tests mitprüft. 145 Tests; abgedeckt ist, was in Phase 4 und 5 auffällig
     war, die Admin-Seiten bewusst nicht.
 
+- 2026-08-18 — `Frontend/docker-entrypoint.sh` — der Zweig „Zertifikat
+  gefunden" setzte die zuvor umgebogenen Pfade in `nginx.conf` **nicht**
+  zurück. Wer zuerst ohne Zertifikat startet und es später nachlegt — genau der
+  Weg, den `docs/server-aufsetzen.md` §11 vorschlägt —, bekam nach
+  `docker compose restart frontend` weiter das alte selbstsignierte aus `/tmp`
+  ausgeliefert, während das Log „Zertifikat gefunden" meldete. Ein `restart`
+  behält denselben Container samt Dateisystem. Behoben: die Pfade werden bei
+  **jedem** Start gesetzt, nicht nur im Notfallzweig; nachgemessen über
+  `openssl s_client`, welches Zertifikat wirklich ausgeliefert wird.
+  **Lehre:** wer eine Konfiguration zur Laufzeit umschreibt, muss beide
+  Richtungen schreiben — sonst ist der Zustand vom Startverlauf abhängig
+- 2026-08-18 — `Infrastructure/.../SubmissionRepository.cs` — `GetPageAsync`
+  sortierte nur nach `SubmittedAt`. Ohne eindeutiges zweites Kriterium
+  entscheidet PostgreSQL bei gleichem Zeitstempel je Abfrage neu: dieselbe
+  Zeile kann auf Seite 1 **und** Seite 2 stehen, während eine andere ausfällt.
+  Über HTTP kollidieren die Zeitstempel praktisch nie, ein Seed-Skript legt
+  seine Zeilen aber im selben Augenblick an — und genau deshalb zieht der
+  Sortier-Test seine Zeitpunkte künstlich auseinander. Er umging das Problem,
+  statt es zu zeigen. Behoben mit `ThenByDescending(s => s.Id)`

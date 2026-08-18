@@ -22,8 +22,24 @@ NOTFALL_VERZEICHNIS=/tmp/soop-zertifikat
 NOTFALL_ZERT=$NOTFALL_VERZEICHNIS/soop.pem
 NOTFALL_SCHLUESSEL=$NOTFALL_VERZEICHNIS/soop-key.pem
 
+# Die Pfade werden bei JEDEM Start neu gesetzt, nicht nur im Notfallzweig.
+#
+# Grund: ein "docker compose restart" behaelt denselben Container samt
+# Dateisystem. Wer zuerst ohne Zertifikat startet und es spaeter nachlegt -
+# genau der Weg, den docs/server-aufsetzen.md Abschnitt 11 vorschlaegt - haette
+# sonst eine nginx.conf, die weiter auf das alte selbstsignierte in /tmp zeigt.
+# Das Log meldete "Zertifikat gefunden", der Browser zeigte weiter eine Warnung,
+# und die Fehlersuche liefe in die falsche Richtung.
+setze_pfade() {
+    sed -i \
+        -e "s|ssl_certificate     .*|ssl_certificate     $1;|" \
+        -e "s|ssl_certificate_key .*|ssl_certificate_key $2;|" \
+        /etc/nginx/nginx.conf
+}
+
 if [ -f "$GEMOUNTET_ZERT" ] && [ -f "$GEMOUNTET_SCHLUESSEL" ]; then
     echo "Zertifikat gefunden: $GEMOUNTET_ZERT"
+    setze_pfade "$GEMOUNTET_ZERT" "$GEMOUNTET_SCHLUESSEL"
 else
     echo "============================================================"
     echo " ACHTUNG: kein Zertifikat unter /etc/nginx/certs gefunden."
@@ -49,13 +65,9 @@ else
         -subj "/CN=soop.workshop" \
         -addext "subjectAltName=DNS:soop.workshop,DNS:localhost,IP:127.0.0.1"
 
-    # nginx.conf zeigt fest auf /etc/nginx/certs. Fuer den Notfallpfad werden
-    # die beiden Zeilen umgebogen - die Konfiguration selbst bleibt damit
-    # lesbar und beschreibt den Normalfall.
-    sed -i \
-        -e "s|ssl_certificate     .*|ssl_certificate     $NOTFALL_ZERT;|" \
-        -e "s|ssl_certificate_key .*|ssl_certificate_key $NOTFALL_SCHLUESSEL;|" \
-        /etc/nginx/nginx.conf
+    # nginx.conf beschreibt den Normalfall (/etc/nginx/certs) und bleibt damit
+    # lesbar; fuer den Notfallpfad werden die beiden Zeilen umgebogen.
+    setze_pfade "$NOTFALL_ZERT" "$NOTFALL_SCHLUESSEL"
 fi
 
 exec "$@"
