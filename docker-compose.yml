@@ -1,11 +1,17 @@
-# Entwicklungsumgebung. Aktuell nur die Datenbank -
-# Backend und Frontend kommen in Phase 7 dazu.
+# Betriebsaufbau: Datenbank, Backend und Frontend auf einer Maschine.
 #
-#   docker compose up -d      startet die Datenbank
-#   docker compose down       stoppt sie (Daten bleiben im Volume)
-#   docker compose down -v    stoppt sie und loescht die Daten
+#   docker compose up -d --build   startet alles
+#   docker compose ps              zeigt den Zustand (healthy?)
+#   docker compose logs -f backend Protokoll des Backends
+#   docker compose down            stoppt alles (Daten bleiben im Volume)
+#   docker compose down -v         stoppt alles und LOESCHT die Daten
 #
 # Die Zugangsdaten stehen in .env (gitignoriert), Vorlage ist .env.example.
+# Schritt fuer Schritt: docs/server-aufsetzen.md
+#
+# In der ENTWICKLUNG laedt Compose zusaetzlich docker-compose.override.yml und
+# veroeffentlicht damit den Datenbank-Port. Auf dem Server liegt die Datei
+# nicht, dort bleibt die Datenbank im internen Netz.
 
 services:
   db:
@@ -16,21 +22,116 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-soopworkshop}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt - .env aus .env.example anlegen}
-    ports:
-      # Nur an IPv4-Loopback binden. Ohne die Adresse bindet Docker an alle
-      # Schnittstellen und legt zusaetzlich einen IPv6-Listener an. "localhost"
-      # loest unter Windows zuerst auf ::1 auf, wo der WSL-Relay horcht und die
-      # Verbindung nicht zum Container durchreicht - das aeussert sich als
-      # "28P01 password authentication failed" und kostet viel Suchzeit.
-      # Nebeneffekt: die Datenbank ist nicht mehr aus dem lokalen Netz erreichbar.
-      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - intern
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-soopworkshop}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  backend:
+    build:
+      # Wurzelverzeichnis, nicht der Projektordner: das Dockerfile braucht
+      # Directory.Build.props, Directory.Packages.props und lib/.
+      context: .
+      dockerfile: src/SoopWorkshop.Backend.API/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+      # Im Container heisst die Datenbank wie ihr Dienst, nicht 127.0.0.1 - die
+      # Aufloesung macht Docker im internen Netz.
+      ConnectionStrings__DefaultConnection: >-
+        Host=db;Port=5432;Database=${POSTGRES_DB:-soopworkshop};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+
+      Admin__Password: ${Admin__Password:?Admin__Password fehlt - .env aus .env.example anlegen}
+
+      # Leer, und das ist richtig: hinter dem Reverse Proxy liegen Seite und API
+      # auf demselben Ursprung, es gibt keine fremde Herkunft mehr zu erlauben.
+      Cors__AllowedOrigins__0: ""
+
+      Evaluation__MaxConcurrency: ${Evaluation__MaxConcurrency:-4}
+      Evaluation__CompileTimeoutSeconds: ${Evaluation__CompileTimeoutSeconds:-30}
+      Evaluation__RunTimeoutSeconds: ${Evaluation__RunTimeoutSeconds:-10}
+      Evaluation__QueueCapacity: ${Evaluation__QueueCapacity:-100}
+
+      Database__MigrateOnStartup: ${Database__MigrateOnStartup:-true}
+
+    networks:
+      - intern
+
+    volumes:
+      # Mit diesen Schluesseln verschluesselt ASP.NET das Anmelde-Cookie. Ohne
+      # das Volume liegen sie im Container: ein "up -d --build" nach einer
+      # Aktualisierung erzeugt neue, und die bestehende Anmeldung des Betreuers
+      # wird ungueltig - kommentarlos, mitten im Workshop.
+      - dataprotection:/home/app/.aspnet/DataProtection-Keys
+
+    # ------------------------------------------------------------------------
+    # Hier laeuft FREMDER CODE. Jede Abgabe wird kompiliert und ausgefuehrt.
+    #
+    # Das interne Netz ist die wirksamste einzelne Massnahme des ganzen
+    # Aufbaus: der Container hat keine Route ins LAN und keine ins Internet.
+    # Er braucht auch keine - das JUnit-JAR liegt im Image, es wird nichts
+    # nachgeladen. Ohne das koennte die Abgabe eines Teilnehmers mit einer
+    # Zeile "new Socket(...)" das Firmennetz erreichen.
+    #
+    # Die Grenzen darunter sind der Unterschied zwischen einer Endlosschleife,
+    # die einen Container ausbremst, und einer, die die VM erlegt.
+    #
+    # Was das NICHT leistet: die Abgabe erreicht weiterhin die Datenbank und
+    # kann den Container belasten. Echte Isolation je Abgabe (ein eigener
+    # Container pro Auswertung) bleibt eine spaetere Ausbaustufe.
+    # ------------------------------------------------------------------------
+    mem_limit: 2g
+    cpus: 2.0
+    pids_limit: 512
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      # Der erste Start wendet die Migrationen an, das darf dauern.
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./src/SoopWorkshop.Frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        # Nicht bloss "gestartet", sondern gesund. Sonst beantwortet der Proxy
+        # in den ersten Sekunden Aufrufe mit 502, waehrend das Backend noch
+        # migriert - und der erste Eindruck ist eine Fehlerseite.
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Das Zertifikat wird gemountet, nicht ins Image gebacken: ein Schluessel
+      # im Image ist ein Schluessel im Klartext in jeder Kopie davon. Fehlt der
+      # Ordner, erzeugt der Entrypoint ein selbstsigniertes und sagt es laut.
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      # In BEIDEN Netzen, und damit die einzige Bruecke: von aussen erreichbar
+      # und zugleich der einzige Weg zum Backend.
+      - intern
+      - aussen
+
+networks:
+  intern:
+    # Kein Weg nach draussen. Traegt die Abschottung aus dem Kommentar oben.
+    internal: true
+  aussen:
+
 volumes:
   pgdata:
+  dataprotection:

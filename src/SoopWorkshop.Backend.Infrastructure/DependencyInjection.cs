@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SoopWorkshop.Backend.Application.Repositories;
+using SoopWorkshop.Backend.Infrastructure.Configuration;
 using SoopWorkshop.Backend.Infrastructure.Persistence;
 using SoopWorkshop.Backend.Infrastructure.Persistence.Repositories;
 using SoopWorkshop.Backend.Application.Evaluation;
@@ -32,8 +33,23 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.Configure<EvaluationOptions>(
                 configuration.GetSection(EvaluationOptions.SectionName));
 
+            services.Configure<DatabaseOptions>(
+                configuration.GetSection(DatabaseOptions.SectionName));
+
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
+
+            // Sagt, ob die Datenbank wirklich antwortet - der Healthcheck im
+            // Compose-Aufbau haengt daran. Ein Backend, das steht, aber nicht an
+            // seine Datenbank kommt, ist nicht "bereit".
+            services.AddHealthChecks()
+                .AddDbContextCheck<AppDbContext>("datenbank");
+
+            // VOR dem EvaluationWorker: dessen erste Handlung ist ein Zugriff auf
+            // die Datenbank, und dieser Dienst haelt den Start auf, bis das Schema
+            // steht. Die Reihenfolge der Registrierung ist die Reihenfolge des
+            // Starts - sie ist hier keine Kosmetik.
+            services.AddHostedService<DatabaseMigrationService>();
 
             services.AddScoped<ITaskCategoryRepository, TaskCategoryRepository>();
             services.AddScoped<ITaskItemRepository, TaskItemRepository>();

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using SoopWorkshop.Backend.API.Configuration;
 using SoopWorkshop.Backend.API.Middleware;
@@ -36,7 +37,28 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // Zugangsschutz fuer api/admin/*. Bricht den Start ab, wenn kein Passwort
 // gesetzt ist — siehe AdminAuthenticationExtensions.
-builder.Services.AddAdminAuthentication(builder.Configuration);
+builder.Services.AddAdminAuthentication(builder.Configuration, builder.Environment);
+
+// Hinter dem Reverse Proxy endet TLS bei nginx; das Backend selbst spricht nur
+// http. Ohne diese Koepfe saehe es dauerhaft "http" und wuerde das Anmelde-Cookie
+// als nicht-Secure ausstellen, obwohl der Browser ueber https spricht.
+//
+// KnownIPNetworks und KnownProxies werden geleert, weil der Proxy ein anderer
+// Container mit wechselnder Adresse ist - die Voreinstellung vertraut nur
+// Loopback und verwirft die Koepfe still. Das ist nur vertretbar, WEIL das
+// Backend im Compose-Aufbau in einem internen Netz ohne veroeffentlichten Port
+// liegt und ausschliesslich ueber den Proxy erreichbar ist. Wird es jemals
+// direkt veroeffentlicht, muss hier ein bekanntes Netz eingetragen werden -
+// sonst kann jeder Aufrufer das Schema faelschen.
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 // CORS (Cross-Origin Resource Sharing), erlaubt es dem Frontend Requests an die API zu senden.
 // Die erlaubten Origins stehen in der Konfiguration, damit sie im Betrieb ueber
@@ -73,6 +95,13 @@ startupLogger.LogInformation(
     evaluationOptions.CompileTimeoutSeconds,
     evaluationOptions.RunTimeoutSeconds);
 
+// Muss vor allem stehen, was Schema oder Aufrufer-Adresse auswertet — sonst
+// arbeitet die Kette mit der Adresse des Proxys statt der des Browsers.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseForwardedHeaders();
+}
+
 // Exception Middleware einbinden
 app.UseMiddleware<ExceptionMiddleware>();
 
@@ -82,9 +111,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     // Zum testen der Endpunkte und Datenbank befüllen zum test
     app.MapScalarApiReference();
-}
 
-app.UseHttpsRedirection();
+    // Nur in der Entwicklung, wo das https-Startprofil auf 7212 horcht. Im
+    // Container horcht das Backend ausschliesslich auf http, die Umleitung
+    // macht dort der Reverse Proxy — eine Umleitung hier wuerde ins Leere
+    // zeigen, weil das Backend keinen https-Port kennt.
+    app.UseHttpsRedirection();
+}
 
 // CORS einbinden
 app.UseCors("AllowFrontend");
@@ -96,6 +129,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Bewusst ohne Anmeldung: der Healthcheck laeuft im Compose-Aufbau als
+// Container-Befehl und hat kein Cookie. Er gibt nur "Healthy" oder "Unhealthy"
+// zurueck, keine Innenansicht.
+app.MapHealthChecks("/health");
 
 app.Run();
 
