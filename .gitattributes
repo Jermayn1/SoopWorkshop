@@ -18,4 +18,5 @@ Dockerfile  text eol=lf
 
 *.jar       binary
 *.png       binary
+*.ico       binary
 *.woff2     binary
