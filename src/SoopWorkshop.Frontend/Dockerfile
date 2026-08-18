@@ -1,5 +1,6 @@
 # Frontend: Node baut, nginx liefert aus und ist zugleich der Reverse Proxy
-# vor dem Backend. Dieser Container ist der EINZIGE, der Ports veroeffentlicht.
+# vor dem Backend. Dieser Container ist der EINZIGE, der einen Port
+# veroeffentlicht.
 #
 # Build-Kontext ist dieser Ordner (context: ./src/SoopWorkshop.Frontend).
 
@@ -17,7 +18,8 @@ COPY . .
 
 # LEER, und das ist die eigentliche Aussage: das Frontend spricht die API ueber
 # denselben Ursprung an (relative Pfade), weil nginx unten /api weiterreicht.
-# Damit steckt kein Hostname im Image.
+# Damit steckt kein Hostname im Image, und dasselbe Image laeuft unter jeder
+# IP und jedem Namen.
 #
 # Die leere Zeichenkette muss ankommen - client.ts unterscheidet ausdruecklich
 # zwischen "nicht gesetzt" (Entwicklung, localhost:5120) und "leer" (gleicher
@@ -31,16 +33,12 @@ RUN npm run build
 # --------------------------------------------------------------- Laufen -------
 FROM nginx:alpine AS final
 
-# openssl fuer das Notfall-Zertifikat im Entrypoint. Das nginx-Image bringt es
-# nicht mit.
-RUN apk add --no-cache openssl
-
 COPY --from=build /quelle/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY docker-entrypoint.sh /docker-entrypoint-soop.sh
-RUN chmod +x /docker-entrypoint-soop.sh
 
-EXPOSE 80 443
+EXPOSE 80
 
-ENTRYPOINT ["/docker-entrypoint-soop.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+# Kein eigener Entrypoint: das nginx-Image startet von selbst richtig. Bis
+# Phase 7 stand hier ein Skript, das ein Notfall-Zertifikat erzeugte - mit dem
+# Wechsel auf reines http ist es weggefallen, und mit ihm openssl im Image,
+# der Zertifikats-Mount und zwei Fehlerquellen (siehe CLAUDE.md Paragraph 9).

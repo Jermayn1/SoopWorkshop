@@ -1,350 +1,98 @@
 # SoopWorkshop auf einer VM aufsetzen
 
-Von der leeren Debian-VM bis zum laufenden System, das die Teilnehmer unter
-`https://soop.workshop` erreichen.
+Von der leeren Debian-VM zum laufenden System. **Fünf Schritte, rund 15 Minuten**
+davon zehn Wartezeit beim Bauen.
 
-**Diese Anleitung wird von oben nach unten abgearbeitet.** Nach jedem Abschnitt
-steht eine Kontrolle — woran du erkennst, dass der Schritt geklappt hat. Wenn
-eine Kontrolle fehlschlägt, hilft Abschnitt 11 weiter, statt weiterzumachen.
+Danach erreichen die Teilnehmer das Tool über `http://<ip-der-vm>` — ohne
+Zertifikat, ohne DNS, ohne dass jemand auf einem Teilnehmerrechner etwas
+einrichten muss. Die Seite lädt direkt, es gibt nichts wegzuklicken.
 
-> **Der Aufbau ist ausschließlich für das lokale Netz gedacht.** Nichts davon
-> gehört ins Internet freigegeben — warum, steht in Abschnitt 9.
-
----
-
-## Inhalt
-
-| | |
-|---|---|
-| [1](#1-was-du-brauchst) | Was du brauchst |
-| [2](#2-vm-vorbereiten) | VM vorbereiten |
-| [3](#3-projekt-auf-die-vm) | Projekt auf die VM |
-| [4](#4-env-anlegen) | `.env` anlegen |
-| [5](#5-dns-einrichten) | DNS einrichten |
-| [6](#6-zertifikat-erzeugen-und-verteilen) | Zertifikat erzeugen und verteilen |
-| [7](#7-starten) | Starten |
-| [8](#8-erste-anmeldung-und-aufgaben-einspielen) | Erste Anmeldung und Aufgaben einspielen |
-| [9](#9-absichern) | Absichern |
-| [10](#10-betrieb) | Betrieb |
-| [11](#11-fehlersuche) | Fehlersuche |
+Alles Weitere — DNS-Name, Firewall, Sicherung — steht danach unter
+[Optional](#optional) und ist für den Betrieb nicht nötig.
 
 ---
 
-## 1. Was du brauchst
-
-**Die VM**
-
-| | Richtwert | Warum |
-|---|---|---|
-| Betriebssystem | Debian 13 (oder 12) | alles läuft in Containern, die Distribution ist zweitrangig |
-| CPU | 2 vCPU | jede Abgabe startet `javac` und eine JVM |
-| RAM | 4 GB | 2 GB davon darf der Backend-Container nutzen |
-| Platte | 20 GB | Images und Datenbank |
-| Netz | **feste IP** | der DNS-Eintrag zeigt darauf; eine wechselnde Adresse macht ihn wertlos |
-
-**Außerdem**
-
-- Zugriff auf den DNS des Netzes — oder die Möglichkeit, auf den
-  Teilnehmerrechnern die `hosts`-Datei zu ändern (Abschnitt 5)
-- Deinen Arbeitsrechner (Windows), auf dem du das Zertifikat erzeugst
-- Rechte, das Wurzelzertifikat auf die Teilnehmerrechner zu bringen
-
-**Was du nicht brauchst:** .NET, Node oder ein JDK auf der VM. Alles davon
-steckt in den Images.
-
----
-
-## 2. VM vorbereiten
-
-Docker Engine und das Compose-Plugin aus dem offiziellen Repository:
+## 1. Docker prüfen
 
 ```bash
-sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg
+docker compose version
 ```
 
-```bash
-sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
-```
+Kommt eine Version, weiter zu Schritt 2. Kommt ein Fehler, fehlt das
+Compose-Plugin — dann [Docker nachinstallieren](#docker-nachinstallieren) unten.
 
-```bash
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-```bash
-sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-Damit du Docker ohne `sudo` benutzen kannst:
+Falls jeder Docker-Befehl „permission denied" sagt:
 
 ```bash
 sudo usermod -aG docker $USER
 ```
 
-> **Danach einmal ab- und wieder anmelden.** Gruppenzugehörigkeiten gelten erst
-> in einer neuen Sitzung — sonst bekommst du bei jedem Befehl
-> „permission denied while trying to connect to the Docker daemon socket".
-
-Zeitzone setzen, damit die Zeitstempel der Abgaben lesbar sind:
-
-```bash
-sudo timedatectl set-timezone Europe/Berlin
-```
-
-**Kontrolle**
-
-```bash
-docker run --rm hello-world
-```
-
-Muss „Hello from Docker!" ausgeben — ohne `sudo`.
+> Danach **einmal ab- und wieder anmelden.** Gruppen gelten erst in einer neuen
+> Sitzung.
 
 ---
 
-## 3. Projekt auf die VM
+## 2. Projekt holen
 
 ```bash
-sudo apt-get install -y git && git clone https://github.com/Jermayn1/SoopWorkshop.git && cd SoopWorkshop
+sudo apt-get update && sudo apt-get install -y git
 ```
-
-Hat die VM kein Internet, packst du das Repository auf deinem Arbeitsrechner ein
-(`git archive`) und kopierst es mit `scp` herüber. Die Container werden aber aus
-dem Internet gebaut — ohne Netz brauchst du fertige Images (Abschnitt 10,
-„Ohne Internet auf der VM").
-
-**Kontrolle**
 
 ```bash
-ls docker-compose.yml .env.example
+git clone https://github.com/Jermayn1/SoopWorkshop.git && cd SoopWorkshop
 ```
-
-Beide Dateien müssen da sein.
 
 ---
 
-## 4. `.env` anlegen
-
-Die `.env` ist die einzige Stelle mit Zugangsdaten. Sie ist gitignoriert und
-gehört **nicht** ins Repository.
+## 3. Zwei Passwörter setzen
 
 ```bash
 cp .env.example .env
 ```
 
-Zwei Passwörter erzeugen — nicht selbst ausdenken, sondern würfeln lassen:
+Zwei Passwörter würfeln lassen, nicht ausdenken:
 
 ```bash
 openssl rand -base64 24
 ```
 
-Zweimal aufrufen und die Werte eintragen:
+Zweimal aufrufen, dann eintragen:
 
 ```bash
 nano .env
 ```
 
-| Schlüssel | Bedeutung |
+| Schlüssel | Wofür |
 |---|---|
-| `POSTGRES_PASSWORD` | Passwort der Datenbank. Sieht niemand außer den Containern. |
+| `POSTGRES_PASSWORD` | Datenbank. Sieht niemand außer den Containern. |
 | `Admin__Password` | **Damit meldest du dich am Panel an.** Das ist das Passwort, das du dir merken musst. |
 
-> **`Admin__Password` ist Pflicht.** Fehlt es, startet das Backend nicht — mit
-> einer Meldung, die genau das sagt. Ein stiller Start ohne Zugangsschutz wäre
-> schlimmer als ein Abbruch.
-
-Rechte einschränken, damit die Datei nicht jeder auf der VM lesen kann:
+Speichern mit `Strg+O`, `Enter`, `Strg+X`.
 
 ```bash
 chmod 600 .env
 ```
 
-**Kontrolle**
+**Kontrolle** — muss `0` ausgeben:
 
 ```bash
 grep -c 'bitte-aendern' .env
 ```
 
-Muss `0` ausgeben. Steht dort noch eine `1` oder `2`, ist mindestens ein
-Vorgabewert stehengeblieben.
+Steht dort `1` oder `2`, ist ein Vorgabewert stehengeblieben. Das Backend würde
+zwar starten, aber mit einem öffentlich bekannten Passwort.
 
 ---
 
-## 5. DNS einrichten
-
-**Warum überhaupt ein Name?** Zwei Gründe, und der zweite wiegt schwerer:
-
-1. Teilnehmer tippen `soop.workshop` statt `192.168.x.y`.
-2. **Das Zertifikat lautet auf den Namen, nicht auf die IP.** Wer die IP
-   eintippt, bekommt trotz gültigem Zertifikat eine Warnung. Der Name muss
-   deshalb *vor* Abschnitt 6 stehen.
-
-Ein DNS-Eintrag ist eine Zuordnung von Name zu Adresse — ein **A-Record**:
-
-```
-soop.workshop.  →  192.168.1.50
-```
-
-Erst die IP der VM feststellen:
-
-```bash
-hostname -I
-```
-
-Dann einen der drei Wege:
-
-### Weg 1 — der vorhandene interne DNS *(der Normalfall)*
-
-Betreibt die Ausbildung einen internen DNS-Server (Windows Server / Active
-Directory, Pi-hole, OPNsense, Fritz!Box mit eigenen Einträgen), gehört der
-A-Record dorthin. Das ist eine Bitte an die IT und keine Bastelei — genau dafür
-ist der Server da.
-
-Was du melden musst: **Name `soop.workshop`, Typ `A`, Ziel = die IP von oben.**
-
-### Weg 2 — dnsmasq auf derselben VM
-
-Wenn es keinen internen DNS gibt:
-
-```bash
-sudo apt-get install -y dnsmasq
-```
-
-```bash
-echo "address=/soop.workshop/$(hostname -I | awk '{print $1}')" | sudo tee /etc/dnsmasq.d/soop.conf
-```
-
-```bash
-sudo systemctl restart dnsmasq
-```
-
-Danach muss im DHCP des Routers die VM als DNS-Server eingetragen werden, damit
-die Teilnehmerrechner sie überhaupt fragen.
-
-> **Bedenke:** damit hängt die Namensauflösung *aller* Rechner an dieser VM. Ist
-> sie aus, kommt niemand mehr ins Internet. Für einen Workshop-Tag vertretbar,
-> als Dauerlösung nicht.
-
-### Weg 3 — `hosts`-Datei *(Rückfall)*
-
-Ohne jede Infrastruktur, auf **jedem** Teilnehmerrechner. Unter Windows als
-Administrator in `C:\Windows\System32\drivers\etc\hosts`:
-
-```
-192.168.1.50    soop.workshop
-```
-
-Funktioniert immer, skaliert schlecht — bei 15 Rechnern ist das 15-mal Arbeit.
-
-### Anmerkung zum Namen
-
-`.workshop` ist eine **echte öffentliche Top-Level-Domain**. Intern ist das
-unproblematisch, aber ein Name darunter kann eines Tages mit einem realen
-Eintrag kollidieren. ICANN hat `.internal` genau für private Netze reserviert —
-wenn du frei wählen kannst, ist `soop.internal` die sauberere Wahl. Ändern musst
-du dafür nur den DNS-Eintrag und den Namen im Zertifikat; die Anwendung kennt
-ihren eigenen Namen nicht.
-
-**Kontrolle** — von einem **Teilnehmerrechner** aus, nicht von der VM:
-
-```
-nslookup soop.workshop
-```
-
-Muss die IP der VM liefern.
-
----
-
-## 6. Zertifikat erzeugen und verteilen
-
-Für einen internen Namen gibt es kein öffentlich vertrauenswürdiges Zertifikat.
-Du wirst also deine eigene kleine Zertifizierungsstelle (CA), und deren
-Wurzelzertifikat kommt einmalig auf die Teilnehmerrechner. Danach zeigt der
-Browser ein Schloss und **keine Warnung**.
-
-> **Warum nicht einfach selbstsigniert?** Weil dann jeder Browser bei jedem
-> Besuch eine ganzseitige Warnung zeigt. Das ist nicht nur unschön: es bringt
-> einem ganzen Kurs bei, Sicherheitswarnungen wegzuklicken.
-
-### 6.1 mkcert auf deinem Arbeitsrechner
-
-```powershell
-winget install FiloSottile.mkcert
-```
-
-Einmalig die eigene CA anlegen und im Windows-Zertifikatsspeicher eintragen:
-
-```powershell
-mkcert -install
-```
-
-### 6.2 Zertifikat erzeugen
-
-Das Skript im Repository kapselt den Aufruf, damit die Erneuerung in einem Jahr
-kein Rätselraten wird:
-
-```powershell
-.\scripts\erzeuge-zertifikat.ps1 -Name soop.workshop -ServerIp 192.168.1.50
-```
-
-Es legt `certs\soop.pem` und `certs\soop-key.pem` an und nennt am Ende den Pfad
-zum Wurzelzertifikat.
-
-### 6.3 Auf die VM kopieren
-
-```powershell
-scp certs\soop.pem certs\soop-key.pem benutzer@192.168.1.50:~/SoopWorkshop/certs/
-```
-
-Auf der VM die Rechte des Schlüssels einschränken:
-
-```bash
-chmod 600 certs/soop-key.pem
-```
-
-### 6.4 Wurzelzertifikat auf die Teilnehmerrechner
-
-Den Pfad nennt:
-
-```powershell
-mkcert -CAROOT
-```
-
-Aus diesem Ordner die Datei `rootCA.pem` verteilen. Auf einem Windows-Rechner
-als Administrator:
-
-```powershell
-Import-Certificate -FilePath rootCA.pem -CertStoreLocation Cert:\LocalMachine\Root
-```
-
-> **Firefox hat einen eigenen Zertifikatsspeicher** und ignoriert den von
-> Windows. Entweder in Firefox unter *Einstellungen → Datenschutz und Sicherheit
-> → Zertifikate anzeigen → Importieren* nachziehen, oder
-> `security.enterprise_roots.enabled` auf `true` setzen. Chrome und Edge
-> benutzen den Windows-Speicher.
-
-**Wer das Wurzelzertifikat nicht installiert, kommt trotzdem hinein** — mit
-einer Warnung, die sich wegklicken lässt. Das ist der dokumentierte Rückfall und
-kein Fehler. (Deshalb setzt der Server bewusst **kein HSTS**: das würde die
-Warnung unumgehbar machen und solche Rechner komplett aussperren.)
-
-**Kontrolle**
-
-```bash
-ls -l certs/soop.pem certs/soop-key.pem
-```
-
-Beide Dateien müssen auf der VM liegen.
-
----
-
-## 7. Starten
+## 4. Starten
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
 ```
 
-> **Das `-f docker-compose.yml` ist Absicht.** Ohne die Angabe zieht Compose
+> **Das `-f docker-compose.yml` gehört dazu.** Ohne die Angabe zieht Compose
 > zusätzlich `docker-compose.override.yml` heran — die ist für die Entwicklung
-> und veröffentlicht den Datenbank-Port nach außen.
+> und veröffentlicht den Datenbank-Port.
 
 Der erste Lauf baut beide Images und dauert einige Minuten. Danach:
 
@@ -352,166 +100,147 @@ Der erste Lauf baut beide Images und dauert einige Minuten. Danach:
 docker compose -f docker-compose.yml ps
 ```
 
-**Kontrolle** — `db` und `backend` müssen `healthy` zeigen, `frontend` `Up`:
+**Kontrolle** — `db` und `backend` müssen `healthy` zeigen:
 
 ```
-NAME                    STATUS
-soopworkshop-db         Up 2 minutes (healthy)
-soopworkshop-backend-1  Up 1 minute (healthy)
-soopworkshop-frontend-1 Up 1 minute
+NAME                      STATUS
+soopworkshop-db           Up 2 minutes (healthy)
+soopworkshop-backend-1    Up 1 minute (healthy)
+soopworkshop-frontend-1   Up 1 minute
 ```
 
-Was wirklich gilt, steht in der ersten Logzeile des Backends:
+Zeigt `backend` nach zwei Minuten nicht `healthy`, hilft
+[Fehlersuche](#fehlersuche).
+
+Die IP der VM:
 
 ```bash
-docker compose -f docker-compose.yml logs backend | head -30
+hostname -I
 ```
 
-Dort müssen zwei Dinge stehen:
-
-```
-Konfiguration: Datenbank db:5432/soopworkshop, Auswertung 4 gleichzeitig, ...
-8 ausstehende Migration(en) werden angewendet: ...
-```
-
-Und im Frontend-Log **darf nicht** stehen, dass ein selbstsigniertes Zertifikat
-erzeugt wurde:
-
-```bash
-docker compose -f docker-compose.yml logs frontend | grep -i achtung
-```
-
-Kommt hier eine Meldung, liegt das Zertifikat nicht am richtigen Ort — zurück zu
-Abschnitt 6.3.
-
-Jetzt vom **Teilnehmerrechner** aus `https://soop.workshop` öffnen. Es muss die
-Aufgabenübersicht erscheinen, mit Schloss und ohne Warnung.
+**Kontrolle** — von einem **anderen Rechner im Netz** `http://<ip-der-vm>`
+öffnen. Die Aufgabenübersicht muss erscheinen.
 
 ---
 
-## 8. Erste Anmeldung und Aufgaben einspielen
+## 5. Anmelden und Aufgaben einspielen
 
-`https://soop.workshop/admin` öffnen und mit `Admin__Password` aus der `.env`
+`http://<ip-der-vm>/admin` öffnen, mit `Admin__Password` aus der `.env`
 anmelden.
 
-**Entweder** von Hand anlegen — die Reihenfolge ist Pflicht:
+**Der schnelle Weg:** hast du auf deinem Rechner schon einen Aufgabenbestand,
+dann *Transfer → Datei wählen*. Die Vorschau zeigt vor dem Ausführen, was
+passieren würde.
 
-1. Kategorie anlegen (Name, Symbol, Reihenfolge)
-2. Aufgabe anlegen (Titel, Beschreibung, Schwierigkeit, Auswertungsmodus)
+**Von Hand** — die Reihenfolge ist Pflicht:
+
+1. Kategorie anlegen
+2. Aufgabe anlegen (Titel, Beschreibung, Auswertungsmodus)
 3. Testfälle bzw. JUnit-Dateien ergänzen
 4. **Danach** sichtbar schalten
 
-> Schritt 4 geht erst nach Schritt 3. Eine Aufgabe, deren Auswertungsmodus Daten
-> verlangt, die es noch nicht gibt, lässt sich nicht sichtbar schalten — sonst
-> würde sie still milder bewertet, weil die fehlende Kategorie aus der Wertung
-> fällt.
+> Schritt 4 geht erst nach Schritt 3. Eine Aufgabe, deren Modus Daten verlangt,
+> die es noch nicht gibt, lässt sich nicht sichtbar schalten — sonst würde sie
+> still milder bewertet, weil die fehlende Kategorie aus der Wertung fällt.
 
-**Oder** einen fertigen Bestand einspielen: *Verwaltung → Transfer → Datei
-wählen*. Die Vorschau zeigt vor dem Ausführen, was passieren würde. Damit kannst
-du den Aufgabenbestand auf deinem Rechner vorbereiten und hier nur einspielen.
+**Kontrolle** — im Panel bei der Aufgabe auf *Probelauf*, eine Musterlösung
+hochladen. Kommt die erwartete Punktzahl heraus, funktioniert die ganze Kette:
+Kompilieren, Testfälle, JUnit.
 
-**Kontrolle**
-
-Aufgabe im Panel unter *Vorschau* ansehen (zeigt exakt die Teilnehmersicht),
-dann eine Musterlösung über *Probelauf* hochladen. Kommt die erwartete
-Punktzahl heraus, funktioniert die ganze Kette — Kompilieren, Testfälle, JUnit.
-
-> Ein Probelauf erzeugt eine **echte** Abgabe. Sie taucht später in der
-> Abgaben-Übersicht auf.
+**Damit läuft das System.** Alles Weitere ist Komfort und Absicherung.
 
 ---
 
-## 9. Absichern
+## Warum kein HTTPS
 
-### Das Wichtigste zuerst
+Kurz: weil es für einen internen Namen kein Zertifikat gibt, dem Browser von
+sich aus trauen — und jede Alternative wäre für die Teilnehmer schlechter.
 
-**Jede Abgabe wird ausgeführt.** Ein Teilnehmer schickt Java-Code, und dieser
-Code läuft auf deiner VM. Das ist keine Unterstellung von Böswilligkeit — eine
-einzige Zeile `new Socket(...)` genügt, auch versehentlich.
+| | Was der Teilnehmer erlebt |
+|---|---|
+| **http (so wie hier)** | Seite lädt sofort. Kleines „Nicht sicher" neben der Adresse. **Nichts zu klicken.** |
+| https selbstsigniert | **Ganzseitige Warnung** „Ihre Verbindung ist nicht privat" — auf jedem Rechner, bei jedem Besuch |
+| https mit eigener CA | Schloss, keine Warnung — aber ein Wurzelzertifikat muss auf **jeden** Teilnehmerrechner |
 
-Was der Aufbau dagegen tut:
+Das „Nicht sicher" in der Adressleiste lässt sich nicht wegkonfigurieren; ein
+Schloss gibt es nur mit einem vertrauenswürdigen Zertifikat. Es ist aber ein
+**Label, keine Warnseite** — und damit deutlich harmloser als das, was ein
+selbstsigniertes Zertifikat auslöst.
 
-- **Backend und Datenbank liegen in einem Docker-Netz mit `internal: true`.**
-  Der Container, in dem die Abgaben laufen, hat **keine Route ins LAN und keine
-  ins Internet**. Er braucht auch keine: das JUnit-JAR liegt im Image.
-- **Grenzen für Speicher, CPU und Prozessanzahl** — der Unterschied zwischen
-  einer Endlosschleife, die einen Container ausbremst, und einer, die die VM
-  erlegt.
-- **Zeitgrenzen** je Kompilierlauf und je Testlauf.
+**Was das kostet, offen gesagt:** das Admin-Passwort läuft im Klartext durchs
+LAN. In einem geschlossenen Kursnetz mit genau einem Betreuer ist das dieselbe
+Risikoklasse wie das Passwort im Klartext in der `.env` auf dem Server. Deshalb
+gehört dieser Aufbau auch nicht ins Internet — siehe
+[Nicht nach außen freigeben](#nicht-nach-außen-freigeben).
+
+**Nachrüsten ist später ein Konfigurationsschritt, keine Codeänderung:** das
+Backend wertet `X-Forwarded-Proto` schon aus, und die Cookie-Politik steht auf
+`SameAsRequest` — über https wird das Anmelde-Cookie von selbst `Secure`. Wie es
+geht, steht unter [HTTPS nachrüsten](#https-nachrüsten).
+
+---
+
+## Optional
+
+Nichts davon wird für den Betrieb gebraucht. In dieser Reihenfolge lohnt es:
+
+### Nicht nach außen freigeben
+
+**Das ist die einzige Absicherung, die wirklich zählt.** Keine Portfreigabe im
+Router, kein Tunneldienst, kein Reverse Proxy von außen.
+
+Grund: **jede Abgabe wird ausgeführt.** Ein Teilnehmer schickt Java-Code, und
+der läuft auf dieser VM. Der Aufbau hält ihn davon ab, ins Netz zu greifen —
+Backend und Datenbank liegen in einem Docker-Netz **ohne Route ins LAN und ohne
+Route ins Internet** —, dazu Grenzen für Speicher, CPU und Prozesse sowie
+Zeitgrenzen je Lauf.
 
 Was er **nicht** tut: eine Abgabe erreicht weiterhin die Datenbank und kann den
-Container belasten. Echte Isolation je Abgabe (ein eigener Container pro
-Auswertung) ist eine spätere Ausbaustufe.
+Container belasten. Deshalb:
 
-**Daraus folgt: behandle die VM als nicht vertrauenswürdig.**
-
-- Keine Firmen-Zugangsdaten darauf, kein SSH-Schlüssel zu anderen Systemen
+- Keine Firmen-Zugangsdaten auf der VM, keine SSH-Schlüssel zu anderen Systemen
 - Wenn möglich in ein eigenes VLAN oder Gastnetz
-- **Snapshot vor dem Workshop** — danach ist Zurücksetzen eine Sache von Sekunden
+- **Snapshot vor dem Workshop** — Zurücksetzen ist dann eine Sache von Sekunden
 
 ### Firewall
 
 ```bash
-sudo apt-get install -y ufw
+sudo apt-get install -y ufw && sudo ufw allow from 192.168.1.0/24 to any port 80 proto tcp && sudo ufw allow from 192.168.1.0/24 to any port 22 proto tcp && sudo ufw enable
 ```
 
-```bash
-sudo ufw allow from 192.168.1.0/24 to any port 80 proto tcp
-```
+Subnetz anpassen. Der Datenbank-Port ist gar nicht veröffentlicht.
 
-```bash
-sudo ufw allow from 192.168.1.0/24 to any port 443 proto tcp
-```
+### Ein Name statt der IP
 
-```bash
-sudo ufw allow from 192.168.1.0/24 to any port 22 proto tcp
-```
+Damit die Teilnehmer `http://soop.workshop` tippen statt einer IP. **Reiner
+Komfort** — ohne Zertifikat hängt nichts daran.
 
-```bash
-sudo ufw enable
-```
+Gebraucht wird ein **A-Record**: Name → IP der VM.
 
-Das Subnetz an dein Netz anpassen. Der Datenbank-Port ist gar nicht erst
-veröffentlicht — im Betriebsaufbau erreicht ihn nur das Backend.
+- **Vorhandener interner DNS** (Windows Server / AD, Pi-hole, OPNsense): dort
+  eintragen lassen. Das ist eine Bitte an die IT, keine Bastelei.
+- **`hosts`-Datei** auf den Teilnehmerrechnern als Rückfall. Unter Windows als
+  Administrator in `C:\Windows\System32\drivers\etc\hosts`:
+  ```
+  192.168.1.50    soop.workshop
+  ```
 
-### Nicht ins Internet freigeben
+Es ist am Server **nichts** zu ändern — nginx antwortet auf jeden Namen.
 
-**Keine Portfreigabe im Router, kein Reverse Proxy von außen, kein
-Tunneldienst.** Das System ist workshop-intern gedacht:
+**Kontrolle** vom Teilnehmerrechner: `nslookup soop.workshop` liefert die IP.
 
-- Es gibt genau ein Passwort und keine Benutzerverwaltung
-- Es ist nicht gegen böswillige Abgaben gehärtet
-- Die Zertifikate stammen aus deiner eigenen CA, der nur dein Netz vertraut
-
-**Kontrolle** — von einem anderen Rechner:
-
-```bash
-nmap -p 22,80,443,5432 192.168.1.50
-```
-
-`5432` muss `closed` oder `filtered` sein.
-
----
-
-## 10. Betrieb
-
-### Autostart nach Neustart der VM
-
-Passiert von selbst: alle Dienste tragen `restart: unless-stopped`, und Docker
-startet mit dem System.
-
-**Kontrolle:** VM neu starten, warten, `docker compose -f docker-compose.yml ps`
-— alles muss wieder `healthy` sein.
+> Zwei Stolpersteine: `.workshop` ist eine echte öffentliche Top-Level-Domain —
+> intern unproblematisch, aber `.internal` ist für private Netze reserviert und
+> die sauberere Wahl. Und **DNS über HTTPS im Browser** umgeht den lokalen
+> Resolver; löst die Seite bei genau einem Teilnehmer nicht auf, ist fast immer
+> das die Ursache.
 
 ### Sichern
 
-Die Aufgaben liegen in der Datenbank. Zwei Wege, und du willst beide:
+Der Aufgabenbestand: *Verwaltung → Transfer → Export* lädt alles als eine
+JSON-Datei. **Die gehört auf deinen Rechner, nicht nur auf die VM.**
 
-**Der schnelle für den Aufgabenbestand** — *Verwaltung → Transfer → Export*
-lädt alles als eine JSON-Datei herunter (ohne Abgaben, das sind
-Workshop-Daten). Diese Datei gehört auf deinen Rechner, nicht nur auf die VM.
-
-**Der vollständige für die ganze Datenbank:**
+Die ganze Datenbank:
 
 ```bash
 docker compose -f docker-compose.yml exec -T db pg_dump -U postgres soopworkshop > sicherung-$(date +%F).sql
@@ -531,69 +260,48 @@ git pull && docker compose -f docker-compose.yml up -d --build
 
 Migrationen wendet das Backend beim Start selbst an. **Vorher sichern.**
 
-### Zertifikat erneuern
+Autostart nach einem Neustart der VM passiert von selbst — alle Dienste tragen
+`restart: unless-stopped`.
 
-mkcert-Zertifikate laufen nach gut zwei Jahren ab. Dann Abschnitt 6.2 und 6.3
-wiederholen und neu starten:
+### HTTPS nachrüsten
 
-```bash
-docker compose -f docker-compose.yml restart frontend
-```
+Nur sinnvoll, wenn du das Wurzelzertifikat auf die Teilnehmerrechner bringen
+kannst (sonst tauschst du ein Label gegen eine Warnseite). In Kurzform:
 
-Das Wurzelzertifikat auf den Clients bleibt gültig — es muss **nicht** neu
-verteilt werden.
+1. Auf deinem Rechner `mkcert` installieren, `mkcert -install`, dann
+   `mkcert -cert-file soop.pem -key-file soop-key.pem soop.workshop <ip>`
+2. Beide Dateien auf die VM legen und in den Frontend-Container mounten
+3. In `src/SoopWorkshop.Frontend/nginx.conf` einen `listen 443 ssl`-Block mit
+   `ssl_certificate` ergänzen, Port 443 in `docker-compose.yml` veröffentlichen
+4. `rootCA.pem` (Pfad: `mkcert -CAROOT`) auf jeden Teilnehmerrechner —
+   **Firefox hat einen eigenen Zertifikatsspeicher**
+5. **Kein HSTS setzen.** Das würde die Warnung unumgehbar machen und jeden
+   Rechner ohne Wurzelzertifikat komplett aussperren
 
-### Ohne Internet auf der VM
+Am Backend ist **nichts** zu ändern: `X-Forwarded-Proto` wird ausgewertet, und
+das Anmelde-Cookie wird über https von selbst `Secure`.
 
-Images auf deinem Rechner bauen, als Archiv kopieren, dort laden:
-
-```powershell
-docker save soopworkshop-backend soopworkshop-frontend postgres:16-alpine -o soop-images.tar
-```
-
-```bash
-docker load -i soop-images.tar
-```
-
-### Logs
+### Docker nachinstallieren
 
 ```bash
-docker compose -f docker-compose.yml logs -f backend
+sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg
+```
+
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
+```
+
+```bash
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+```bash
+sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ---
 
-## 11. Fehlersuche
-
-### Die Seite ist bei genau einem Teilnehmer nicht erreichbar
-
-Fast immer **DNS über HTTPS (DoH)** im Browser: Firefox und Chrome fragen dann
-einen Resolver im Internet statt den im Netz, und der kennt `soop.workshop`
-nicht. Abschalten (Firefox: *Einstellungen → Verbindungs-Einstellungen → DNS
-über HTTPS aus*) oder für diesen Rechner einen `hosts`-Eintrag setzen.
-
-Gegenprobe: `nslookup soop.workshop` funktioniert (das benutzt DoH nicht), der
-Browser aber nicht.
-
-### Zertifikatswarnung trotz installiertem Wurzelzertifikat
-
-- **Die IP statt des Namens aufgerufen?** Das Zertifikat lautet auf den Namen.
-- **Firefox?** Eigener Zertifikatsspeicher, siehe Abschnitt 6.4.
-- **Steht im Frontend-Log eine ACHTUNG-Meldung?** Dann benutzt der Container ein
-  selbstsigniertes Notfall-Zertifikat, weil es deins nicht gefunden hat.
-  Abschnitt 6.3 prüfen und `docker compose -f docker-compose.yml restart frontend`.
-
-### `28P01 password authentication failed`
-
-`POSTGRES_PASSWORD` wirkt **nur beim ersten Anlegen** des Datenvolumes. Wurde es
-später geändert, behält die Datenbank ihr altes Passwort. Entweder das Passwort
-in der Datenbank ändern oder — wenn noch keine Daten drin sind:
-
-```bash
-docker compose -f docker-compose.yml down -v && docker compose -f docker-compose.yml up -d --build
-```
-
-> `down -v` **löscht die Datenbank**. Vorher sichern.
+## Fehlersuche
 
 ### Das Backend wird nicht `healthy`
 
@@ -601,32 +309,49 @@ docker compose -f docker-compose.yml down -v && docker compose -f docker-compose
 docker compose -f docker-compose.yml logs backend | tail -40
 ```
 
-- „Es ist kein Admin-Passwort gesetzt" → `Admin__Password` fehlt in der `.env`
-- „Die Datenbank war beim Versuch N von 10 nicht bereit" → normal in den ersten
-  Sekunden; kommt es zehnmal, läuft die Datenbank nicht
+- **„Es ist kein Admin-Passwort gesetzt"** → `Admin__Password` fehlt in der `.env`
+- **„Die Datenbank war beim Versuch N von 10 nicht bereit"** → in den ersten
+  Sekunden normal. Kommt es zehnmal, läuft die Datenbank nicht:
+  `docker compose -f docker-compose.yml logs db`
+- **`28P01 password authentication failed`** → `POSTGRES_PASSWORD` wirkt **nur
+  beim ersten Anlegen** des Datenvolumes. Später geändert? Dann behält die
+  Datenbank ihr altes. Wenn noch keine Daten drin sind:
+  ```bash
+  docker compose -f docker-compose.yml down -v && docker compose -f docker-compose.yml up -d --build
+  ```
+  > `down -v` **löscht die Datenbank.**
+
+### Die Seite lädt, aber alles ist leer
+
+Noch keine Aufgaben angelegt oder keine sichtbar geschaltet — Schritt 5.
+
+### 502 Bad Gateway
+
+Das Backend ist noch nicht oben oder gerade abgestürzt.
+`docker compose -f docker-compose.yml ps` und dann die Logs.
 
 ### Jede Abgabe schlägt fehl
 
-Prüfen, ob das JDK im Image ist:
+Prüfen, ob das JDK im Image steckt:
 
 ```bash
 docker compose -f docker-compose.yml exec backend javac -version
 ```
 
-Kommt hier nichts, ist das Image kaputt gebaut — neu bauen mit `--no-cache`.
+Kommt nichts, ist das Image kaputt gebaut — neu bauen mit
+`docker compose -f docker-compose.yml build --no-cache backend`.
 
 ### Abgaben stehen nach einem Neustart auf „Fehlgeschlagen"
 
 **Kein Fehler, sondern Absicht.** Eine Auswertung, die beim Herunterfahren
-abgebrochen wird, kann nicht fortgesetzt werden; beim nächsten Start werden
-solche Abgaben als fehlgeschlagen markiert, mit einem Hinweis für den
-Teilnehmer. Er reicht einfach neu ein.
+abgebrochen wird, lässt sich nicht fortsetzen; beim nächsten Start werden solche
+Abgaben markiert, mit einem Hinweis für den Teilnehmer. Er reicht neu ein.
 
 ### Umlaute erscheinen zerlegt
 
-Sollte nicht vorkommen — die ganze Kette ist auf UTF-8 festgelegt und das ist
-geprüft. Tritt es doch auf, gehört es gemeldet: mit der Aufgabe, der Abgabe und
-einem Auszug aus `docker compose logs backend`.
+Sollte nicht vorkommen, die ganze Kette ist auf UTF-8 festgelegt und das ist
+geprüft. Tritt es doch auf, gehört es gemeldet — mit Aufgabe, Abgabe und einem
+Auszug aus `docker compose -f docker-compose.yml logs backend`.
 
 ---
 
@@ -636,13 +361,11 @@ einem Auszug aus `docker compose logs backend`.
 docker compose -f docker-compose.yml up -d --build    # starten / aktualisieren
 docker compose -f docker-compose.yml ps               # Zustand
 docker compose -f docker-compose.yml logs -f backend  # Protokoll
-docker compose -f docker-compose.yml restart frontend # nur den Proxy neu
 docker compose -f docker-compose.yml down             # stoppen (Daten bleiben)
 ```
 
 | | |
 |---|---|
-| Teilnehmer | `https://soop.workshop` |
-| Verwaltung | `https://soop.workshop/admin` |
+| Teilnehmer | `http://<ip-der-vm>` |
+| Verwaltung | `http://<ip-der-vm>/admin` |
 | Zugangsdaten | `.env` auf der VM |
-| Zertifikate | `certs/` auf der VM |
