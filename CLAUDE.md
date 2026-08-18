@@ -2,17 +2,24 @@
 
 > Diese Datei ist die **gemeinsame Wahrheit** für die Zusammenarbeit an diesem Projekt.
 > Claude liest sie zu Beginn jeder Sitzung und hält die Fortschrittsliste aktuell.
-> Stand: 2026-08-18 — Phase 0 bis 6 abgeschlossen. Das Admin-Panel steht (Anmeldung,
-> Kategorien und Aufgaben, JUnit-Editor, Bestands-Transfer, Vorschau, Probelauf),
-> und die Testabdeckung ist ausgebaut: **386 Projekt-Tests** (davon 84 gegen ein
-> echtes PostgreSQL aus dem Container) und **145 Frontend-Tests**. Alle Prüfungen
-> laufen mit einem Befehl: `.\scripts\pruefe-alles.ps1`.
-> Als Nächstes kommt Phase 7 (Docker Compose, README, Abschluss) — dort auch
-> GitHub Actions. Das Frontend heißt **Soop Judge** und ist
+> Stand: 2026-08-18 — **Phase 0 bis 7 abgeschlossen, das Projekt ist
+> auslieferbar.** `docker compose up -d --build` bringt Datenbank, Backend und
+> Frontend hoch; die Schritt-für-Schritt-Anleitung für die Debian-VM steht in
+> **`docs/server-aufsetzen.md`**. Teilnehmer erreichen das System unter
+> `https://soop.workshop`, der Betreuer verwaltet es von einem anderen Rechner
+> im selben Netz.
+> **400 Projekt-Tests** (davon 98 gegen ein echtes PostgreSQL aus dem Container)
+> und **145 Frontend-Tests**. Alle Prüfungen mit einem Befehl:
+> `.\scripts\pruefe-alles.ps1`; dieselben Schritte laufen als GitHub Action.
+> Das Frontend heißt **Soop Judge** und ist
 > **React 19 + Vite + TypeScript + Tailwind 4** unter
 > `src/SoopWorkshop.Frontend/`. Das alte Blazor-Frontend liegt stillgelegt unter
 > `archive/`. Der Feinschliff an Farben und Abständen macht der Betreuer von Hand —
-> siehe §6.1. Die Abnahme von Phase 6 steht in `tests/manual/abnahme-phase6.md`.
+> siehe §6.1. Die Abnahmen stehen in `tests/manual/abnahme-phase*.md`.
+>
+> **Was offen bleibt** (bewusst, nicht vergessen): echte Isolation je Abgabe
+> (ein Container pro Auswertung), Übersichtsseite für Aufgaben (§10 Punkt 14),
+> Dunkelmodus und Handy-Optimierung.
 
 ---
 
@@ -146,8 +153,34 @@ Schreibt `src/api/schema.d.ts` aus `/openapi/v1.json`. Die Datei ist eingecheckt
 der Build ohne laufendes Backend funktioniert. Fällt im Backend ein Feld weg, bricht
 danach die Umsetzung in `src/api/mappers.ts` beim Übersetzen — genau dafür ist sie da.
 
-Die Datenbank läuft über `docker-compose.yml` (Service `db`, Container
-`soopworkshop-db`). In Phase 7 kommen Backend und Frontend als weitere Services dazu.
+### Container: Entwicklung und Betrieb aus derselben Datei
+
+`docker-compose.yml` beschreibt seit Phase 7 den **Betrieb** — Datenbank,
+Backend und Frontend. In der Entwicklung braucht man davon nur die Datenbank:
+
+```bash
+docker compose up -d db
+```
+
+Compose lädt lokal zusätzlich `docker-compose.override.yml`. Die veröffentlicht
+den Datenbank-Port auf `127.0.0.1:5432` und hängt `db` ins äußere Netz — nötig,
+weil das Betriebsnetz `internal: true` trägt und eine Portfreigabe dort gar
+nicht zulässt. **Auf dem Server liegt die Datei nicht**, deshalb steht dort
+überall `-f docker-compose.yml`:
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+**Das `-f` ist keine Kosmetik.** Ohne die Angabe zöge Compose auf dem Server das
+Override mit, falls es doch dort läge, und veröffentlichte die Datenbank ins
+Netz. Die vollständige Anleitung steht in `docs/server-aufsetzen.md`.
+
+Der Container `soopworkshop-db` behält seinen festen Namen, weil `start-dev.ps1`,
+`stop-dev.ps1` und `sync-db-password.ps1` ihn benutzen. Backend und Frontend
+haben bewusst **keinen** — ein fester Name verhindert einen zweiten Stapel auf
+derselben Maschine (und genau daran ist die Abnahme in Phase 7 einmal
+gescheitert).
 
 ### `.env` ist in der Entwicklung die eine Wahrheit
 
@@ -1147,21 +1180,69 @@ auffällig war; die Admin-Seiten sind es bewusst nicht.
 - [ ] Aus Phase 5 weiterhin offen: **Submissions-Übersicht mit
       Auswertungshistorie** — sie braucht neue Endpunkte und ist Feature-Arbeit
 
-### Phase 7 — Docker Compose, README, Abschluss
+### Phase 7 — Auslieferung, Betrieb, Abschluss ✅
+*Branch `phase-7-auslieferung`. 400 Projekt-Tests (98 Integration) und 145
+Frontend-Tests, alle grün. Build warnungsfrei, Typprüfung und Linter sauber.
+Anleitung: `docs/server-aufsetzen.md`. Abnahme: `tests/manual/abnahme-phase7.md`.*
 
-- [ ] `Dockerfile` Backend — inkl. JDK und JUnit-Standalone-JAR
-- [ ] `Dockerfile` Frontend — mehrstufig: Node baut, ein schlanker Webserver liefert
-      `dist/` aus. Die Schriften liegen als npm-Paket bei, es wird nichts nachgeladen
-- [ ] `docker-compose.yml`: PostgreSQL + Backend + Frontend, Healthchecks, `depends_on`,
-      benanntes Volume für die DB
-- [ ] Konfiguration vollständig über Umgebungsvariablen (ConnectionString,
-      `VITE_API_URL`, Admin-Passwort) — nichts Fest-Verdrahtetes mehr.
-      `Cors:AllowedOrigins` muss dort auf den Betriebs-Host zeigen, nicht auf 5173
-- [ ] Migrationen beim Start anwenden oder dokumentierter Einzelschritt
-- [ ] **README final**: Was das Tool ist, Voraussetzungen, Setup in einem Befehl,
-      DB-Einrichtung, Admin-Login, Aufgaben anlegen, Troubleshooting.
-      Die leeren Abschnitte (Architektur, Projektstruktur, Roadmap) füllen.
-- [ ] Hinweis in der README: workshop-interner Betrieb, keine Härtung gegen böswillige Abgaben
+> **Das Ziel hat sich in dieser Phase geschärft:** nicht „läuft in Docker",
+> sondern **läuft auf einer Debian-VM im Ausbildungsnetz**, erreichbar unter
+> `soop.workshop`, verwaltet vom Rechner des Betreuers — nicht vom Server.
+> Das letzte Detail hat mehr entschieden als alles andere (siehe Cookie unten).
+
+- [x] `Dockerfile` Backend — mehrstufig, JDK 21 in der **Laufzeitschicht**
+      (nicht im Build: `javac` und `java` werden je Abgabe als Prozess
+      aufgerufen), JUnit-JAR über die bestehende `.csproj`-Regel, `USER app`
+- [x] `Dockerfile` Frontend — Node baut, nginx liefert aus **und ist der
+      Reverse Proxy**. Die Schriften liegen als npm-Paket bei
+- [x] `docker-compose.yml`: PostgreSQL + Backend + Frontend, Healthchecks,
+      `depends_on: service_healthy`, benannte Volumes.
+      `docker-compose.override.yml` veröffentlicht den DB-Port nur lokal
+- [x] Konfiguration vollständig über Umgebungsvariablen. **`Cors` bleibt im
+      Betrieb leer** — hinter dem Proxy gibt es keine fremde Herkunft mehr zu
+      erlauben, und `VITE_API_URL` wird leer gebaut (relative Pfade)
+- [x] Migrationen beim Start über einen `IHostedService`, abschaltbar über
+      `Database__MigrateOnStartup`, mit Wiederholversuchen
+- [x] **README neu geschrieben** — der Bestand beschrieb ein anderes Projekt
+      (JAR-Upload, Blazor, „jedes JAR läuft isoliert in einem Container")
+- [x] **`docs/server-aufsetzen.md`** — elf Abschnitte von der leeren VM bis zur
+      Fehlersuche, jeder mit einer Kontrolle. Das eigentliche Ergebnis der Phase
+- [x] Grenzen unbeschönigt in der README: workshop-intern, keine Härtung gegen
+      böswillige Abgaben, was das interne Netz leistet und was nicht
+- [x] **Abgaben-Übersicht** (Nachzügler aus Phase 5) — `GET
+      api/admin/submissions`, seitenweise, filterbar, verlinkt auf **dieselbe**
+      Ergebnisseite wie beim Teilnehmer
+- [x] **GitHub Actions** (aus Phase 6 verschoben) — spiegelt
+      `pruefe-alles.ps1`, dazu ein Job, der beide Images baut und prüft, dass
+      `javac`, `java` und das JUnit-JAR im Backend-Image liegen
+- [x] Die drei offenen Findings aus Phase 6 geschlossen (§9)
+
+**Die drei Entscheidungen, an denen alles hing:**
+
+| | Entscheidung | Warum |
+|---|---|---|
+| Origins | **ein** Ursprung, nginx reicht `/api` weiter | CORS entfällt, kein Hostname im Image |
+| HTTPS | **eigene CA (mkcert)**, kein selbstsigniertes | selbstsigniert bringt einem ganzen Kurs bei, Warnungen wegzuklicken |
+| Cookie | Entwicklung `None`+`Always`, Betrieb `Lax`+`SameAsRequest` | der Betreuer sitzt **nicht** auf dem Server; mit `Always` wäre das Cookie über http nie zurückgekommen |
+
+`SameAsRequest` ist **kein Ausschalter**: über https ist das Cookie `Secure`,
+über http nicht — es beschreibt die Lage, statt eine Zusicherung zu behaupten,
+die die Verbindung nicht hergibt. Voraussetzung ist `UseForwardedHeaders`;
+ohne das sähe das Backend hinter dem Proxy dauerhaft `http`. **Bewusst kein
+HSTS**: das machte die Zertifikatswarnung unumgehbar und sperrte jeden Rechner
+ohne Wurzelzertifikat komplett aus.
+
+**Fremder Code — die wirksamste Maßnahme der ganzen Phase:** Backend und
+Datenbank liegen in einem Docker-Netz mit `internal: true`. Der Container, in
+dem die Abgaben laufen, hat **keine Route ins LAN und keine ins Internet** —
+nachgemessen, nicht behauptet (§7). Er braucht auch keine, das JUnit-JAR liegt
+im Image. Dazu `mem_limit`, `cpus`, `pids_limit`. Das ist die in §10 Punkt 4
+versprochene „v1 mit Timeouts und Prozesslimits".
+
+**Bewusst nicht umgesetzt:** kein Registry-Push (workshop-intern, es gibt
+keine), keine echte Isolation je Abgabe (eigener Container pro Auswertung —
+spätere Ausbaustufe), kein Zurückstellen abgebrochener Abgaben in die
+Warteschlange beim Herunterfahren (braucht eine persistente Warteschlange).
 
 ### Definition of Done — wann ist das Projekt „final"?
 
@@ -1501,6 +1582,52 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   ehrliche 20 %. **Lehre:** eine Coverage-Zahl ohne Angabe der Grundgesamtheit
   ist keine Messung, sondern eine Selbstbestätigung
 
+**Aus Phase 7:**
+
+- 2026-08-18 — `Frontend/src/api/client.ts` — `import.meta.env.VITE_API_URL || DEFAULT`
+  wäre im Betrieb still auf `http://localhost:5120` zurückgefallen. Der Aufbau
+  setzt die Variable **absichtlich leer** (gleicher Ursprung, relative Pfade),
+  und eine leere Zeichenkette ist falsy. Der Fehler hätte den `localhost` des
+  **Teilnehmers** angesprochen, wo nichts horcht — und wie ein ausgefallenes
+  Backend ausgesehen. Behoben mit `??`. **Lehre:** wenn ein leerer Wert eine
+  eigene Aussage trägt, ist `||` falsch — die Frage ist „gesetzt?", nicht
+  „wahr?"
+- 2026-08-18 — `Frontend/nginx.conf` — nginx löst Upstream-Namen **beim Start**
+  auf und startet gar nicht, wenn der Name fehlt (`host not found in upstream`).
+  Ein Backend, das sich gerade neu aufbaut, hätte damit die ganze Seite
+  mitgenommen: Teilnehmer sähen „Verbindung abgelehnt" statt einer Seite mit
+  Fehlermeldung. Behoben über Dockers DNS (`resolver 127.0.0.11`) plus eine
+  Variable im `proxy_pass` — damit löst nginx je Anfrage auf. **Achtung:** bei
+  einer Variablen muss `$request_uri` ausdrücklich angehängt werden, sonst
+  verwirft nginx den Pfad
+- 2026-08-18 — `Backend.API/Dockerfile` — das Verzeichnis der
+  DataProtection-Schlüssel muss **schon im Image** dem Benutzer `app` gehören.
+  Ein frisches Named Volume übernimmt Inhalt und Eigentümer aus dem Image;
+  existiert das Verzeichnis dort nicht, legt Docker es an und es gehört `root`.
+  Folge: die **Anmeldung** scheitert mit 500
+  (`UnauthorizedAccessException` in `FileSystemXmlRepository`), während alles
+  andere einwandfrei läuft. Ohne das Volume wäre stattdessen bei jedem
+  `up --build` die bestehende Anmeldung ungültig geworden — kommentarlos
+- 2026-08-18 — `Frontend/docker-entrypoint.sh` — der Notfallpfad für ein
+  fehlendes Zertifikat schrieb in ein `:ro` gemountetes Verzeichnis **und**
+  verschluckte den Grund mit `2>/dev/null`. Ergebnis war eine endlose
+  Neustartschleife ohne Erklärung. Genau der `catch { }`, den §2 verbietet, nur
+  in Shell. Behoben: Notfall-Zertifikat nach `/tmp`, nginx-Konfiguration wird
+  umgebogen, und die Fehlerausgabe bleibt stehen
+- 2026-08-18 — `docker-compose.yml` — feste `container_name` verhindern einen
+  zweiten Stapel auf derselben Maschine (Namenskonflikt). Bei Backend und
+  Frontend entfernt; bei `db` behalten, weil `start-dev.ps1`, `stop-dev.ps1`
+  und `sync-db-password.ps1` den Namen benutzen. **Merken:** ein fester
+  Containername ist eine Zusicherung an Skripte, kein Komfort
+- 2026-08-18 — Abnahme im Container — die Ablehnung „größer als 1024 KB" kommt
+  nur durch, weil `client_max_body_size` gesetzt ist; nginx' Voreinstellung von
+  1 MB hätte sie durch eine **englische HTML-Seite** ersetzt. Oberhalb der
+  Gesamtgrenze antwortet aber weiterhin nginx mit 413 — dort gäbe es ohnehin
+  keinen deutschen Satz, weil ASP.NETs `RequestSizeLimit` das Binden vor der
+  Validierung abbricht. Das Frontend blockt den Fall clientseitig. **Lehre:**
+  einen Kommentar, der mehr verspricht als der Test zeigt, auf den Test
+  zurückziehen
+
 ---
 
 ## 10. Offene Entscheidungen
@@ -1575,3 +1702,4 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
     Importen, damit `tsconfig.app.json` unangetastet bleibt und `tsc -b` die
     Tests mitprüft. 145 Tests; abgedeckt ist, was in Phase 4 und 5 auffällig
     war, die Admin-Seiten bewusst nicht.
+
