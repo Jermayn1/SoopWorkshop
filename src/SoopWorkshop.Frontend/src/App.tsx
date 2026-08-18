@@ -11,6 +11,7 @@ import { CategoriesPage } from './admin/pages/CategoriesPage'
 import { NewTaskPage } from './admin/pages/NewTaskPage'
 import { TaskEditorPage } from './admin/pages/TaskEditorPage'
 import { TaskPreviewPage } from './admin/pages/TaskPreviewPage'
+import { SubmissionsPage } from './admin/pages/SubmissionsPage'
 import { TransferPage } from './admin/pages/TransferPage'
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="aufgaben/neu" element={<NewTaskPage />} />
           <Route path="aufgaben/:taskId" element={<TaskEditorPage />} />
           <Route path="aufgaben/:taskId/vorschau" element={<TaskPreviewPage />} />
+          <Route path="abgaben" element={<SubmissionsPage />} />
           <Route path="transfer" element={<TransferPage />} />
         </Route>
       </Route>

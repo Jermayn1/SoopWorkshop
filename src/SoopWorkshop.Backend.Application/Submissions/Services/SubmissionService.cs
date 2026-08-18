@@ -95,6 +95,61 @@ public class SubmissionService(
         });
     }
 
+    // Obergrenze fuer take. Ohne sie koennte ein Aufruf mit take=100000 die
+    // ganze Tabelle samt Includes in den Speicher ziehen - eine Seitengrenze,
+    // die der Aufrufer selbst bestimmt, ist keine.
+    private const int MaxSeitengroesse = 200;
+
+    public async Task<Result<SubmissionPageDto>> GetPageAsync(
+        Guid? taskItemId,
+        SubmissionStatus? status,
+        int skip,
+        int take,
+        CancellationToken cancellationToken)
+    {
+        skip = Math.Max(0, skip);
+        take = Math.Clamp(take <= 0 ? 25 : take, 1, MaxSeitengroesse);
+
+        var (items, gesamt) = await _submissionRepository.GetPageAsync(
+            taskItemId, status, skip, take, cancellationToken);
+
+        _logger.LogInformation(
+            "Abgaben-Uebersicht: {Anzahl} von {Gesamt} (Aufgabe {TaskItemId}, Status {Status}).",
+            items.Count,
+            gesamt,
+            taskItemId,
+            status);
+
+        return Result<SubmissionPageDto>.Ok(new SubmissionPageDto
+        {
+            Items = items.Select(MapToListItem).ToList(),
+            Total = gesamt,
+            Skip = skip,
+            Take = take
+        });
+    }
+
+    private static SubmissionListItemDto MapToListItem(Submission submission) => new()
+    {
+        Id = submission.Id,
+        TaskItemId = submission.TaskItemId,
+
+        // Die Navigationen kommen aus dem Include der Abfrage. Der Rueckfall
+        // ist ein leerer String und keine Ausnahme: eine Zeile ohne Titel ist
+        // aergerlich, eine Uebersicht, die deswegen gar nicht laedt, schlimmer.
+        TaskTitle = submission.Task?.Title ?? string.Empty,
+        CategoryName = submission.Task?.Category?.Name ?? string.Empty,
+
+        SubmittedAt = submission.SubmittedAt,
+        Status = submission.Status,
+        ErrorMessage = submission.ErrorMessage,
+
+        // Null statt 0, solange keine Auswertung vorliegt — 0 waere eine
+        // Aussage ueber die Loesung, null sagt nur "noch nicht bewertet".
+        TotalScore = submission.EvaluationResult?.TotalScore,
+        MaxScore = submission.EvaluationResult?.MaxScore
+    };
+
     private static SubmissionDto MapToDto(Submission submission) => new()
     {
         Id = submission.Id,

@@ -25,7 +25,7 @@ type Schemas = components['schemas']
 // ASP.NET gibt int32 im Vertrag als "integer | string" an, weil es beim
 // Binden auch Zahlen als Zeichenkette annimmt. In Antworten kommt immer eine
 // Zahl — hier trotzdem beide Faelle behandeln, statt es zu glauben.
-function toNumber(value: number | string | undefined, fallback = 0): number {
+export function toNumber(value: number | string | undefined, fallback = 0): number {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
     const parsed = Number.parseInt(value, 10)
