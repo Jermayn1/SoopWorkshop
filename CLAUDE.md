@@ -5,10 +5,11 @@
 > Stand: 2026-08-18 — **Phase 0 bis 7 abgeschlossen, das Projekt ist
 > auslieferbar.** `docker compose up -d --build` bringt Datenbank, Backend und
 > Frontend hoch; die Schritt-für-Schritt-Anleitung für die Debian-VM steht in
-> **`docs/server-aufsetzen.md`**. Teilnehmer erreichen das System unter
+> **`docs/server-aufsetzen.md`** (fünf Schritte), alles Weitere getrennt in
+> **`docs/betrieb.md`**. Teilnehmer erreichen das System unter
 > `http://<ip-der-vm>` — **ohne Zertifikat und ohne DNS-Eintrag**; auf den
 > Teilnehmerrechnern ist nichts einzurichten. Ein Name und HTTPS sind optionale
-> Schritte in der Anleitung, kein Teil des Betriebs.
+> Schritte in `betrieb.md`, kein Teil des Aufsetzens.
 > **400 Projekt-Tests** (davon 98 gegen ein echtes PostgreSQL aus dem Container)
 > und **145 Frontend-Tests**. Alle Prüfungen mit einem Befehl:
 > `.\scripts\pruefe-alles.ps1`; dieselben Schritte laufen als GitHub Action.
@@ -175,7 +176,8 @@ docker compose -f docker-compose.yml up -d --build
 
 **Das `-f` ist keine Kosmetik.** Ohne die Angabe zöge Compose auf dem Server das
 Override mit, falls es doch dort läge, und veröffentlichte die Datenbank ins
-Netz. Die vollständige Anleitung steht in `docs/server-aufsetzen.md`.
+Netz. Die Anleitung steht in `docs/server-aufsetzen.md`, der Betrieb in
+`docs/betrieb.md`.
 
 Der Container `soopworkshop-db` behält seinen festen Namen, weil `start-dev.ps1`,
 `stop-dev.ps1` und `sync-db-password.ps1` ihn benutzen. Backend und Frontend
@@ -1206,8 +1208,12 @@ Anleitung: `docs/server-aufsetzen.md`. Abnahme: `tests/manual/abnahme-phase7.md`
       `Database__MigrateOnStartup`, mit Wiederholversuchen
 - [x] **README neu geschrieben** — der Bestand beschrieb ein anderes Projekt
       (JAR-Upload, Blazor, „jedes JAR läuft isoliert in einem Container")
-- [x] **`docs/server-aufsetzen.md`** — elf Abschnitte von der leeren VM bis zur
-      Fehlersuche, jeder mit einer Kontrolle. Das eigentliche Ergebnis der Phase
+- [x] **`docs/server-aufsetzen.md`** — fünf Schritte von der leeren VM zum
+      laufenden System, jeder mit einer Kontrolle, plus die Fehler, die dabei
+      wirklich blockieren. Das eigentliche Ergebnis der Phase.
+      **`docs/betrieb.md`** nimmt alles auf, was nicht zum Laufen gebraucht wird
+      (Absichern, Firewall, Sichern, DNS-Name, HTTPS nachrüsten) — getrennt,
+      damit die Anleitung eine Anleitung bleibt und kein Nachschlagewerk
 - [x] Grenzen unbeschönigt in der README: workshop-intern, keine Härtung gegen
       böswillige Abgaben, was das interne Netz leistet und was nicht
 - [x] **Abgaben-Übersicht** (Nachzügler aus Phase 5) — `GET
@@ -1729,7 +1735,7 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - 2026-08-18 — `Frontend/docker-entrypoint.sh` — der Zweig „Zertifikat
   gefunden" setzte die zuvor umgebogenen Pfade in `nginx.conf` **nicht**
   zurück. Wer zuerst ohne Zertifikat startet und es später nachlegt — genau der
-  Weg, den `docs/server-aufsetzen.md` §11 vorschlägt —, bekam nach
+  Weg, den die damalige Anleitung in der Fehlersuche vorschlug —, bekam nach
   `docker compose restart frontend` weiter das alte selbstsignierte aus `/tmp`
   ausgeliefert, während das Log „Zertifikat gefunden" meldete. Ein `restart`
   behält denselben Container samt Dateisystem. Behoben: die Pfade werden bei

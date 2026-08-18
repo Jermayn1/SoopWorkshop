@@ -66,8 +66,10 @@ docker compose -f docker-compose.yml up -d --build
 ```
 
 Voraussetzung ist nur Docker. .NET, Node und das JDK stecken in den Images.
-DNS-Name, Firewall, Sicherung und HTTPS stehen in der Anleitung als optionale
-Schritte — sie werden für den Betrieb nicht gebraucht.
+
+Alles, was **nicht** gebraucht wird, damit es läuft — Absicherung, Firewall,
+Sicherung, ein DNS-Name statt der IP, HTTPS nachrüsten — steht getrennt in
+[docs/betrieb.md](docs/betrieb.md).
 
 ---
 

@@ -130,10 +130,10 @@ Es sind fünf Pflichtschritte. Besonders hinsehen bei:
 - **Der Teilnehmerblick** — `http://<ip-der-vm>` von einem fremden Rechner
   öffnen. Die Seite muss **direkt** laden, ohne dass irgendwo etwas zu
   bestätigen ist. Das „Nicht sicher" in der Adressleiste ist erwartet und kein
-  Befund (Abschnitt „Warum kein HTTPS")
+  Befund (`docs/betrieb.md`, „Warum kein HTTPS")
 
-Alles unter *Optional* ist ausdrücklich **nicht** Teil der Abnahme. Wenn dabei
-etwas nicht klappt, ist das eine Notiz für später, kein Blocker.
+Alles aus `docs/betrieb.md` ist ausdrücklich **nicht** Teil der Abnahme. Wenn
+dabei etwas nicht klappt, ist das eine Notiz für später, kein Blocker.
 
 ### 2.5 Vom zweiten Rechner verwalten
 
@@ -174,7 +174,7 @@ Fehler, sondern das dokumentierte Verhalten.**
   http immer so und lässt sich nicht wegkonfigurieren — ein Schloss gibt es nur
   mit einem vertrauenswürdigen Zertifikat. Es ist ein Label, keine Warnseite:
   die Seite lädt sofort, es ist nichts zu klicken. Die Abwägung steht in
-  `docs/server-aufsetzen.md` unter „Warum kein HTTPS".
+  `docs/betrieb.md` unter „Warum kein HTTPS".
 - **Das Admin-Passwort läuft im Klartext durchs LAN.** Folge derselben
   Entscheidung, offen dokumentiert. Deshalb gehört der Aufbau nicht ins Internet.
 - **Eine Abgabe erreicht die Datenbank.** Das interne Netz sperrt LAN und
