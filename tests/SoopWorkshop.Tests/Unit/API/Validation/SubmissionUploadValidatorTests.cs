@@ -93,6 +93,21 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
             SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("mehrfach");
         }
 
+        // Der Vergleich laeuft ueber OrdinalIgnoreCase, weil das Dateisystem
+        // unter Windows es genauso haelt.
+        //
+        // **Hier weicht das Frontend ab**: checkFiles in uploadLimits.ts
+        // vergleicht bitgenau und laesst beide durch. Der Teilnehmer waehlt sie
+        // also ohne Warnung aus und faengt sich die Ablehnung erst vom Server.
+        // Nachgemessen in uploadLimits.test.ts; siehe CLAUDE.md Paragraph 9.
+        [Fact]
+        public void Validate_GleicherNameInAndererSchreibweise_WirdEbenfallsAbgelehnt()
+        {
+            List<IFormFile> files = [FormFileFactory.Create("Main.java"), FormFileFactory.Create("main.java")];
+
+            SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("mehrfach");
+        }
+
         [Fact]
         public void Validate_MehrereVerstoesse_MeldetAlleAufEinmal()
         {

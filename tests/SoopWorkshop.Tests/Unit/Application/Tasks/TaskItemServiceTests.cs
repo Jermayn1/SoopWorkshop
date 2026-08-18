@@ -222,5 +222,43 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             result.IsSuccess.ShouldBeTrue();
             item.IsVisible.ShouldBeFalse();
         }
+
+        // Auf dieser Filterung steht die Vorschau aus Etappe 5.5: das Panel laedt
+        // ueber denselben DTO wie die oeffentliche Seite und ist damit ehrlich
+        // durch Konstruktion. Faellt die Filterung weg, faellt sie unbemerkt mit —
+        // im Panel saehe alles weiter richtig aus.
+        [Fact]
+        public async Task GetByIdAsync_NurFreigeschalteteJUnitDateienVerlassenDenAdminBereich()
+        {
+            var item = GivenExistingTask(GivenExistingCategory());
+            item.UnitTestFiles =
+            [
+                new TaskUnitTestFile
+                {
+                    Id = Guid.NewGuid(),
+                    TaskItemId = item.Id,
+                    FileName = "SichtbarTest.java",
+                    Content = "class SichtbarTest {}",
+                    Order = 2,
+                    IsVisibleToParticipant = true
+                },
+                new TaskUnitTestFile
+                {
+                    Id = Guid.NewGuid(),
+                    TaskItemId = item.Id,
+                    FileName = "GeheimTest.java",
+                    Content = "class GeheimTest {}",
+                    Order = 1,
+                    IsVisibleToParticipant = false
+                }
+            ];
+
+            var result = await CreateService().GetByIdAsync(item.Id);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value!.VisibleUnitTestFiles
+                .Select(file => file.FileName)
+                .ShouldBe(["SichtbarTest.java"]);
+        }
     }
 }
