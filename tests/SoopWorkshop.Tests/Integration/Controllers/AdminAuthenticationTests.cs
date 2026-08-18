@@ -125,13 +125,63 @@ namespace SoopWorkshop.Tests.Integration.Controllers
 
             cookie.ShouldContain(AdminAuthenticationExtensions.CookieName);
 
-            // Beides ist der Grund, warum es ueberhaupt ein Cookie ist und kein
-            // Token im Speicher der Seite: kein Zugriff aus JavaScript, und die
-            // Origin-Grenze zwischen Frontend (5173) und API (5120) verlangt
-            // SameSite=None, das wiederum Secure verlangt.
+            // Der Grund, warum es ueberhaupt ein Cookie ist und kein Token im
+            // Speicher der Seite: kein Zugriff aus JavaScript. Ein eingeschleustes
+            // Skript kann den Zugang so nicht auslesen.
             cookie.ShouldContain("httponly", Case.Insensitive);
+
+            // Die Tests laufen unter "Testing", also im BETRIEBSZWEIG der
+            // Cookie-Politik - und damit gegen die Einstellung, die ausgeliefert
+            // wird. Hinter dem Reverse Proxy liefern Frontend und API denselben
+            // Ursprung aus; es gibt keine Origin-Grenze mehr zu ueberqueren, Lax
+            // ist die engere und richtige Angabe.
+            cookie.ShouldContain("samesite=lax", Case.Insensitive);
+
+            // Secure, weil die Basisadresse https ist. Das ist keine feste
+            // Zusicherung mehr, sondern SameAsRequest - siehe den Test darunter.
             cookie.ShouldContain("secure", Case.Insensitive);
-            cookie.ShouldContain("samesite=none", Case.Insensitive);
+        }
+
+        /// <summary>
+        /// Ueber http traegt dasselbe Cookie kein Secure - und kommt damit zurueck.
+        /// </summary>
+        /// <remarks>
+        /// Das ist der Fall, auf dem der ganze Betriebsaufbau steht: der Betreuer
+        /// verwaltet von einem anderen Rechner im Netz, nicht vom Server selbst.
+        /// Mit dem frueheren CookieSecurePolicy.Always haette der Browser das
+        /// Cookie ueber http nie zurueckgeschickt (localhost ist die Ausnahme, ein
+        /// Rechner im LAN nicht) - die Anmeldung haette kommentarlos nie
+        /// funktioniert, und der Fehler haette wie ein kaputter Server ausgesehen.
+        ///
+        /// SameAsRequest ist dabei kein Ausschalter: der Test darueber belegt,
+        /// dass ueber https weiterhin Secure gesetzt wird. Sobald ein Zertifikat
+        /// auf dem Server liegt, zieht die Absicherung ohne Codeaenderung nach.
+        /// </remarks>
+        [Fact]
+        public async Task Anmelden_UeberHttp_SetztKeinSecureUndDasCookieKommtZurueck()
+        {
+            using var client = Fixture.Factory.CreateClient(
+                new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+                {
+                    AllowAutoRedirect = false,
+                    BaseAddress = new Uri("http://localhost")
+                });
+
+            var anmeldung = await client.PostAsJsonAsync(
+                "/api/admin/auth/login",
+                new AdminLoginDto { Password = SoopWorkshopFactory.AdminPassword });
+
+            anmeldung.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+            var cookie = anmeldung.Headers.GetValues("Set-Cookie").ShouldHaveSingleItem();
+            cookie.ShouldNotContain("secure", Case.Insensitive);
+
+            // Der eigentliche Beleg: nicht der Kopf, sondern dass der Zugang
+            // damit auch wirklich traegt. Der CookieContainer von .NET verhaelt
+            // sich hier wie ein Browser - ein Secure-Cookie waere ueber http gar
+            // nicht erst zurueckgeschickt worden.
+            var geschuetzt = await client.GetAsync("/api/admin/auth/session");
+            geschuetzt.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Fact]

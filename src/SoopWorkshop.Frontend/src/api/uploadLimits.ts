@@ -35,7 +35,13 @@ export function checkFiles(
       continue
     }
 
-    if (accepted.some((f) => f.name === file.name)) {
+    // Gross- und Kleinschreibung zaehlt hier NICHT, weil sie es im Backend
+    // nicht tut (SubmissionUploadValidator vergleicht mit OrdinalIgnoreCase).
+    // Vorher liess der Browser 'A.java' neben 'a.java' durch, und erst der
+    // Server lehnte ab - der Teilnehmer bekam eine Ablehnung fuer etwas, das
+    // die Oberflaeche eben noch angenommen hatte. Bei Namensgleichheit
+    // ueberschreibt javac ausserdem die eine Klasse mit der anderen.
+    if (accepted.some((f) => f.name.toLowerCase() === file.name.toLowerCase())) {
       rejections.push(`'${file.name}' ist bereits ausgewählt.`)
       continue
     }

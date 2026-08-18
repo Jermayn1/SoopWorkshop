@@ -1,0 +1,135 @@
+# Spiegelt scripts/pruefe-alles.ps1. Aendert sich dort etwas, gehoert es auch
+# hierher - zwei Wahrheiten darueber, was "gruen" heisst, waeren schlimmer als
+# gar keine CI.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Ein zweiter Push auf denselben Branch macht den ersten Lauf ueberfluessig.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefungen:
+    name: Build, Tests, Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/SoopWorkshop.Frontend/package-lock.json
+
+      # Ab hier gilt dieselbe Haltung wie im Skript: NICHT beim ersten Fehler
+      # abbrechen. Wer fuenf Pruefungen anstoesst, will fuenf Ergebnisse sehen
+      # und nicht fuenfmal neu starten. Die Auswertung steht am Ende.
+      - name: dotnet build
+        id: build
+        continue-on-error: true
+        run: dotnet build SoopWorkshop.slnx --nologo -v quiet
+
+      # Die Integrationstests starten einen PostgreSQL-Container ueber
+      # Testcontainers. Auf ubuntu-latest ist Docker vorhanden, es braucht
+      # keinen services-Block - der wuerde einen ZWEITEN Container aufmachen,
+      # den niemand benutzt.
+      #
+      # Kein Admin__Password noetig: die Tests setzen es ueber UseSetting, und
+      # eine .env gibt es hier nicht (Program.cs laedt sie ohnehin nur in
+      # Development, die Tests laufen unter "Testing").
+      - name: dotnet test
+        id: test
+        continue-on-error: true
+        run: dotnet test SoopWorkshop.slnx --nologo -v quiet --no-build
+
+      - name: npm ci
+        working-directory: src/SoopWorkshop.Frontend
+        run: npm ci
+
+      # Enthaelt tsc -b, also die Typpruefung gegen den erzeugten API-Vertrag.
+      - name: npm run build
+        id: frontend-build
+        continue-on-error: true
+        working-directory: src/SoopWorkshop.Frontend
+        run: npm run build
+
+      - name: npm run test
+        id: frontend-test
+        continue-on-error: true
+        working-directory: src/SoopWorkshop.Frontend
+        run: npm test
+
+      - name: npm run lint
+        id: lint
+        continue-on-error: true
+        working-directory: src/SoopWorkshop.Frontend
+        run: npm run lint
+
+      - name: Zusammenfassung
+        run: |
+          fehler=0
+          zeile() {
+            if [ "$2" = "success" ]; then
+              echo "  OK    $1"
+            else
+              echo "  FEHL  $1"
+              fehler=1
+            fi
+          }
+
+          echo "----------------------------------------"
+          zeile "dotnet build"  "${{ steps.build.outcome }}"
+          zeile "dotnet test"   "${{ steps.test.outcome }}"
+          zeile "npm run build" "${{ steps.frontend-build.outcome }}"
+          zeile "npm run test"  "${{ steps.frontend-test.outcome }}"
+          zeile "npm run lint"  "${{ steps.lint.outcome }}"
+          echo "----------------------------------------"
+
+          if [ "$fehler" -eq 0 ]; then
+            echo "Alles gruen."
+          else
+            echo "Mindestens eine Pruefung ist gefallen."
+            exit 1
+          fi
+
+  images:
+    name: Container bauen
+    runs-on: ubuntu-latest
+
+    # Der einzige automatisierte Beleg, dass die Dockerfiles noch uebersetzen.
+    # Ohne ihn faellt ein kaputtes Dockerfile erst beim Aufsetzen auf dem
+    # Server auf - also genau dann, wenn man es am wenigsten gebrauchen kann.
+    # Nur bauen, nicht veroeffentlichen: das System laeuft workshop-intern,
+    # es gibt keine Registry.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backend-Image
+        run: docker build -f src/SoopWorkshop.Backend.API/Dockerfile -t soopworkshop-backend:ci .
+
+      - name: Frontend-Image
+        run: docker build -t soopworkshop-frontend:ci ./src/SoopWorkshop.Frontend
+
+      # Die Pruefung, die in Phase 7 tatsaechlich etwas gefunden haette: ohne
+      # javac und java scheitert nicht der Start, sondern still jede einzelne
+      # Abgabe.
+      - name: JDK im Backend-Image vorhanden
+        run: |
+          docker run --rm --entrypoint sh soopworkshop-backend:ci -c '
+            set -e
+            javac -version
+            java -version
+            test -f lib/junit-platform-console-standalone-6.1.3.jar
+            echo "JDK und JUnit-JAR sind da."
+          '

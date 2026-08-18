@@ -55,17 +55,30 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             // Meldung sagt, was fehlt.
             (await response.Content.ReadAsStringAsync()).ShouldContain("JUnit-Datei");
 
-            // **Ist-Verhalten**: der Controller bildet JEDEN Fehlschlag auf 404 ab,
-            // auch diesen - obwohl es die Aufgabe sehr wohl gibt. Sichtbar wird das
-            // heute nicht, weil das Panel die Meldung unabhaengig vom Ausgang
-            // anzeigt (TaskEditorPage.onToggleVisibility). Sauber waere 400; das
-            // ist eine Vertragsaenderung und gehoert besprochen, nicht nebenbei
-            // erledigt. Siehe CLAUDE.md Paragraph 9.
-            response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            // 400, nicht 404: die Aufgabe GIBT es, ihr fehlen nur die Testdaten
+            // ihres Modus. Bis Phase 7 bildete der Controller jeden Fehlschlag
+            // auf 404 ab - im Frontend kam das als notFound an, also als "gibt
+            // es nicht" fuer etwas, das offen im Editor liegt. Genau die
+            // Zusammenlegung, gegen die ApiResult gebaut wurde.
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             await WithDbAsync(async db =>
                 (await db.TaskItems.SingleAsync(t => t.Id == ohneTestdaten.Id))
                     .IsVisible.ShouldBeFalse());
+        }
+
+        // Die Gegenprobe zum Test darueber. Ohne sie belegte nichts mehr, dass
+        // die beiden Faelle ueberhaupt noch unterscheidbar sind - ein Controller,
+        // der pauschal 400 liefert, bestuende oben genauso.
+        [Fact]
+        public async Task ToggleVisibility_AufgabeGibtEsNicht_Liefert404()
+        {
+            var client = await CreateAdminClientAsync();
+
+            var response = await client.PatchAsync(
+                $"/api/admin/tasks/{Guid.NewGuid()}/visibility", null);
+
+            response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
 
         [Fact]

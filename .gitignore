@@ -440,3 +440,8 @@ Gedanken.md
 
 # Coverage-Berichte aus scripts/pruefe-alles.ps1 -MitCoverage
 artifacts/
+
+# Zertifikate fuer den Reverse Proxy (Phase 7). Der private Schluessel darf
+# niemals ins Repository - deshalb der ganze Ordner bis auf die Beschreibung.
+certs/*
+!certs/README.md

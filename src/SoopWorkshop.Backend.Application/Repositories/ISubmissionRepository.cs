@@ -7,6 +7,17 @@ namespace SoopWorkshop.Backend.Application.Repositories
     {
         Task<Submission?> GetByIdAsync(Guid id);
         Task<List<Submission>> GetByTaskIdAsync(Guid taskId);
+
+        // Seitenweise Liste fuer die Uebersicht im Panel, neueste zuerst.
+        // Laedt Aufgabe, Kategorie und Auswertung mit — aber NICHT die Dateien:
+        // die Liste zeigt nur deren Anzahl, und ihr Inhalt waere bei hunderten
+        // Zeilen die teuerste Spalte der Abfrage.
+        Task<(List<Submission> Items, int Total)> GetPageAsync(
+            Guid? taskItemId,
+            SubmissionStatus? status,
+            int skip,
+            int take,
+            CancellationToken cancellationToken);
         Task AddAsync(Submission submission);
         Task UpdateAsync(Submission submission);
 

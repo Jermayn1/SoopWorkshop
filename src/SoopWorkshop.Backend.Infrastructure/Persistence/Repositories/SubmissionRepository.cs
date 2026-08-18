@@ -40,6 +40,47 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .ToListAsync();
         }
 
+        public async Task<(List<Submission> Items, int Total)> GetPageAsync(
+            Guid? taskItemId,
+            SubmissionStatus? status,
+            int skip,
+            int take,
+            CancellationToken cancellationToken)
+        {
+            var abfrage = _context.Submissions.AsNoTracking().AsQueryable();
+
+            if (taskItemId is not null)
+                abfrage = abfrage.Where(s => s.TaskItemId == taskItemId);
+
+            if (status is not null)
+                abfrage = abfrage.Where(s => s.Status == status);
+
+            // Vor dem Blaettern zaehlen, sonst zaehlt man die Seite statt der
+            // Menge - und die Seitennavigation im Panel zeigte immer "1 von 1".
+            var gesamt = await abfrage.CountAsync(cancellationToken);
+
+            var items = await abfrage
+                // Aufgabe UND deren Kategorie: die Zeile nennt beide. Fehlte das
+                // Include, stuende dort ein leerer Name statt einer Fehlermeldung
+                // - dieselbe stille Fehlerquelle wie bei GetByIdAsync.
+                .Include(s => s.Task)
+                    .ThenInclude(t => t.Category)
+                .Include(s => s.EvaluationResult)
+                .OrderByDescending(s => s.SubmittedAt)
+                // Zweites Kriterium, damit die Reihenfolge TOTAL ist. Ohne das
+                // entscheidet die Datenbank bei gleichem Zeitstempel, und zwar
+                // je Abfrage neu: dieselbe Zeile koennte auf Seite 1 und auf
+                // Seite 2 auftauchen, waehrend eine andere ganz ausfaellt.
+                // Ueber HTTP kollidieren die Zeitstempel praktisch nie, ein
+                // Seed-Skript legt seine Zeilen aber im selben Augenblick an.
+                .ThenByDescending(s => s.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync(cancellationToken);
+
+            return (items, gesamt);
+        }
+
         public async Task AddAsync(Submission submission)
         {
             _context.Submissions.Add(submission);

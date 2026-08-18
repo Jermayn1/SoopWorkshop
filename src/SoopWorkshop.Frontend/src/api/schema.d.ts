@@ -623,6 +623,59 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/admin/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    taskItemId?: string;
+                    status?: components["schemas"]["SubmissionStatus"];
+                    skip?: number | string;
+                    take?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SubmissionPageDto"];
+                        "application/json": components["schemas"]["SubmissionPageDto"];
+                        "text/json": components["schemas"]["SubmissionPageDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/tasks/{taskItemId}/weights": {
         parameters: {
             query?: never;
@@ -963,6 +1016,17 @@ export interface paths {
                         "text/plain": components["schemas"]["VisibilityStateDto"];
                         "application/json": components["schemas"]["VisibilityStateDto"];
                         "text/json": components["schemas"]["VisibilityStateDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
                     };
                 };
                 /** @description Not Found */
@@ -1751,6 +1815,31 @@ export interface components {
             /** Format: date-time */
             submittedAt?: string;
             status?: components["schemas"]["SubmissionStatus"];
+        };
+        SubmissionListItemDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            taskItemId?: string;
+            taskTitle?: string;
+            categoryName?: string;
+            /** Format: date-time */
+            submittedAt?: string;
+            status?: components["schemas"]["SubmissionStatus"];
+            errorMessage?: string;
+            /** Format: int32 */
+            totalScore?: null | number | string;
+            /** Format: int32 */
+            maxScore?: null | number | string;
+        };
+        SubmissionPageDto: {
+            items?: components["schemas"]["SubmissionListItemDto"][];
+            /** Format: int32 */
+            total?: number | string;
+            /** Format: int32 */
+            skip?: number | string;
+            /** Format: int32 */
+            take?: number | string;
         };
         /** @enum {unknown} */
         SubmissionStatus: "Pending" | "Running" | "Done" | "Failed";

@@ -11,7 +11,8 @@ namespace SoopWorkshop.Backend.API.Configuration
 
         public static IServiceCollection AddAdminAuthentication(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHostEnvironment environment)
         {
             var section = configuration.GetSection(AdminOptions.SectionName);
 
@@ -38,13 +39,42 @@ namespace SoopWorkshop.Backend.API.Configuration
                     // Skript kann den Zugang so nicht auslesen.
                     options.Cookie.HttpOnly = true;
 
-                    // Frontend (5173) und API (5120) sind verschiedene Origins,
-                    // das Cookie ueberquert also eine Origin-Grenze. Das verlangt
-                    // SameSite=None, und None verlangt Secure. Browser behandeln
-                    // localhost als vertrauenswuerdigen Ursprung und nehmen
-                    // Secure-Cookies dort auch ueber http an.
-                    options.Cookie.SameSite = SameSiteMode.None;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    // Die beiden Betriebsformen beschreiben verschiedene Lagen,
+                    // und das Cookie soll die tatsaechliche beschreiben statt
+                    // eine davon zu behaupten.
+                    //
+                    // ENTWICKLUNG: Frontend (5173) und API (5120) sind
+                    // verschiedene Origins, das Cookie ueberquert eine
+                    // Origin-Grenze. Das verlangt SameSite=None, und None
+                    // verlangt Secure. Browser behandeln localhost als
+                    // vertrauenswuerdigen Ursprung und nehmen Secure-Cookies
+                    // dort auch ueber http an.
+                    //
+                    // BETRIEB: hinter dem Reverse Proxy liefern Frontend und API
+                    // denselben Ursprung aus, es gibt also keine Grenze mehr zu
+                    // ueberqueren - Lax genuegt und ist die engere Angabe.
+                    //
+                    // SameAsRequest ist KEIN Ausschalter: ueber https ist das
+                    // Cookie Secure, ueber http nicht. Es sagt die Wahrheit ueber
+                    // die Verbindung, statt eine Zusicherung zu behaupten, die
+                    // sie nicht hergibt. Voraussetzung dafuer ist
+                    // UseForwardedHeaders in Program.cs - ohne das saehe das
+                    // Backend hinter dem Proxy immer http.
+                    //
+                    // Warum ueberhaupt: der Betreuer verwaltet von einem anderen
+                    // Rechner im Netz. Mit Always waere das Cookie dort ueber
+                    // http nie zurueckgekommen, und die Anmeldung haette
+                    // kommentarlos nie funktioniert.
+                    if (environment.IsDevelopment())
+                    {
+                        options.Cookie.SameSite = SameSiteMode.None;
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    }
+                    else
+                    {
+                        options.Cookie.SameSite = SameSiteMode.Lax;
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                    }
 
                     options.ExpireTimeSpan = TimeSpan.FromHours(8);
                     options.SlidingExpiration = true;

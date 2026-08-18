@@ -18,9 +18,21 @@ export type ApiResult<T> =
 
 const DEFAULT_BASE_URL = 'http://localhost:5120'
 
-// Im Betrieb ueber VITE_API_URL gesetzt. Der Standard zeigt auf das lokale
-// Backend aus scripts/start-dev.ps1.
-export const apiBaseUrl: string = import.meta.env.VITE_API_URL || DEFAULT_BASE_URL
+// Im Betrieb ist VITE_API_URL LEER, und das ist kein Versehen: hinter dem
+// Reverse Proxy liegen Frontend und API auf demselben Ursprung, die Aufrufe
+// gehen also relativ raus ("/api/..."). Damit steckt kein Hostname im Image und
+// dasselbe Image laeuft auf jedem Server.
+//
+// Deshalb ?? und nicht ||. Eine leere Zeichenkette ist falsy: mit || waere die
+// ausdrueckliche Angabe "gleicher Ursprung" still auf localhost:5120
+// zurueckgefallen - und zwar auf den localhost des TEILNEHMERS, wo nichts
+// horcht. Der Fehler haette wie ein ausgefallenes Backend ausgesehen.
+//
+// Der Standard greift nur, wenn die Variable gar nicht gesetzt ist: das ist die
+// Entwicklung mit scripts/start-dev.ps1.
+const konfigurierteAdresse = import.meta.env.VITE_API_URL as string | undefined
+
+export const apiBaseUrl: string = konfigurierteAdresse ?? DEFAULT_BASE_URL
 
 // Das Backend antwortet auf Ablehnungen mit text/plain und fertigen deutschen
 // Saetzen ("'notiz.txt' ist keine .java-Datei."). Die werden dem Teilnehmer im

@@ -136,10 +136,14 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
         {
             var item = await _repository.GetByIdAsync(id);
             if (item is null)
-                return Result<bool>.Fail("Aufgabe nicht gefunden.");
+                return Result<bool>.NotFound("Aufgabe nicht gefunden.");
 
             if (!item.IsVisible)
             {
+                // Kein NotFound: die Aufgabe gibt es, ihr fehlen nur die Daten,
+                // die ihr Auswertungsmodus verlangt. Das ist eine ungueltige
+                // Anfrage (400), keine fehlende Ressource - sonst zeigte das
+                // Frontend "gibt es nicht" fuer etwas, das offen vor einem liegt.
                 var problem = DescribeMissingTestData(item);
                 if (problem is not null)
                     return Result<bool>.Fail(problem);
