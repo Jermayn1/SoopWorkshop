@@ -2,7 +2,16 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Vier Angaben, weil ein SVG allein nicht reicht: Safari benutzt
+      SVG-Favicons nicht zuverlaessig und zeigte auf dem Mac gar kein Symbol.
+      Browser waehlen das erste Format, das sie koennen - die .ico steht
+      deshalb zuerst, das SVG danach fuer alle, die es beherrschen.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Soop Judge</title>
   </head>

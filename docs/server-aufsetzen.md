@@ -125,7 +125,7 @@ docker compose -f docker-compose.yml logs --tail=60 backend
 |---|---|
 | **502 Bad Gateway** | Backend unten. Logs ansehen. |
 | „kein Admin-Passwort gesetzt" | `Admin__Password` fehlt in der `.env` |
-| `28P01 password authentication failed` | `POSTGRES_PASSWORD` nach dem ersten Start geändert. Ohne Daten: `down -v`, dann neu starten (**löscht die Datenbank**) |
+| `28P01 password authentication failed` | sollte sich beim Start selbst beheben — die Datenbank gleicht ihr Passwort an die `.env` an. Bleibt es: `docker compose -f docker-compose.yml logs db \| grep angeglichen` |
 | Seite leer | keine Aufgabe sichtbar geschaltet |
 | `.env`-Werte wirken nicht | Windows-Zeilenenden: `sed -i 's/\r$//' .env` |
 | jede Abgabe scheitert | `docker compose -f docker-compose.yml build --no-cache backend` |

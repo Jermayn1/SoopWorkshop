@@ -82,11 +82,8 @@ Alles starten (Datenbank, Build, Backend, Frontend):
 .\scripts\stop-dev.ps1
 ```
 
-Datenbank-Passwort an die `.env` angleichen (siehe unten):
-
-```bash
-.\scripts\sync-db-password.ps1
-```
+Die Datenbank gleicht ihr Passwort beim Start selbst an die `.env` an — dafür
+gibt es kein eigenes Skript mehr (siehe unten).
 
 `start-dev.ps1 -SkipBuild` überspringt den Build, `-NoDatabase` lässt den Container in Ruhe.
 Backend und Frontend laufen in je einem eigenen Fenster, damit die Logs lesbar bleiben.
@@ -180,7 +177,7 @@ Netz. Die Anleitung steht in `docs/server-aufsetzen.md`, der Betrieb in
 `docs/betrieb.md`.
 
 Der Container `soopworkshop-db` behält seinen festen Namen, weil `start-dev.ps1`,
-`stop-dev.ps1` und `sync-db-password.ps1` ihn benutzen. Backend und Frontend
+`stop-dev.ps1` ihn benutzen. Backend und Frontend
 haben bewusst **keinen** — ein fester Name verhindert einen zweiten Stapel auf
 derselben Maschine (und genau daran ist die Abnahme in Phase 7 einmal
 gescheitert).
@@ -211,24 +208,24 @@ Welche Werte tatsächlich gelten, steht in der ersten Logzeile des Backends:
 Konfiguration: Datenbank 127.0.0.1:5432/soopworkshop, Auswertung 10 gleichzeitig, Zeitgrenzen 30s kompilieren / 10s ausfuehren.
 ```
 
-**`POSTGRES_PASSWORD` in der `.env` geändert?** Dann muss die Datenbank angeglichen
-werden — der Wert wirkt nur beim ersten Anlegen des Volumes, danach behält sie ihr altes
-Passwort. Der Fehler kommt als `28P01` zurück und sieht aus wie ein Tippfehler, obwohl
-beide Seiten für sich stimmen:
+**`POSTGRES_PASSWORD` in der `.env` geändert? Nichts weiter zu tun.** Der
+`db`-Dienst gleicht das Passwort bei **jedem Start** an die `.env` an
+(`docker-compose.yml`, `command` am `db`-Dienst). Ein `docker compose up -d`
+genügt.
 
-```bash
-.\scripts\sync-db-password.ps1
-```
+Warum das nötig ist: `POSTGRES_PASSWORD` wirkt nur beim **ersten** Anlegen des
+Datenverzeichnisses. Ohne den Abgleich behielte die Datenbank ihr altes Passwort,
+und der Fehler käme als `28P01` zurück — der sieht aus wie ein Tippfehler, obwohl
+beide Seiten für sich stimmen. Bis Phase 7 gab es dafür `sync-db-password.ps1`,
+das von Hand aufgerufen werden musste; das Skript ist damit entfallen.
 
-Setzt das Passwort per `ALTER USER` und prüft anschließend, ob die Anmeldung wirklich
-klappt. Ein laufendes Backend muss danach **nicht** neu gestartet werden — der
-Connection-String ändert sich nicht, nur das Passwort dahinter. Die Alternative ist
-`docker compose down -v` (löscht alle Daten).
+**Warum der Abgleich ohne das alte Passwort auskommt:** `psql` **innerhalb** des
+Containers geht über den lokalen Socket, und der steht in der `pg_hba.conf` des
+Images auf `trust`. Genau das macht die Selbstheilung möglich.
 
-**Achtung bei der Fehlersuche:** `psql` **innerhalb** des Containers akzeptiert wegen
-`trust` in `pg_hba.conf` jedes Passwort. Eine dort „bestätigte" Übereinstimmung sagt
-nichts aus. Verlässlich ist nur eine Verbindung von aussen — das Skript oben macht genau
-das über ein kurzlebiges `postgres`-Image gegen `host.docker.internal`.
+> **Dieselbe Eigenschaft ist bei der Fehlersuche eine Falle:** eine im Container
+> „bestätigte" Übereinstimmung sagt nichts aus, weil dort jedes Passwort
+> akzeptiert wird. Verlässlich ist nur eine Verbindung von **aussen**.
 
 **`127.0.0.1` statt `localhost`, das ist Absicht.** Unter Windows löst `localhost`
 zuerst auf IPv6 `::1` auf. Dort horcht der WSL-Relay von Docker Desktop, reicht die
@@ -1646,7 +1643,7 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - 2026-08-18 — `docker-compose.yml` — feste `container_name` verhindern einen
   zweiten Stapel auf derselben Maschine (Namenskonflikt). Bei Backend und
   Frontend entfernt; bei `db` behalten, weil `start-dev.ps1`, `stop-dev.ps1`
-  und `sync-db-password.ps1` den Namen benutzen. **Merken:** ein fester
+  den Namen benutzen. **Merken:** ein fester
   Containername ist eine Zusicherung an Skripte, kein Komfort
 - 2026-08-18 — Abnahme im Container — die Ablehnung „größer als 1024 KB" kommt
   nur durch, weil `client_max_body_size` gesetzt ist; nginx' Voreinstellung von
@@ -1765,3 +1762,24 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   daraus folgt etwas anderes als aus „technisch sauber". Wer die zweite Frage
   beantwortet, ohne die erste gestellt zu haben, baut zwei Fehlerquellen und ein
   Skript, die am Ende wieder rausfliegen
+- 2026-08-18 — `docker-compose.yml` / `scripts/sync-db-password.ps1` —
+  `POSTGRES_PASSWORD` wirkt nur beim **ersten** Anlegen des Datenverzeichnisses.
+  Wer den Wert später in der `.env` ändert, bekommt `28P01`, und bis Phase 7 half
+  nur ein Skript von Hand. Beim ersten Aufsetzen auf einer VM ist das nicht
+  aufgefallen, weil dort das Volume ohnehin neu entsteht — im Alltag mit einem
+  bestehenden Volume ist es bei jedem Start passiert. Behoben, indem der
+  `db`-Dienst das Passwort bei **jedem** Start per `ALTER USER` angleicht; der
+  Aufruf läuft über den lokalen Socket im Container, der laut `pg_hba.conf` auf
+  `trust` steht und deshalb das alte Passwort nicht kennen muss. Das Skript ist
+  entfallen. Nachgemessen mit zwei Durchläufen und gewechseltem Passwort: das
+  neue gilt, das alte wird abgelehnt.
+  **Lehre:** dieselbe Eigenschaft, die in §3 als Falle bei der Fehlersuche steht
+  (im Container wird jedes Passwort akzeptiert), ist hier die Lösung — man muss
+  sie nur von der richtigen Seite betrachten
+- 2026-08-18 — `Frontend/index.html` — als Favicon lag nur ein SVG vor.
+  **Safari benutzt SVG-Favicons nicht zuverlässig**, und auf dem MacBook des
+  Betreuers erschien gar kein Symbol. Server-seitig war alles in Ordnung —
+  nachgemessen: 200 und `image/svg+xml`. Behoben mit `.ico`, `-32.png` und
+  `apple-touch-icon.png` daneben, aus derselben SVG gerendert. **Merken:** beim
+  Rastern die Auflösung mitgeben (`-density`), sonst rastert ImageMagick auf
+  32×32 und skaliert hoch — das Ergebnis ist unscharf und trotzdem 123 KB groß

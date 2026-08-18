@@ -26,6 +26,41 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - intern
+
+    # ------------------------------------------------------------------------
+    # Gleicht das Passwort bei JEDEM Start an die .env an.
+    #
+    # Warum das noetig ist: POSTGRES_PASSWORD wirkt nur beim ERSTEN Anlegen des
+    # Datenverzeichnisses. Wird der Wert spaeter in der .env geaendert, behaelt
+    # die Datenbank ihr altes - das Backend kommt dann nicht mehr hinein und
+    # meldet "28P01 password authentication failed". Der Fehler sieht aus wie
+    # ein Tippfehler, obwohl beide Seiten fuer sich stimmen.
+    #
+    # Bisher musste man dafuer von Hand sync-db-password.ps1 aufrufen. Jetzt
+    # erledigt es der Start selbst: sobald die Datenbank bereit ist, setzt ein
+    # ALTER USER das Passwort auf den Wert aus der .env. Das ist idempotent -
+    # stimmt es schon, aendert der Befehl nichts.
+    #
+    # Der psql-Aufruf laeuft ueber den lokalen Socket INNERHALB des Containers,
+    # und der ist in der pg_hba.conf des Images auf "trust" gesetzt. Deshalb
+    # braucht dieser Schritt das alte Passwort nicht zu kennen - genau das
+    # macht die Selbstheilung ueberhaupt moeglich.
+    #
+    # exec am Ende ist Pflicht: postgres muss PID 1 bleiben, sonst kommen
+    # Signale (docker stop) nicht an und der Container wird hart abgeraeumt.
+    # ------------------------------------------------------------------------
+    command:
+      - sh
+      - -c
+      - |
+        (
+          until pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -q; do sleep 1; done
+          psql -v ON_ERROR_STOP=1 --username "$$POSTGRES_USER" --dbname "$$POSTGRES_DB" \
+            -c "ALTER USER \"$$POSTGRES_USER\" WITH PASSWORD '$$POSTGRES_PASSWORD';" \
+            && echo "Datenbank-Passwort an die .env angeglichen."
+        ) &
+        exec docker-entrypoint.sh postgres
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-soopworkshop}"]
       interval: 5s
