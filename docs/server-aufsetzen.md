@@ -1,13 +1,9 @@
-# SoopWorkshop auf einer VM aufsetzen
+# Aufsetzen
 
-Fünf Schritte. Rund 15 Minuten, davon zehn Wartezeit beim Bauen.
+Debian-VM mit Docker. Fünf Befehle, rund 15 Minuten (davon zehn Bauzeit).
 
-Danach erreichen die Teilnehmer das Tool über `http://<ip-der-vm>` — kein
-Zertifikat, kein DNS-Eintrag, und auf den Teilnehmerrechnern ist nichts
-einzurichten.
-
-Für Absicherung, Sicherung, einen DNS-Namen und HTTPS gibt es
-[docs/betrieb.md](betrieb.md). Nichts davon wird gebraucht, damit es läuft.
+Danach: `http://<ip-der-vm>` — kein Zertifikat, kein DNS, auf den
+Teilnehmergeräten ist nichts einzurichten.
 
 ---
 
@@ -17,44 +13,24 @@ Für Absicherung, Sicherung, einen DNS-Namen und HTTPS gibt es
 docker compose version
 ```
 
-Kommt eine Version, weiter zu Schritt 2. Kommt ein Fehler, fehlt das
-Compose-Plugin — dann [Docker nachinstallieren](betrieb.md#docker-nachinstallieren).
+Fehler? → [Docker nachinstallieren](betrieb.md#docker-nachinstallieren)
 
-Sagt jeder Docker-Befehl „permission denied":
-
-```bash
-sudo usermod -aG docker $USER
-```
-
-> Danach **einmal ab- und wieder anmelden.** Gruppen gelten erst in einer neuen
-> Sitzung.
-
----
+„permission denied"? → `sudo usermod -aG docker $USER`, dann **ab- und wieder
+anmelden**.
 
 ## 2. Projekt holen
 
 ```bash
-sudo apt-get update && sudo apt-get install -y git
+sudo apt-get update && sudo apt-get install -y git && git clone https://github.com/Jermayn1/SoopWorkshop.git && cd SoopWorkshop
 ```
+
+## 3. Passwörter setzen
 
 ```bash
-git clone https://github.com/Jermayn1/SoopWorkshop.git && cd SoopWorkshop
+cp .env.example .env && openssl rand -base64 24 && openssl rand -base64 24
 ```
 
----
-
-## 3. Zwei Passwörter setzen
-
-```bash
-cp .env.example .env
-```
-
-Passwörter würfeln lassen, nicht ausdenken — der Befehl gibt eines aus, ruf ihn
-zweimal auf:
-
-```bash
-openssl rand -base64 24
-```
+Die zwei ausgegebenen Werte eintragen:
 
 ```bash
 nano .env
@@ -62,25 +38,16 @@ nano .env
 
 | Schlüssel | Wofür |
 |---|---|
-| `POSTGRES_PASSWORD` | Datenbank. Sieht niemand außer den Containern. |
-| `Admin__Password` | **Damit meldest du dich am Panel an.** Das ist das Passwort, das du dir merken musst. |
+| `POSTGRES_PASSWORD` | Datenbank, sieht nur der Container |
+| `Admin__Password` | **damit meldest du dich am Panel an** |
 
-Speichern: `Strg+O`, `Enter`, `Strg+X`.
-
-```bash
-chmod 600 .env
-```
-
-**Kontrolle** — muss `0` ausgeben:
+Speichern: `Strg+O`, `Enter`, `Strg+X`. Dann:
 
 ```bash
-grep -c 'bitte-aendern' .env
+chmod 600 .env && grep -c 'bitte-aendern' .env
 ```
 
-Steht dort `1` oder `2`, ist ein Vorgabewert stehengeblieben. Das Backend würde
-starten, aber mit einem öffentlich bekannten Passwort.
-
----
+Muss `0` ausgeben.
 
 ## 4. Starten
 
@@ -88,133 +55,98 @@ starten, aber mit einem öffentlich bekannten Passwort.
 docker compose -f docker-compose.yml up -d --build
 ```
 
-> **Das `-f docker-compose.yml` gehört dazu.** Ohne die Angabe zieht Compose
-> zusätzlich `docker-compose.override.yml` heran — die ist für die Entwicklung
-> und veröffentlicht den Datenbank-Port.
+> Das `-f docker-compose.yml` gehört dazu — sonst lädt Compose die
+> Entwicklungs-Override mit.
 
-Der erste Lauf baut beide Images und dauert einige Minuten.
-
-```bash
-docker compose -f docker-compose.yml ps
-```
-
-**Kontrolle** — `db` und `backend` müssen `healthy` zeigen:
-
-```
-NAME                      STATUS
-soopworkshop-db           Up 2 minutes (healthy)
-soopworkshop-backend-1    Up 1 minute (healthy)
-soopworkshop-frontend-1   Up 1 minute
-```
-
-Die IP der VM:
+## 5. Prüfen
 
 ```bash
-hostname -I
+./scripts/pruefe-betrieb.sh
 ```
 
-**Kontrolle** — `http://<ip-der-vm>` von einem **anderen Rechner im Netz**
-öffnen. Die Aufgabenübersicht muss erscheinen.
-
-> Chrome und Edge schreiben „Nicht sicher" neben die Adresse. Das ist bei http
-> immer so, ist ein Label und keine Warnseite — die Seite lädt sofort. Warum das
-> so gewählt ist: [betrieb.md](betrieb.md#warum-kein-https).
+Prüft Docker, `.env`, alle drei Container, Erreichbarkeit und das JDK — und
+nennt bei einem Fehlschlag den nächsten Schritt. Am Ende steht die Adresse für
+die Teilnehmer.
 
 ---
 
-## 5. Anmelden und Aufgaben anlegen
+## Aufgaben anlegen
 
-`http://<ip-der-vm>/admin` öffnen, mit `Admin__Password` aus der `.env`
-anmelden.
+`http://<ip-der-vm>/admin`, anmelden mit `Admin__Password`.
 
-**Hast du schon einen Aufgabenbestand als JSON-Datei:** *Transfer → Datei
-wählen*. Die Vorschau zeigt vor dem Ausführen, was passieren würde. Fertig.
+**Fertiger Bestand:** *Transfer → Datei wählen*. Fertig.
 
-**Von Hand** — die Reihenfolge ist Pflicht:
+**Von Hand**, Reihenfolge ist Pflicht:
 
-1. Kategorie anlegen
-2. Aufgabe anlegen (Titel, Beschreibung, Auswertungsmodus)
-3. Testfälle bzw. JUnit-Dateien ergänzen
-4. **Danach** sichtbar schalten
+1. Kategorie → 2. Aufgabe → 3. Testfälle bzw. JUnit-Dateien → 4. **danach**
+sichtbar schalten
 
-> Schritt 4 geht erst nach Schritt 3. Eine Aufgabe, deren Modus Daten verlangt,
-> die es noch nicht gibt, lässt sich nicht sichtbar schalten — sonst würde sie
-> still milder bewertet, weil die fehlende Kategorie aus der Wertung fällt.
+> Schritt 4 geht erst nach Schritt 3, sonst würde die Aufgabe still milder
+> bewertet.
 
-**Kontrolle** — bei der Aufgabe auf *Probelauf*, eine Musterlösung hochladen.
-Kommt die erwartete Punktzahl heraus, funktioniert die ganze Kette: Kompilieren,
-Testfälle, JUnit.
-
-**Damit läuft das System.**
+**Prüfen:** *Probelauf* mit einer Musterlösung. Erwartete Punktzahl → die ganze
+Kette läuft.
 
 ---
 
-## Wenn etwas nicht läuft
+## Ports
 
-### `backend` wird nicht `healthy`
+| Port | Wo | Wofür | Von außen |
+|---|---|---|---|
+| **80** | VM | Weboberfläche und API | **ja** — der einzige, der offen sein muss |
+| 8080 | Container | Backend | nein, nur im Docker-Netz |
+| 5432 | Container | PostgreSQL | nein, nicht veröffentlicht |
 
-```bash
-docker compose -f docker-compose.yml logs backend | tail -40
+**Eingehend freizugeben: nur Port 80/TCP aus dem Teilnehmernetz.**
+
+Port 80 belegt? In der `.env`:
+
+```
+HTTP_PORT=8080
 ```
 
-| Meldung | Ursache |
+Dann läuft die Seite auf `http://<ip-der-vm>:8080`.
+
+**Ausgehend** braucht die VM nur beim Bauen und Aktualisieren Internet (443 für
+Docker-Images, NuGet, npm; git). Im Betrieb nicht — der Backend-Container hat
+ohnehin keine Route nach draußen.
+
+---
+
+## Wenn etwas klemmt
+
+Erst `./scripts/pruefe-betrieb.sh`. Sagt der nichts Brauchbares:
+
+```bash
+docker compose -f docker-compose.yml logs --tail=60 backend
+```
+
+| Symptom | Ursache |
 |---|---|
-| „Es ist kein Admin-Passwort gesetzt" | `Admin__Password` fehlt in der `.env` |
-| „Die Datenbank war beim Versuch N von 10 nicht bereit" | in den ersten Sekunden normal. Zehnmal → `logs db` ansehen |
-| `28P01 password authentication failed` | siehe unten |
-
-**Zu `28P01`:** `POSTGRES_PASSWORD` wirkt **nur beim ersten Anlegen** des
-Datenvolumes. Später geändert? Dann behält die Datenbank ihr altes. Wenn noch
-keine Daten drin sind:
-
-```bash
-docker compose -f docker-compose.yml down -v && docker compose -f docker-compose.yml up -d --build
-```
-
-> `down -v` **löscht die Datenbank.**
-
-### 502 Bad Gateway
-
-Das Backend ist noch nicht oben oder abgestürzt. `ps` und dann die Logs.
-
-### Seite lädt, aber ist leer
-
-Noch keine Aufgabe angelegt oder keine sichtbar geschaltet — Schritt 5.
-
-### Jede Abgabe schlägt fehl
-
-```bash
-docker compose -f docker-compose.yml exec backend javac -version
-```
-
-Kommt nichts, ist das Image kaputt gebaut:
-`docker compose -f docker-compose.yml build --no-cache backend`.
+| **502 Bad Gateway** | Backend unten. Logs ansehen. |
+| „kein Admin-Passwort gesetzt" | `Admin__Password` fehlt in der `.env` |
+| `28P01 password authentication failed` | `POSTGRES_PASSWORD` nach dem ersten Start geändert. Ohne Daten: `down -v`, dann neu starten (**löscht die Datenbank**) |
+| Seite leer | keine Aufgabe sichtbar geschaltet |
+| `.env`-Werte wirken nicht | Windows-Zeilenenden: `sed -i 's/\r$//' .env` |
+| jede Abgabe scheitert | `docker compose -f docker-compose.yml build --no-cache backend` |
 
 ---
 
-## Danach
-
-> **Nicht ins Internet freigeben.** Keine Portfreigabe im Router, kein
-> Tunneldienst. Jede Abgabe wird auf dieser VM **ausgeführt** — der Aufbau
-> hindert diesen Code daran, ins Netz zu greifen, aber die VM selbst gehört als
-> nicht vertrauenswürdig behandelt. Snapshot vor dem Workshop.
-
-Alles Weitere in [docs/betrieb.md](betrieb.md): Firewall, Sicherung,
-Aktualisieren, ein DNS-Name statt der IP, HTTPS nachrüsten.
-
----
-
-## Kurzreferenz
+## Befehle
 
 ```bash
 docker compose -f docker-compose.yml up -d --build    # starten / aktualisieren
 docker compose -f docker-compose.yml ps               # Zustand
 docker compose -f docker-compose.yml logs -f backend  # Protokoll
 docker compose -f docker-compose.yml down             # stoppen (Daten bleiben)
+./scripts/pruefe-betrieb.sh                           # Betrieb prüfen
 ```
 
-| | |
-|---|---|
-| Teilnehmer | `http://<ip-der-vm>` |
-| Verwaltung | `http://<ip-der-vm>/admin` |
-| Zugangsdaten | `.env` auf der VM |
+---
+
+> **Nicht ins Internet freigeben.** Jede Abgabe wird auf dieser VM
+> **ausgeführt**. Der Container dafür hat keine Route ins LAN und keine ins
+> Internet, aber die VM selbst gehört als nicht vertrauenswürdig behandelt —
+> Snapshot vor dem Workshop.
+
+Absicherung, Sicherung, DNS-Name, HTTPS: [betrieb.md](betrieb.md)

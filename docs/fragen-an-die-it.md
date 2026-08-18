@@ -32,66 +32,77 @@ dass du das Risiko kennst.
 
 ---
 
-## Die vier Fragen, die alles entscheiden
+## Ausgangslage
 
-Wenn nur fünf Minuten Zeit sind, dann diese.
+Bekannt und geklärt:
 
-### 1. Gibt es eine interne Zertifizierungsstelle? Sind die Rechner in der Domäne?
+- **Die Teilnehmer bringen eigene Geräte mit** und hängen im **Gast-WLAN**
+- Die VM ist aus dem Gastnetz erreichbar
+- Die VM hat Internet
 
-**Die wichtigste Frage überhaupt.** Formulierung:
+Daraus folgt zweierlei, bevor du überhaupt fragst:
 
-> „Habt ihr eine interne CA — etwa Active Directory Certificate Services? Und
-> sind die Schulungsrechner in der Domäne?"
+**Eine interne CA nützt hier nichts.** Sie funktioniert nur auf Geräten, die der
+CA vertrauen — also auf verwalteten Firmenrechnern. Auf privaten Handys und
+Laptops müsste jeder Teilnehmer selbst ein Wurzelzertifikat installieren. Das
+verlangt man nicht, und die meisten könnten es auch gar nicht.
+
+**Ein interner DNS-Eintrag nützt im Gastnetz vermutlich nichts.** Gastnetze
+bekommen meist den Router oder einen öffentlichen Resolver als DNS, nicht den
+internen Server. Frag trotzdem — aber rechne mit der IP.
+
+**Der Aufbau läuft heute schon über die IP und braucht nichts davon.** Die
+Fragen unten dienen dazu, es *schöner* zu machen, nicht *lauffähig*.
+
+---
+
+## Die drei Fragen, die etwas ändern
+
+### 1. Erreichen Geräte im Gast-WLAN die VM wirklich? *(einmal ausprobieren)*
+
+> „Ich brauche Port 80 von einem Gerät im Gast-WLAN auf die VM. Gibt es
+> Client-Isolation oder eine Firewall dazwischen?"
+
+Du sagst, es geht — dann **einmal mit dem eigenen Handy im Gast-WLAN
+gegenprüfen**, sobald die VM steht. Das ist der einzige Test, der zählt.
+
+Häufige Stolpersteine: Client-Isolation im WLAN, ein Zwangs-Proxy im Browser,
+oder eine Firewall zwischen Gast-VLAN und Server-VLAN.
+
+**Wenn es nicht geht,** ist die naheliegende Lösung, die VM **ins Gastnetz zu
+stellen**. Das ist sogar aus Sicherheitssicht die bessere Wahl: auf ihr läuft
+fremder Java-Code, und dort ist sie vom Firmennetz getrennt.
+
+### 2. Gibt es eine Domain, die dem Betrieb gehört?
+
+**Das ist die einzige Frage, die zu einem Schloss im Browser führt.**
+
+> „Habt ihr eine Domain, unter der ich einen Namen bekommen könnte — mit der
+> Möglichkeit, ein öffentliches Zertifikat über eine DNS-Challenge zu holen?"
 
 | Antwort | Was das bedeutet |
 |---|---|
-| **Ja, interne CA + Domänenrechner** | **Jackpot.** Sie stellen ein Zertifikat für unseren Namen aus, und **jeder Domänenrechner vertraut ihm bereits** — kein Aufwand auf den Clients, perfektes Schloss im Browser. Wir brauchen nur die Zertifikatsdatei und den Schlüssel. |
-| Keine CA, aber Domäne + Gruppenrichtlinien | Fast so gut: ich erzeuge das Zertifikat, die IT verteilt das Wurzelzertifikat einmal per GPO. |
-| Keine Domäne | Dann bleibt es bei http. Wurzelzertifikat auf 15 Rechner einzeln lohnt nicht. |
+| **Ja, mit DNS-API-Zugang** | Ein echtes Let's-Encrypt-Zertifikat. **Jedes Gerät zeigt ein Schloss, ohne dass ein Teilnehmer etwas tut** — auch private Handys. Einmalig ein bis zwei Stunden, danach wartungsfrei. |
+| Ja, aber DNS nur von Hand | Geht auch, die Erneuerung wird dann alle 90 Tage Handarbeit |
+| Nein | Bleibt bei http. Oder ich registriere selbst eine Domain (~20–30 €/Jahr) |
 
-**Falls ja, gleich nachfragen:**
-- Auf welchen Namen kann das Zertifikat lauten?
-- Wie lange dauert die Ausstellung — Minuten oder Tage?
-- Bekomme ich Zertifikat **und privaten Schlüssel** als Dateien (PEM oder PFX)?
+**Falls ja, nachfragen:** Wer verwaltet die DNS-Einträge? Ist ein Eintrag
+möglich, der auf eine **private IP** zeigt? (Das ist erlaubt und üblich, wird
+aber manchmal abgelehnt.)
 
-### 2. Gibt es einen internen DNS-Server, und kann ich einen Eintrag bekommen?
+### 3. Interner DNS-Eintrag — gilt der auch im Gastnetz?
 
-> „Kann ich einen A-Record auf die IP der VM bekommen — etwa `soop` unter eurem
-> internen Suffix?"
+> „Kann ich einen A-Record auf die IP der VM bekommen? Und bekommen Geräte im
+> Gast-WLAN euren internen DNS überhaupt zu sehen?"
 
-| Antwort | Was das bedeutet |
-|---|---|
-| Ja | Teilnehmer tippen einen Namen statt einer IP. Voraussetzung für Frage 1. |
-| Nein | Läuft trotzdem — über die IP. Ohne Zertifikat hängt daran nichts. |
-
-**Nachfragen:** Welches interne Suffix ist üblich? (Das gehört in den Namen im
-Zertifikat, beides muss zusammenpassen.)
-
-### 3. Bekomme ich eine VM — und hat sie Internetzugang?
-
-> „Eine kleine Linux-VM, Debian, 2 vCPU / 4 GB / 20 GB, mit sudo für mich."
-
-**Der Internetzugang ist der Punkt, der leicht untergeht.** Beim ersten Start
-lädt Docker Basis-Images, .NET-Pakete und npm-Pakete. Ohne Internet muss ich die
-Images vorher auf meinem Rechner bauen und als Datei mitbringen — machbar, aber
-ich muss es **vorher** wissen.
+Die zweite Hälfte ist die entscheidende. Ein Eintrag, den das Gastnetz nicht
+auflöst, hilft niemandem.
 
 | Antwort | Was das bedeutet |
 |---|---|
-| Internet direkt | Standardweg, nichts zu tun |
-| Nur über Proxy | Sagen lassen: Adresse und Port. Docker und npm brauchen die Proxy-Einstellung |
-| Kein Internet | Ich baue die Images zu Hause und bringe sie mit (`docker save`) |
-
-### 4. Erreichen die Teilnehmerrechner die VM?
-
-> „Liegen die Schulungsrechner im selben Netz wie die VM? Gibt es Client-Isolation
-> im WLAN oder eine Firewall dazwischen?"
-
-Klingt trivial, ist aber der häufigste Grund, warum am Workshoptag nichts geht.
-**Client-Isolation im WLAN** ist der Klassiker: jeder kommt ins Internet, aber
-keiner erreicht ein Gerät im selben Netz.
-
-Wenn möglich: **einmal vorher ausprobieren**, von einem echten Schulungsrechner.
+| Ja, und Gastnetz sieht ihn | Teilnehmer tippen einen Namen statt einer IP |
+| Eintrag ja, Gastnetz nein | Nutzlos für die Teilnehmer |
+| Nein | Zugriff über die IP — funktioniert |
 
 ---
 
@@ -118,11 +129,15 @@ Wenn möglich: **einmal vorher ausprobieren**, von einem echten Schulungsrechner
 
 ### Zertifikate und HTTPS
 
-- [ ] Interne CA vorhanden? (AD Certificate Services oder anderes)
-- [ ] Sind die Schulungsrechner domänengebunden?
-- [ ] Kann ein Wurzelzertifikat per Gruppenrichtlinie verteilt werden?
-- [ ] Gibt es eine Firmendomain, unter der ein **öffentliches** Zertifikat möglich wäre?
+Eine interne CA hilft hier nicht — die Teilnehmer bringen eigene Geräte mit.
+Deshalb geht es nur um den öffentlichen Weg:
+
+- [ ] Gibt es eine Domain, die dem Betrieb gehört?
+- [ ] Wer verwaltet deren DNS-Einträge? Gibt es dort eine API?
+      (nötig für die automatische Erneuerung per DNS-Challenge)
+- [ ] Darf ein Eintrag auf eine **private IP** zeigen?
 - [ ] Gibt es eine Vorgabe, dass interne Dienste HTTPS sprechen müssen?
+      (dann wird aus dem „schöner" ein „muss")
 
 ### Zugang und Betrieb
 
@@ -132,16 +147,12 @@ Wenn möglich: **einmal vorher ausprobieren**, von einem echten Schulungsrechner
 - [ ] Wie lange darf die VM stehen bleiben — nur für den Workshop oder dauerhaft?
 - [ ] Ansprechpartner am Workshoptag, falls etwas klemmt
 
-### Teilnehmerrechner
+### Teilnehmer
 
-- [ ] Wie viele Teilnehmer?
-- [ ] Firmenrechner oder eigene Geräte?
-- [ ] Welcher Browser ist Standard? (**Firefox hat einen eigenen
-      Zertifikatsspeicher** und ignoriert den von Windows — relevant, sobald wir
-      HTTPS machen)
-- [ ] Haben die Teilnehmer lokale Administratorrechte?
-- [ ] Ist **DNS über HTTPS** in den Browsern aktiv? (das umgeht den internen
-      DNS-Server, dann löst der interne Name nicht auf)
+- [ ] Wie viele? (bestimmt `Evaluation__MaxConcurrency` und die VM-Größe)
+- [ ] Läuft das Gast-WLAN über einen Zwangs-Proxy?
+- [ ] Bekommt das Gast-WLAN einen öffentlichen DNS-Resolver? (dann greift ein
+      interner Eintrag dort nicht)
 
 ---
 
@@ -151,26 +162,24 @@ Damit du beim Gespräch schon einordnen kannst, was du hörst:
 
 | Antwort | Was wir daraufhin bauen |
 |---|---|
-| Interne CA + Domänenrechner | **HTTPS mit ihrem Zertifikat.** Ich ergänze einen `listen 443`-Block, sie liefern die Datei. Am Backend ändert sich nichts. Schloss im Browser, null Aufwand für die Teilnehmer. |
-| Domäne, aber keine CA | HTTPS mit eigener CA, Wurzelzertifikat per GPO. Ergebnis für die Teilnehmer identisch. |
-| Weder noch | Bleibt bei http. Läuft heute schon. |
-| Kein DNS-Eintrag | Zugriff über die IP. Kein Problem, solange kein Zertifikat im Spiel ist. |
-| Kein Internet auf der VM | Ich baue die Images vorher und bringe sie als Datei mit. |
-| Client-Isolation im Netz | Muss vorher gelöst werden, sonst nützt der ganze Rest nichts. |
+| **Domain vorhanden, DNS mit API** | **Der Volltreffer.** Öffentliches Let's-Encrypt-Zertifikat über die DNS-Challenge, A-Record auf die interne IP. Schloss auf jedem Gerät, auch privaten Handys, ohne dass ein Teilnehmer etwas tut. Ein bis zwei Stunden einmalig. |
+| Domain vorhanden, DNS nur von Hand | Dasselbe, aber die Erneuerung alle 90 Tage ist Handarbeit. Für einen Workshop trotzdem in Ordnung. |
+| Keine Domain | Bleibt bei http — läuft heute schon. Oder ich registriere selbst eine (~20–30 €/Jahr). |
+| Interner A-Record, im Gastnetz sichtbar | Teilnehmer tippen einen Namen statt einer IP. Am Server nichts zu ändern. |
+| Interner A-Record, im Gastnetz unsichtbar | Nutzlos für die Teilnehmer — dann die IP. |
+| Gastnetz erreicht die VM nicht | **Blocker.** Muss vorher gelöst werden, am besten indem die VM ins Gastnetz wandert. |
 
 ---
 
 ## Der Zettel zum Mitnehmen
 
-Wenn du nur eine Karte in der Hand haben willst:
-
-1. **Interne CA? Rechner in der Domäne?** → entscheidet über HTTPS
-2. **A-Record auf die VM-IP möglich?** → entscheidet über den Namen
-3. **Hat die VM Internet?** → entscheidet, ob ich Images mitbringen muss
-4. **Erreichen die Schulungsrechner die VM?** → einmal vorher testen
-5. **Snapshot vor dem Workshop?** → weil auf der VM fremder Code läuft
-6. **Port 80 aus dem Teilnehmer-Subnetz erlaubt?**
-7. **Ansprechpartner am Workshoptag?**
+1. **Port 80 aus dem Gast-WLAN auf die VM offen?** → mit dem Handy gegenprüfen
+2. **Gibt es eine Domain des Betriebs, unter der ich einen Namen bekomme?**
+   → der einzige Weg zum Schloss im Browser
+3. **A-Record möglich — und sieht das Gastnetz den internen DNS?**
+4. **Snapshot vor dem Workshop?** → weil auf der VM fremder Code läuft
+5. **Darf die VM ins Gastnetz statt ins Servernetz?** → besser für beide Seiten
+6. **Ansprechpartner am Workshoptag?**
 
 ---
 
@@ -178,9 +187,10 @@ Wenn du nur eine Karte in der Hand haben willst:
 
 Die ehrliche Antwort, die du geben kannst:
 
-> „Weil es für einen internen Namen kein Zertifikat gibt, dem Browser von sich
-> aus trauen. Ein selbstsigniertes bringt jedem Teilnehmer bei jedem Besuch eine
-> ganzseitige Warnung — das ist schlechter als http, weil es beibringt,
-> Sicherheitswarnungen wegzuklicken. Ein Zertifikat aus **eurer** CA hätte das
-> Problem nicht, deshalb frage ich danach. Das Tool ist darauf vorbereitet: der
-> Wechsel ist Konfiguration, keine Änderung am Programm."
+> „Weil die Teilnehmer eigene Geräte mitbringen. Ein Zertifikat aus eurer CA
+> würde auf privaten Handys nicht anerkannt, und ein selbstsigniertes bringt
+> jedem bei jedem Besuch eine ganzseitige Warnung — das ist schlechter als
+> http, weil es beibringt, Sicherheitswarnungen wegzuklicken. Sauber ginge es
+> nur mit einem öffentlichen Zertifikat auf einer Domain, die euch gehört —
+> deshalb frage ich danach. Das Tool ist darauf vorbereitet: der Wechsel ist
+> Konfiguration, keine Änderung am Programm."
