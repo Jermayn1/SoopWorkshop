@@ -98,3 +98,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Nur fuer die Integrationstests. Top-Level-Statements erzeugen zwar eine
+// Program-Klasse, aber eine interne - WebApplicationFactory<Program> braucht
+// sie oeffentlich. Zur Laufzeit aendert das nichts.
+public partial class Program;

@@ -437,3 +437,6 @@ Gedanken.md
 
 # Claude Code — launch.json gehoert ins Projekt, die Einstellungen nicht
 .claude/settings.local.json
+
+# Coverage-Berichte aus scripts/pruefe-alles.ps1 -MitCoverage
+artifacts/
