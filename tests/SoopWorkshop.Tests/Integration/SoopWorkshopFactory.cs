@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Backend.Infrastructure.Evaluation;
 
 namespace SoopWorkshop.Tests.Integration
@@ -48,7 +50,42 @@ namespace SoopWorkshop.Tests.Integration
 
                 if (worker is not null)
                     services.Remove(worker);
+
+                // Mit dem Worker faellt auch der einzige Leser der Warteschlange
+                // weg. Die echte EvaluationQueue ist ein begrenzter Channel
+                // (QueueCapacity, Standard 100) mit FullMode.Wait und haengt als
+                // Singleton an dieser Factory, die einmal je Testlauf gebaut wird -
+                // Respawn setzt die Datenbank zurueck, diesen Channel nicht.
+                // Legten die Tests insgesamt mehr als 100 Abgaben an, wartete
+                // CreateAsync bei der naechsten unbegrenzt auf einen Leser, den es
+                // nicht gibt: der Testlauf haengt ohne Fehlermeldung.
+                services.RemoveAll<IEvaluationQueue>();
+                services.AddSingleton<IEvaluationQueue>(new MitschreibendeWarteschlange());
             });
+        }
+
+        /// <summary>
+        /// Nimmt jede Abgabe an und merkt sie sich, statt sie zu stapeln.
+        /// </summary>
+        /// <remarks>
+        /// Nebenbei wird das Einreihen damit ueberhaupt erst pruefbar: vorher
+        /// belegte nur der Status Pending in der Datenbank, dass die Abgabe
+        /// angekommen ist - ob sie je in der Warteschlange landete, sah niemand.
+        /// </remarks>
+        public sealed class MitschreibendeWarteschlange : IEvaluationQueue
+        {
+            private readonly System.Collections.Concurrent.ConcurrentQueue<Guid> _eingereiht = new();
+
+            public IReadOnlyCollection<Guid> Eingereiht => _eingereiht;
+
+            public ValueTask EnqueueAsync(Guid submissionId, CancellationToken cancellationToken)
+            {
+                _eingereiht.Enqueue(submissionId);
+                return ValueTask.CompletedTask;
+            }
+
+            public IAsyncEnumerable<Guid> ReadAllAsync(CancellationToken cancellationToken) =>
+                AsyncEnumerable.Empty<Guid>();
         }
     }
 }

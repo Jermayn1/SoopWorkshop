@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SoopWorkshop.Backend.Application.Evaluation.Interfaces;
 using SoopWorkshop.Shared.DTOs.Evaluation;
 using SoopWorkshop.Shared.DTOs.Submissions;
 using SoopWorkshop.Shared.Enums;
@@ -64,6 +66,15 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 gespeichert.Status.ShouldBe(SubmissionStatus.Pending);
                 gespeichert.Files.ShouldHaveSingleItem().FileName.ShouldBe("Konto.java");
             });
+
+            // Der zweite Teil des Testnamens, bis hierher unbelegt: Pending in der
+            // Datenbank sagt nur, dass die Abgabe angekommen ist - nicht, dass sie
+            // je in der Warteschlange landete. Ohne das Einreihen bliebe sie
+            // liegen, und niemand saehe es.
+            var warteschlange = (SoopWorkshopFactory.MitschreibendeWarteschlange)
+                Fixture.Factory.Services.GetRequiredService<IEvaluationQueue>();
+
+            warteschlange.Eingereiht.ShouldContain(abgabe.Id);
         }
 
         // Der Kern dieses Tests ist nicht der Statuscode, sondern der WORTLAUT

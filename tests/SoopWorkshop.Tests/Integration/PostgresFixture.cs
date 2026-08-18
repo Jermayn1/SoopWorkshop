@@ -22,7 +22,15 @@ namespace SoopWorkshop.Tests.Integration
     /// </remarks>
     public sealed class PostgresFixture : IAsyncLifetime
     {
-        private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
+        /// <summary>
+        /// Dieselbe Hauptversion wie in docker-compose.yml. Wandert die eine,
+        /// muss die andere mit: sonst prueft jeder Testlauf die Migrationen gegen
+        /// eine andere PostgreSQL-Version als die, auf der sie im Betrieb laufen -
+        /// und genau diese Zusicherung ist der Grund fuer den Container.
+        /// </summary>
+        private const string Image = "postgres:16-alpine";
+
+        private readonly PostgreSqlContainer _container = new PostgreSqlBuilder(Image)
             .WithDatabase("soopworkshop_test")
             .WithUsername("soop")
             .WithPassword("soop")

@@ -1,5 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using SoopWorkshop.Backend.API.Configuration;
 using SoopWorkshop.Shared.DTOs.Auth;
 using SoopWorkshop.Shared.DTOs.Auth.Requests;
@@ -11,8 +14,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
     /// </summary>
     public class AdminAuthenticationTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
-        // Die Endpunkte, die geschuetzt sein muessen. Ohne diese Liste faellt eine
-        // vergessene [Authorize]-Angabe an einem neuen Controller niemandem auf.
+        // Die Endpunkte, an denen das HTTP-Verhalten geprueft wird. Bewusst eine
+        // Stichprobe und NICHT die Zusicherung, dass ueberall [Authorize] steht -
+        // die traegt JederAdminEndpunkt_... weiter unten.
         public static TheoryData<string, string> GeschuetzteEndpunkte => new()
         {
             { "GET", "/api/admin/auth/session" },
@@ -20,6 +24,74 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             { "GET", "/api/admin/tasks" },
             { "GET", "/api/admin/transfer/export" }
         };
+
+        // Die einzigen Admin-Aktionen, die ohne Anmeldung erreichbar sein duerfen.
+        // Kommt eine dazu, muss sie hier eingetragen werden - und genau dieser
+        // Zwang ist der Zweck: eine bewusste Ausnahme wird aufgeschrieben, eine
+        // vergessene faellt auf.
+        private static readonly string[] AbsichtlichOhneAnmeldung =
+        [
+            "api/admin/auth/login",
+            "api/admin/auth/logout"
+        ];
+
+        private List<Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor> AdminAktionen() =>
+            Fixture.Factory.Services
+                .GetRequiredService<IActionDescriptorCollectionProvider>()
+                .ActionDescriptors.Items
+                .Where(a => a.AttributeRouteInfo?.Template?
+                    .StartsWith("api/admin", StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
+
+        /// <summary>
+        /// Prueft JEDE Aktion unter api/admin, nicht eine Auswahl davon.
+        /// </summary>
+        /// <remarks>
+        /// Der Vorgaenger dieses Tests war eine handgepflegte Liste geschuetzter
+        /// Pfade. Sie deckte vier von sieben Admin-Controllern ab - die Endpunkte
+        /// fuer Testfaelle, JUnit-Dateien und Gewichte fehlten. Haette jemand dort
+        /// [Authorize] entfernt, waeren alle Tests gruen geblieben, waehrend die
+        /// JUnit-Dateien aller Aufgaben fuer jeden les- und ueberschreibbar
+        /// gewesen waeren, der den Port erreicht.
+        ///
+        /// Eine Liste geschuetzter Pfade faellt bei einem neuen Controller nach
+        /// OFFEN aus. Diese Richtung faellt nach ZU.
+        /// </remarks>
+        [Fact]
+        public void JederAdminEndpunkt_IstEntwederGeschuetztOderAusdruecklichOffen()
+        {
+            var adminAktionen = AdminAktionen();
+
+            // Ohne diese Zusicherung koennte der Test gruen sein, weil er gar
+            // nichts gefunden hat - etwa nach einer Umbenennung der Route.
+            adminAktionen.Count.ShouldBeGreaterThan(10);
+
+            var ungeschuetzt = adminAktionen
+                .Where(a => !a.EndpointMetadata.OfType<IAuthorizeData>().Any())
+                .Select(a => a.AttributeRouteInfo!.Template!)
+                .Where(t => !AbsichtlichOhneAnmeldung.Contains(t, StringComparer.OrdinalIgnoreCase))
+                .Distinct()
+                .ToList();
+
+            ungeschuetzt.ShouldBeEmpty(
+                "Diese Admin-Endpunkte tragen kein [Authorize] und stehen nicht in " +
+                "AbsichtlichOhneAnmeldung: " + string.Join(", ", ungeschuetzt));
+        }
+
+        // Die Gegenrichtung: eine Ausnahme, die niemand mehr braucht, soll
+        // auffallen statt liegenzubleiben.
+        [Fact]
+        public void KeineUnnoetigenAusnahmen_VomZugangsschutz()
+        {
+            var offen = AdminAktionen()
+                .Where(a => a.EndpointMetadata.OfType<IAllowAnonymous>().Any())
+                .Select(a => a.AttributeRouteInfo!.Template!)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            offen.ShouldBe(AbsichtlichOhneAnmeldung.OrderBy(t => t).ToList());
+        }
 
         [Theory]
         [MemberData(nameof(GeschuetzteEndpunkte))]
