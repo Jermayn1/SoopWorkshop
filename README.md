@@ -49,21 +49,27 @@ vergeben. Volle Punkte gibt es nur, wenn alle Teilprüfungen bestanden sind.
 
 **→ [docs/server-aufsetzen.md](docs/server-aufsetzen.md)**
 
-Schritt für Schritt von der leeren Debian-VM bis zum laufenden System: Docker,
-`.env`, DNS-Eintrag, Zertifikat aus eigener CA, Start, Absicherung, Sicherung
-und Fehlersuche. Nach jedem Abschnitt steht eine Kontrolle.
+**Fünf Schritte, rund 15 Minuten** — davon zehn Wartezeit beim Bauen. Danach
+erreichen die Teilnehmer das Tool über `http://<ip-der-vm>`: **kein Zertifikat,
+kein DNS-Eintrag, und auf den Teilnehmerrechnern ist nichts einzurichten.**
 
-Kurzfassung, wenn Docker schon läuft und ein Zertifikat unter `certs/` liegt:
+Kurzfassung, wenn Docker schon läuft:
 
 ```bash
 cp .env.example .env
 ```
+
+Darin `POSTGRES_PASSWORD` und `Admin__Password` setzen, dann:
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
 ```
 
 Voraussetzung ist nur Docker. .NET, Node und das JDK stecken in den Images.
+
+Alles, was **nicht** gebraucht wird, damit es läuft — Absicherung, Firewall,
+Sicherung, ein DNS-Name statt der IP, HTTPS nachrüsten — steht getrennt in
+[docs/betrieb.md](docs/betrieb.md).
 
 ---
 
@@ -185,8 +191,13 @@ Internet.**
   Ausbaustufe. Behandle die VM als nicht vertrauenswürdig — Snapshot vorher.
 - **Ein Passwort, keine Benutzerverwaltung.** Der Workshop hat genau einen
   Betreuer. Es gibt keine Rollen, keine Nutzerkonten, kein Zurücksetzen.
-- **Die Zertifikate stammen aus einer selbst verwalteten CA.** Ihr vertraut nur,
-  wer das Wurzelzertifikat installiert hat.
+- **Der Betrieb läuft über http, nicht https.** Das ist eine bewusste
+  Entscheidung: für einen internen Namen gibt es kein Zertifikat, dem Browser
+  von sich aus trauen, und die Alternativen wären für die Teilnehmer schlechter
+  (selbstsigniert = ganzseitige Warnung auf jedem Rechner; eigene CA =
+  Wurzelzertifikat von Hand auf jeden Rechner). Der Preis: das Admin-Passwort
+  läuft im Klartext durchs LAN. Nachrüsten ist später ein
+  Konfigurationsschritt — das Backend wertet `X-Forwarded-Proto` bereits aus.
 - **Abgaben überleben keinen Neustart mitten in der Auswertung.** Sie werden
   danach als fehlgeschlagen markiert, mit einem Hinweis für den Teilnehmer.
 

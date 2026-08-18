@@ -5,9 +5,11 @@
 > Stand: 2026-08-18 — **Phase 0 bis 7 abgeschlossen, das Projekt ist
 > auslieferbar.** `docker compose up -d --build` bringt Datenbank, Backend und
 > Frontend hoch; die Schritt-für-Schritt-Anleitung für die Debian-VM steht in
-> **`docs/server-aufsetzen.md`**. Teilnehmer erreichen das System unter
-> `https://soop.workshop`, der Betreuer verwaltet es von einem anderen Rechner
-> im selben Netz.
+> **`docs/server-aufsetzen.md`** (fünf Schritte), alles Weitere getrennt in
+> **`docs/betrieb.md`**. Teilnehmer erreichen das System unter
+> `http://<ip-der-vm>` — **ohne Zertifikat und ohne DNS-Eintrag**; auf den
+> Teilnehmerrechnern ist nichts einzurichten. Ein Name und HTTPS sind optionale
+> Schritte in `betrieb.md`, kein Teil des Aufsetzens.
 > **400 Projekt-Tests** (davon 98 gegen ein echtes PostgreSQL aus dem Container)
 > und **145 Frontend-Tests**. Alle Prüfungen mit einem Befehl:
 > `.\scripts\pruefe-alles.ps1`; dieselben Schritte laufen als GitHub Action.
@@ -174,7 +176,8 @@ docker compose -f docker-compose.yml up -d --build
 
 **Das `-f` ist keine Kosmetik.** Ohne die Angabe zöge Compose auf dem Server das
 Override mit, falls es doch dort läge, und veröffentlichte die Datenbank ins
-Netz. Die vollständige Anleitung steht in `docs/server-aufsetzen.md`.
+Netz. Die Anleitung steht in `docs/server-aufsetzen.md`, der Betrieb in
+`docs/betrieb.md`.
 
 Der Container `soopworkshop-db` behält seinen festen Namen, weil `start-dev.ps1`,
 `stop-dev.ps1` und `sync-db-password.ps1` ihn benutzen. Backend und Frontend
@@ -1205,8 +1208,12 @@ Anleitung: `docs/server-aufsetzen.md`. Abnahme: `tests/manual/abnahme-phase7.md`
       `Database__MigrateOnStartup`, mit Wiederholversuchen
 - [x] **README neu geschrieben** — der Bestand beschrieb ein anderes Projekt
       (JAR-Upload, Blazor, „jedes JAR läuft isoliert in einem Container")
-- [x] **`docs/server-aufsetzen.md`** — elf Abschnitte von der leeren VM bis zur
-      Fehlersuche, jeder mit einer Kontrolle. Das eigentliche Ergebnis der Phase
+- [x] **`docs/server-aufsetzen.md`** — fünf Schritte von der leeren VM zum
+      laufenden System, jeder mit einer Kontrolle, plus die Fehler, die dabei
+      wirklich blockieren. Das eigentliche Ergebnis der Phase.
+      **`docs/betrieb.md`** nimmt alles auf, was nicht zum Laufen gebraucht wird
+      (Absichern, Firewall, Sichern, DNS-Name, HTTPS nachrüsten) — getrennt,
+      damit die Anleitung eine Anleitung bleibt und kein Nachschlagewerk
 - [x] Grenzen unbeschönigt in der README: workshop-intern, keine Härtung gegen
       böswillige Abgaben, was das interne Netz leistet und was nicht
 - [x] **Abgaben-Übersicht** (Nachzügler aus Phase 5) — `GET
@@ -1222,15 +1229,37 @@ Anleitung: `docs/server-aufsetzen.md`. Abnahme: `tests/manual/abnahme-phase7.md`
 | | Entscheidung | Warum |
 |---|---|---|
 | Origins | **ein** Ursprung, nginx reicht `/api` weiter | CORS entfällt, kein Hostname im Image |
-| HTTPS | **eigene CA (mkcert)**, kein selbstsigniertes | selbstsigniert bringt einem ganzen Kurs bei, Warnungen wegzuklicken |
+| Transport | **reines http**, kein TLS | siehe unten — die Alternativen sind für die Teilnehmer schlechter |
 | Cookie | Entwicklung `None`+`Always`, Betrieb `Lax`+`SameAsRequest` | der Betreuer sitzt **nicht** auf dem Server; mit `Always` wäre das Cookie über http nie zurückgekommen |
 
-`SameAsRequest` ist **kein Ausschalter**: über https ist das Cookie `Secure`,
-über http nicht — es beschreibt die Lage, statt eine Zusicherung zu behaupten,
-die die Verbindung nicht hergibt. Voraussetzung ist `UseForwardedHeaders`;
-ohne das sähe das Backend hinter dem Proxy dauerhaft `http`. **Bewusst kein
-HSTS**: das machte die Zertifikatswarnung unumgehbar und sperrte jeden Rechner
-ohne Wurzelzertifikat komplett aus.
+**Warum kein HTTPS** — die Frage ist in dieser Phase zweimal beantwortet worden,
+das zweite Mal richtig. Zuerst mit einer eigenen CA (mkcert), dann verworfen:
+die Vorgabe des Betreuers lautete, dass Teilnehmer die Seite ohne eigenes
+Zutun aufrufen können und keine Warnung sehen. Für einen internen Namen gibt es
+kein öffentlich vertrauenswürdiges Zertifikat, also bleiben drei Wege:
+
+| | Was der Teilnehmer erlebt |
+|---|---|
+| **http** | Seite lädt sofort, kleines „Nicht sicher" in der Adressleiste, nichts zu klicken |
+| selbstsigniert | ganzseitige Warnung, auf jedem Rechner, bei jedem Besuch |
+| eigene CA | Schloss — aber Wurzelzertifikat von Hand auf jeden Rechner |
+
+Von den drei Vorgaben (kein Handanlegen, keine Warnung, einfach) erfüllt http
+zwei vollständig und die dritte fast: ein Label statt einer Warnseite.
+Selbstsigniert wäre in genau dem Punkt schlechter, um den es ging.
+**Nebengewinn: damit fällt DNS als Voraussetzung weg** — der einzige harte Grund
+für den Namen war das Zertifikat, denn ein Zertifikat gilt für einen Namen und
+nicht für eine IP.
+
+**Der Preis steht offen in der Anleitung und in der README:** das Admin-Passwort
+läuft im Klartext durchs LAN. Deshalb gehört der Aufbau nicht ins Internet.
+
+**Der Wechsel kostete keine Codezeile.** `SameAsRequest` ist **kein
+Ausschalter**, sondern eine Aussage über die Verbindung: über https ist das
+Cookie `Secure`, über http nicht. Beim Umbau auf reines http war deshalb nichts
+anzupassen — nachgemessen, das Cookie kommt mit `samesite=lax; httponly` und
+ohne `secure`, und der Round-Trip trägt. Voraussetzung bleibt
+`UseForwardedHeaders`; damit ist HTTPS später ein Konfigurationsschritt.
 
 **Fremder Code — die wirksamste Maßnahme der ganzen Phase:** Backend und
 Datenbank liegen in einem Docker-Netz mit `internal: true`. Der Container, in
@@ -1706,7 +1735,7 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
 - 2026-08-18 — `Frontend/docker-entrypoint.sh` — der Zweig „Zertifikat
   gefunden" setzte die zuvor umgebogenen Pfade in `nginx.conf` **nicht**
   zurück. Wer zuerst ohne Zertifikat startet und es später nachlegt — genau der
-  Weg, den `docs/server-aufsetzen.md` §11 vorschlägt —, bekam nach
+  Weg, den die damalige Anleitung in der Fehlersuche vorschlug —, bekam nach
   `docker compose restart frontend` weiter das alte selbstsignierte aus `/tmp`
   ausgeliefert, während das Log „Zertifikat gefunden" meldete. Ein `restart`
   behält denselben Container samt Dateisystem. Behoben: die Pfade werden bei
@@ -1722,3 +1751,17 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   seine Zeilen aber im selben Augenblick an — und genau deshalb zieht der
   Sortier-Test seine Zeitpunkte künstlich auseinander. Er umging das Problem,
   statt es zu zeigen. Behoben mit `ThenByDescending(s => s.Id)`
+- 2026-08-18 — Zertifikatsmechanik — **zweimal gebaut, dann ganz entfernt.** Der
+  erste Entwurf lieferte HTTPS über eine eigene CA (mkcert), samt Skript,
+  Notfall-Zertifikat im Entrypoint, `certs/`-Mount und openssl im Image. Zwei
+  der Findings oben stammen allein daraus. Die Vorgabe war aber: *Teilnehmer
+  rufen die Seite auf, ohne selbst etwas anzulegen, und sehen keine Warnung.*
+  Mit eigener CA muss auf jeden Rechner ein Wurzelzertifikat, mit
+  selbstsigniertem sieht jeder eine Warnseite — beides verfehlt genau das. Mit
+  reinem http fiel neben der ganzen Mechanik auch **DNS als Voraussetzung** weg,
+  weil ein Zertifikat für einen Namen gilt und nicht für eine IP. Die Anleitung
+  schrumpfte von elf Pflichtabschnitten auf fünf.
+  **Lehre:** die Anforderung war von Anfang an „einfach für 15 Teilnehmer", und
+  daraus folgt etwas anderes als aus „technisch sauber". Wer die zweite Frage
+  beantwortet, ohne die erste gestellt zu haben, baut zwei Fehlerquellen und ein
+  Skript, die am Ende wieder rausfliegen

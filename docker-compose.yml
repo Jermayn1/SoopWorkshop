@@ -113,13 +113,9 @@ services:
         # migriert - und der erste Eindruck ist eine Fehlerseite.
         condition: service_healthy
     ports:
+      # Der einzige veroeffentlichte Port des ganzen Aufbaus. Nur http - die
+      # Begruendung steht in docs/server-aufsetzen.md unter "Warum kein HTTPS".
       - "80:80"
-      - "443:443"
-    volumes:
-      # Das Zertifikat wird gemountet, nicht ins Image gebacken: ein Schluessel
-      # im Image ist ein Schluessel im Klartext in jeder Kopie davon. Fehlt der
-      # Ordner, erzeugt der Entrypoint ein selbstsigniertes und sagt es laut.
-      - ./certs:/etc/nginx/certs:ro
     networks:
       # In BEIDEN Netzen, und damit die einzige Bruecke: von aussen erreichbar
       # und zugleich der einzige Weg zum Backend.

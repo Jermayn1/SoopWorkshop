@@ -28,18 +28,22 @@ Push als GitHub Action, dazu ein Job, der beide Images baut und prüft, dass
 | Backend → Internet (IP) | `curl` Exit 7 — keine Route |
 | Backend → LAN-Gateway | `curl` Exit 7 — keine Route |
 | Backend → Datenbank | `curl` Exit 52 — erreichbar |
-| `http://…` | 301 auf `https` |
+| Seite über `http://` | 200 `text/html` |
 | Unterpfad direkt aufgerufen | 200 mit `index.html` (kein 404) |
 | `/api/categories` durch den Proxy | 200 |
 | `/health` durch den Proxy | `Healthy` |
-| Anmeldung durch den Proxy | 204, Cookie `secure; samesite=lax; httponly` |
+| Port 443 | nicht erreichbar — es gibt nur http |
+| Anmeldung durch den Proxy | 204, Cookie `samesite=lax; httponly`, **kein** `secure` |
 | Geschützter Endpunkt mit Cookie | 200 · ohne Cookie 401 |
-| Abgabe im Modus `Both` | **100/100** durch `javac` und JUnit im Container |
+| Abgaben-Übersicht mit Cookie | 200 |
+| Abgabe im Modus `Both` | durch `javac` und JUnit im Container ausgewertet |
 | Umlaute | `Die Größe der Summe beträgt: 7` — unversehrt |
 | Datei über 1 MB | deutscher Satz als `text/plain`, nicht nginx' HTML |
 
-Das `secure` im Cookie ist dabei der Beleg, dass `X-Forwarded-Proto` von nginx
-über `UseForwardedHeaders` bis zur Cookie-Politik durchkommt.
+Das **fehlende** `secure` ist hier der wichtige Teil: ein Secure-Cookie würde
+über http gar nicht zurückgeschickt, und die Anmeldung funktionierte von keinem
+Rechner im Netz. `CookieSecurePolicy.SameAsRequest` sorgt dafür von selbst —
+über https würde dasselbe Cookie `Secure` tragen.
 
 ---
 
@@ -114,16 +118,22 @@ Eine Anleitung, die nur der Autor gelesen hat, ist keine Anleitung. Was unklar
 ist, gehört notiert und nachgebessert — das ist kein Nebenprodukt der Abnahme,
 sondern ihr Zweck.
 
-Besonders hinsehen bei:
+Es sind fünf Pflichtschritte. Besonders hinsehen bei:
 
-- **Abschnitt 5 (DNS)** — passt der beschriebene Weg zu eurem Netz? Der
-  Normalfall ist der vorhandene interne DNS; ist das bei euch ein anderer, muss
-  es dort stehen
-- **Abschnitt 6.4 (Wurzelzertifikat)** — auf einem Teilnehmerrechner
-  durchspielen. Danach muss `https://soop.workshop` **ohne Warnung** öffnen, mit
-  Schloss. Firefox braucht einen eigenen Schritt
-- **Abschnitt 9 (Absichern)** — `nmap` von einem anderen Rechner: Port 5432 muss
-  zu sein
+- **Schritt 1 (Docker prüfen)** — reicht der Hinweis, wenn das Compose-Plugin
+  fehlt? Auf einer VM mit vorinstalliertem Docker ist das der wahrscheinlichste
+  Stolperstein
+- **Schritt 3 (`.env`)** — ist klar, welches der beiden Passwörter das ist, mit
+  dem man sich später anmeldet?
+- **Schritt 4 (Starten)** — zeigt `ps` am Ende wirklich zweimal `healthy`? Wie
+  lange hat der erste Build gebraucht?
+- **Der Teilnehmerblick** — `http://<ip-der-vm>` von einem fremden Rechner
+  öffnen. Die Seite muss **direkt** laden, ohne dass irgendwo etwas zu
+  bestätigen ist. Das „Nicht sicher" in der Adressleiste ist erwartet und kein
+  Befund (`docs/betrieb.md`, „Warum kein HTTPS")
+
+Alles aus `docs/betrieb.md` ist ausdrücklich **nicht** Teil der Abnahme. Wenn
+dabei etwas nicht klappt, ist das eine Notiz für später, kein Blocker.
 
 ### 2.5 Vom zweiten Rechner verwalten
 
@@ -131,7 +141,7 @@ Der Punkt, an dem der ganze Aufbau hängt und der sich lokal nicht prüfen läss
 
 Von einem **anderen** Rechner im Netz (nicht vom Server):
 
-1. `https://soop.workshop/admin` öffnen
+1. `http://<ip-der-vm>/admin` öffnen
 2. Mit `Admin__Password` anmelden
 3. Eine Kategorie anlegen und wieder löschen
 
@@ -160,12 +170,13 @@ Fehler, sondern das dokumentierte Verhalten.**
 - **Oberhalb von 10 MB antwortet nginx mit einer englischen 413-Seite.** Darunter
   kommt der deutsche Satz des Servers durch. Über die Oberfläche ist der Fall
   nicht erreichbar, das Frontend blockt vorher.
-- **Ohne Wurzelzertifikat zeigt der Browser eine Warnung.** Beabsichtigt: HSTS
-  ist bewusst nicht gesetzt, damit die Seite auf solchen Rechnern überhaupt
-  erreichbar bleibt.
+- **Chrome und Edge schreiben „Nicht sicher" in die Adressleiste.** Das ist bei
+  http immer so und lässt sich nicht wegkonfigurieren — ein Schloss gibt es nur
+  mit einem vertrauenswürdigen Zertifikat. Es ist ein Label, keine Warnseite:
+  die Seite lädt sofort, es ist nichts zu klicken. Die Abwägung steht in
+  `docs/betrieb.md` unter „Warum kein HTTPS".
+- **Das Admin-Passwort läuft im Klartext durchs LAN.** Folge derselben
+  Entscheidung, offen dokumentiert. Deshalb gehört der Aufbau nicht ins Internet.
 - **Eine Abgabe erreicht die Datenbank.** Das interne Netz sperrt LAN und
   Internet aus, nicht die Datenbank. Echte Isolation je Abgabe ist eine spätere
   Ausbaustufe.
-- **Der erste Start ohne Zertifikat erzeugt ein selbstsigniertes** und sagt das
-  laut im Log. Gewollt, damit `docker compose up` auf einem frischen Rechner
-  etwas Benutzbares ergibt.
