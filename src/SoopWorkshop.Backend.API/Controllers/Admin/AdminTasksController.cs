@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SoopWorkshop.Backend.Application.Common;
 using SoopWorkshop.Backend.Application.Tasks.Interfaces;
 using SoopWorkshop.Shared.DTOs.Tasks;
 using SoopWorkshop.Shared.DTOs.Tasks.Requests;
@@ -86,14 +87,21 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         // Toggelt die Sichtbarkeit einer Aufgabe
         [HttpPatch("{id:guid}/visibility")]
         [ProducesResponseType<VisibilityStateDto>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<VisibilityStateDto>> ToggleVisibility(Guid id)
         {
             var result = await _taskItemService.ToggleVisibilityAsync(id);
 
-            return result.IsSuccess
-                ? Ok(new VisibilityStateDto { IsVisible = result.Value })
-                : NotFound(result.ErrorMessage);
+            if (result.IsSuccess)
+                return Ok(new VisibilityStateDto { IsVisible = result.Value });
+
+            // Zwei unterscheidbare Fehlschlaege, zwei Statuscodes. Bis Phase 7
+            // wurde auch "der Aufgabe fehlen die Testdaten ihres Modus" als 404
+            // gemeldet - fuer eine Aufgabe, die es offensichtlich gibt.
+            return result.Failure == ResultFailure.NotFound
+                ? NotFound(result.ErrorMessage)
+                : BadRequest(result.ErrorMessage);
         }
     }
 }

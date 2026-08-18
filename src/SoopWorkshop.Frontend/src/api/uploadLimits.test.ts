@@ -112,16 +112,18 @@ describe('checkFiles', () => {
     expect(rejections).toHaveLength(1)
   })
 
-  // **Ist-Verhalten, und die beiden Seiten sind sich hier NICHT einig.**
-  // checkFiles vergleicht Dateinamen bitgenau, der SubmissionUploadValidator im
-  // Backend dagegen mit OrdinalIgnoreCase. 'A.java' und 'a.java' kommen hier
-  // also durch und werden erst vom Server abgelehnt - genau die Doppelpflege,
-  // vor der der Kopfkommentar in uploadLimits.ts warnt. Nachgemessen, nicht
-  // vermutet; siehe CLAUDE.md §9.
-  it('haelt A.java und a.java fuer zwei verschiedene Dateien', () => {
+  // Bis Phase 7 war das ein Ist-Verhalten-Test mit umgekehrter Erwartung: die
+  // beiden Seiten waren sich NICHT einig. checkFiles verglich bitgenau, der
+  // SubmissionUploadValidator im Backend mit OrdinalIgnoreCase - 'A.java' kam
+  // neben 'a.java' durch die Oberflaeche und wurde erst vom Server abgelehnt.
+  //
+  // Der Server ist die Autoritaet, also zieht das Frontend nach. Dass javac
+  // bei gleichem Namen die eine Klasse mit der anderen ueberschreibt, ist das
+  // fachliche Argument dafuer, dass der Server recht hat.
+  it('haelt A.java und a.java fuer dieselbe Datei', () => {
     const { accepted, rejections } = checkFiles([datei('A.java')], [datei('a.java')])
 
-    expect(accepted).toHaveLength(2)
-    expect(rejections).toEqual([])
+    expect(accepted.map((f) => f.name)).toEqual(['A.java'])
+    expect(rejections).toEqual(["'a.java' ist bereits ausgewählt."])
   })
 })
