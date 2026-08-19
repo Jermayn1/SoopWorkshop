@@ -1,5 +1,5 @@
-import ReactMarkdown from 'react-markdown'
 import { HintPanel } from './HintPanel'
+import { TaskMarkdown } from './TaskMarkdown'
 import { DIFFICULTY_CLASSES, DIFFICULTY_LABELS, MODE_LABELS } from '../api/labels'
 import type { Task } from '../api/types'
 
@@ -40,12 +40,9 @@ export function TaskView({ task }: TaskViewProps) {
         </h1>
       </header>
 
-      <section
-        style={{ animationDelay: '180ms' }}
-        className="anim-ein prose prose-slate max-w-none mb-10 prose-p:text-slate-700 prose-p:leading-relaxed prose-code:before:content-none prose-code:after:content-none prose-code:rounded prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-normal"
-      >
+      <section style={{ animationDelay: '180ms' }} className="anim-ein mb-10">
         <div className="bg-slate-50/50 p-8 rounded-2xl border border-slate-100 shadow-sm">
-          <ReactMarkdown>{task.description}</ReactMarkdown>
+          <TaskMarkdown>{task.description}</TaskMarkdown>
         </div>
       </section>
 

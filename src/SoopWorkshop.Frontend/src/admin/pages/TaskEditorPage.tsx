@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
 import { AlertCircle, ArrowLeft, Eye, EyeOff, RefreshCw, Trash2 } from 'lucide-react'
 import { useAdminCatalog } from '../adminOutlet'
 import { TextInput } from '../components/TextInput'
@@ -15,6 +14,7 @@ import { TestCaseEditor } from '../components/TestCaseEditor'
 import { UnitTestFileEditor } from '../components/UnitTestFileEditor'
 import { TrialRun } from '../components/TrialRun'
 import { WeightEditor } from '../components/WeightEditor'
+import { TaskMarkdown } from '../../components/TaskMarkdown'
 import {
   WEIGHTED_CATEGORIES,
   defaultWeights,
@@ -488,9 +488,7 @@ export function TaskEditorPage() {
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Vorschau
                   </p>
-                  <div className="prose prose-slate max-w-none prose-p:text-slate-700">
-                    <ReactMarkdown>{draft.description}</ReactMarkdown>
-                  </div>
+                  <TaskMarkdown>{draft.description}</TaskMarkdown>
                 </div>
               )}
             </div>

@@ -300,7 +300,7 @@ archive/SoopWorkshop.Frontend.*      stillgelegtes Blazor-Frontend, nicht in der
 src/api/         schema.d.ts (erzeugt) · types.ts · mappers.ts · client.ts ·
                  endpoints.ts · uploadLimits.ts · labels.ts
 src/components/  AppLayout · Sidebar · CategoryCard · HintPanel · BrandMark ·
-                 TaskView · SubmissionForm · ResultView
+                 TaskView · TaskMarkdown · SubmissionForm · ResultView
 src/pages/       HomePage · TaskPage · ResultPage · NotFoundPage
 src/hooks/       useSubmissionPolling
 src/admin/       RequireAdmin · useAdminSession · adminOutlet · validation ·
@@ -1887,3 +1887,38 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   **Lehre:** eine Meldung, die zwei gerundete Zahlen gegeneinanderstellt, muss
   am Randfall geprüft werden, nicht in der Mitte des Bereichs — genau dort
   fallen die beiden Zahlen zusammen
+- 2026-08-19 — `Frontend/src/components/TaskView.tsx` — die Variante
+  `prose-code:` hängt an **jedem** `<code>`, auch dem in einem `<pre>`. Die
+  Pille für Inline-Code landete damit auf jedem Markdown-Codeblock: eine
+  Inline-Box mit `white-space: pre` bricht in ein Fragment je Zeile, und jedes
+  davon zeichnet den Hintergrund selbst — also helle Kästchen Zeile für Zeile,
+  darauf der helle Text des dunklen Blocks. Dazu gilt das `padding-left` nur
+  beim **ersten** Fragment: eine ASCII-Pyramide stand dadurch mit der Spitze
+  6 px zu weit rechts und sah nach einem Schriftproblem aus. Gemessen:
+  Fragmentbreiten 31/34/48 px statt 25/34/42 px bei 8,4 px Zeichenbreite. Die
+  Schrift war nachweislich in Ordnung — alle fünf Sternchen in `*****` haben
+  auf Canvas identische Tinte, und JetBrains Mono meldet `loaded`. Behoben,
+  indem die Inline-Regeln auf `:not(pre) > code` zielen.
+  **Lehre:** dieselbe wie beim `::deep`- und beim `prose`-Fund — eine plausibel
+  aussehende Klassenkette ist kein Beleg. Neu ist die Richtung: hier war die
+  Klasse nicht wirkungslos, sondern **zu wirksam**. Und: ein Symptom, das nach
+  „liegt an der Schriftart" aussieht, wird gemessen, bevor die Schrift
+  angefasst wird
+- 2026-08-19 — `Frontend/src/admin/pages/TaskEditorPage.tsx` gegen
+  `Frontend/src/components/TaskView.tsx` — beide trugen ihre eigene
+  `prose`-Kette, und die liefen in **beide** Richtungen auseinander: beim
+  Teilnehmer verschwanden die Backticks um Inline-Code (`prose-code:before:
+  content-none`), in der Editor-Vorschau standen sie sichtbar im Text. Das
+  Feld verspricht darüber „Die Vorschau darunter zeigt, was der Teilnehmer
+  sieht". Behoben mit einer gemeinsamen Komponente `TaskMarkdown` — dieselbe
+  Begründung wie bei `TaskView`/`ResultView` in Phase 5.5: eine Vorschau ist
+  nur ehrlich, wenn sie dieselbe Komponente benutzt, nicht dieselbe Absicht
+- 2026-08-19 — `Frontend/src/components/TaskMarkdown.tsx` — Codeblöcke standen
+  auf der Zeilenhöhe des Typography-Plugins (1,714). Ein Zeichen ist 0,6 em
+  breit, eine Zeile war damit 2,86-mal so hoch wie breit; ASCII-Kunst wird so
+  um rund 40 % überdehnt, und die Pyramide wirkte auseinandergezogen. Auf
+  `prose-pre:leading-snug` (1,375 → 19,25 px bei 14 px) gezogen, damit
+  gezeichnete Formen ihre Proportionen behalten. Terminal liegt bei ~1,2,
+  Editoren bei ~1,5 — der Wert liegt bewusst dazwischen. **Merken:** in einem
+  Codeblock ist die Zeilenhöhe keine reine Geschmacksfrage, sie ist die eine
+  Hälfte des Rastermaßes
