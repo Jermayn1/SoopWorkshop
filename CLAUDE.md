@@ -541,9 +541,20 @@ Klassennamen in PascalCase, kein snake_case. `CharacterSet` und `NamingConventio
 sind keine eigenen Kategorien mehr; die Enum-Werte bleiben als Altlast stehen, weil sie
 als `int` in der Datenbank liegen — **nicht wiederverwenden**.
 
-Vor jeder Regex-Prüfung entfernt `JavaSourceText.StripCommentsAndLiterals` Kommentare
-sowie String-, Textblock- und Char-Literale. Ohne das schlug die Namensprüfung an,
-sobald `mein_wert` in einem Kommentar oder in einer Ausgabe stand.
+`ContractChecker` und `NamingConventionChecker` schicken den Quelltext vor ihrer
+Regex-Prüfung durch `JavaSourceText.StripCommentsAndLiterals` — das entfernt
+Kommentare sowie String-, Textblock- und Char-Literale. Ohne das schlug die
+Namensprüfung an, sobald `mein_wert` in einem Kommentar oder in einer Ausgabe stand.
+
+**Der `CharacterSetChecker` tut das ausdrücklich nicht.** Er prüft `file.Content`
+roh, also **auch Kommentare und Ausgabetexte** — `// Größe berechnen` und
+`System.out.println("Größe")` kosten denselben Punkt wie ein Umlaut im Bezeichner.
+Das ist gewollt und in Phase 8 ausdrücklich bestätigt worden: die Regel existiert
+wegen der Kodierungsfallen der Java-Konsole, und die treffen gerade die Ausgabe.
+Beide Fälle sind in `CharacterSetCheckerTests` als Ist-Verhalten festgehalten.
+Diese Datei hat das früher als „vor **jeder** Regex-Prüfung" beschrieben — das war
+falsch und hat beim Planen des Feinschliffs beinahe zu einer Verhaltensänderung
+geführt.
 
 ### 5.7 Wie eine Teilprüfung aussieht
 
@@ -596,9 +607,24 @@ ohne Eingabe, bei denen JUnit die Ausgabe von `main` prüft (§5.1).
 - **Ordner = Feature**, nicht Technik: `Tasks/`, `Submissions/`, `Evaluation/` mit je
   `Interfaces/` und `Services/`.
 - **Frontend**: eine Komponente je Datei, benannt wie die Datei. Ordner nach Feature
-  (§4). **Bezeichner englisch, Kommentare deutsch** — wie im Backend. In allem, was
-  ein Teilnehmer liest, stehen **echte Umlaute** (`ä ö ü ß`); die Ersatzschreibung
-  gilt nur für C#-Kommentare.
+  (§4). **Bezeichner englisch, Kommentare deutsch** — wie im Backend.
+- **Angezeigter Text ist orthografisch korrektes Deutsch.** Das gilt für alles, was
+  ein Mensch in der Oberfläche liest — Teilnehmersicht **und** Admin-Panel, im
+  Frontend wie in den Antworten der API:
+  - **echte Umlaute** (`ä ö ü ß`), keine Ersatzschreibung;
+  - **deutsche Anführungszeichen** `„…"` um eingesetzte Werte
+    (`„notiz.txt" ist keine .java-Datei.`), keine geraden Hochkommas;
+  - ein **Gedankenstrich** `—` statt eines Bindestrichs zwischen Satzteilen.
+    Bindestriche in Zusammensetzungen (`Groß-/Kleinschreibung`) bleiben.
+
+  **Die Ersatzschreibung gilt nur noch für C#-Kommentare, Log-Meldungen,
+  Exceptions und die Skripte** unter `scripts/` und `tests/manual/`. Bei den
+  Skripten ist das keine Kosmetik: ohne BOM liest Windows PowerShell 5.1 die
+  Datei als ANSI (§9).
+
+  **Steht ein Satz doppelt** — clientseitig in `uploadLimits.ts`/`validation.ts`
+  und verbindlich im Backend —, muss er auf beiden Seiten **wörtlich gleich**
+  lauten. Genau das war er vor Phase 8 nicht: „groesser" gegen „größer".
 - **Keine eigene Farbpalette im Frontend.** Die Komponenten benutzen Tailwinds
   Standardfarben (`slate`, `indigo`, `emerald`, `rose`, `amber`) direkt. Der
   Feinschliff passiert von Hand in den Komponenten — eine Token-Zwischenschicht
@@ -1729,6 +1755,25 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
     Tests mitprüft. 145 Tests; abgedeckt ist, was in Phase 4 und 5 auffällig
     war, die Admin-Seiten bewusst nicht.
 
+### Neu offen nach Phase 7
+
+16. **HTTPS im Ausbildungsnetz nachrüsten.** Der DNS-Eintrag ist beim Betreuer in
+    Auftrag gegeben (Stand 2026-08-19); sobald der Name steht, lässt sich ein
+    Zertifikat darauf ausstellen und der Aufbau von reinem http auf https heben.
+    **Warum es damals bewusst http wurde**, steht in §8 — die Begründung galt für
+    *selbstsigniert* und *eigene CA*, nicht für ein Zertifikat, dem die Rechner im
+    Netz ohnehin trauen. Mit einem solchen entfällt der Einwand.
+
+    **Die Vorarbeit ist erledigt und kostet keine Codezeile:** `UseForwardedHeaders`
+    ist aktiv, und das Anmelde-Cookie steht auf `SameAsRequest` — das ist kein
+    Ausschalter, sondern eine Aussage über die Verbindung, über https ist es also
+    von selbst `Secure`. Offen sind drei Dinge: das Zertifikat auf die VM bringen,
+    den nginx-Listener auf 443 stellen (samt Weiterleitung von 80), und den
+    Abschnitt in `docs/betrieb.md` von „optional" auf „so geht es" ziehen.
+
+    **Zu erledigen bleibt außerdem der Satz in der README**, dass das
+    Admin-Passwort im Klartext durchs LAN läuft — der fällt damit weg.
+
 - 2026-08-18 — `Frontend/docker-entrypoint.sh` — der Zweig „Zertifikat
   gefunden" setzte die zuvor umgebogenen Pfade in `nginx.conf` **nicht**
   zurück. Wer zuerst ohne Zertifikat startet und es später nachlegt — genau der
@@ -1783,3 +1828,55 @@ Format: `Datum — Datei — Beschreibung — geplant für Phase X`
   `apple-touch-icon.png` daneben, aus derselben SVG gerendert. **Merken:** beim
   Rastern die Auflösung mitgeben (`-density`), sonst rastert ImageMagick auf
   32×32 und skaliert hoch — das Ergebnis ist unscharf und trotzdem 123 KB groß
+
+**Aus Phase 8 (Feinschliff):**
+
+- 2026-08-19 — projektweit — die Ersatzschreibung `ae/oe/ue/ss` in angezeigten
+  Texten war **nie eine Entscheidung**, sondern ein Rest aus der Zeit, in der
+  unklar war, ob Umlaute sauber durch Datei-Kodierung, Prozessgrenzen und
+  Browser kommen. Belegt war das längst — die Admin-Controller, `uploadLimits.ts`
+  und die JUnit-Beispieldateien benutzten echte Umlaute und liefen. Die Folge
+  war ein Bestand, der **im selben Dialog** beides zeigte: `WeightEditor.tsx`
+  sagte „Das Gewicht muss größer als 0 sein.", das Backend antwortete auf
+  dieselbe Eingabe mit „groesser". Behoben in allem, was ein Mensch liest;
+  Logs, Exceptions und Skripte bleiben bewusst ASCII (§6).
+  **Lehre:** eine Vorsichtsmaßnahme, deren Anlass weggefallen ist, verschwindet
+  nicht von selbst — sie wird zur Inkonsistenz, weil neuer Code sie nicht mehr
+  befolgt und alter sie nicht ablegt
+- 2026-08-19 — `CLAUDE.md` §5.6 gegen
+  `Infrastructure/.../Checkers/CharacterSetChecker.cs` — die Datei behauptete,
+  `StripCommentsAndLiterals` laufe „vor **jeder** Regex-Prüfung". Der
+  `CharacterSetChecker` ruft es **nicht** auf, prüft also auch Kommentare und
+  String-Literale. Beim Planen des Feinschliffs führte genau diese Zeile
+  beinahe zu einer stillen **Verhaltensänderung an der Bewertung** — die Annahme
+  „Umlaute im Kommentar sind ja erlaubt" stand unwidersprochen im Raum, und ohne
+  Blick in den Code wäre sie umgesetzt worden. §5.6 richtiggestellt, das
+  Ist-Verhalten für Kommentare als Test festgehalten.
+  **Lehre:** dieselbe wie beim `::deep`-, `prose`- und `Update()`-Fund — eine
+  plausible Aussage in der eigenen Dokumentation ist eine Behauptung, kein
+  Beleg. Neu daran ist nur, wie teuer sie diesmal geworden wäre: Dokumentation
+  über Bewertungsregeln wird vor dem Handeln gegen den Code geprüft
+- 2026-08-19 — `Frontend/src/admin/icons.ts` gegen `IconPickerDialog.tsx` — der
+  Symbol-Index ist ein **Suchindex**, kein Anzeigetext. Ihn auf echte Umlaute
+  umzustellen hätte „pruefung" ins Leere laufen lassen, ohne dass irgendwo ein
+  Fehler entstünde: die Suche hätte einfach nichts mehr gefunden. Gelöst mit
+  einer Faltung (`ä`→`ae`) auf **beiden** Seiten des Vergleichs, damit beide
+  Schreibweisen treffen. **Merken:** wer einen Suchindex umschreibt, ändert die
+  Trefferlage, nicht nur die Schreibweise
+- 2026-08-19 — `Frontend/src/components/CategoryCard.tsx` — der `errorTip`-Absatz
+  hatte `whitespace-pre-wrap`, aber kein `break-words`. Das genügt nur, solange
+  die javac-Rohausgabe Leerzeichen enthält; ein langer Pfad oder Bezeichner
+  schob über die Kartenkante hinaus. Die Vergleichswerte direkt darunter hatten
+  beides von Anfang an — die Stelle ist also nicht übersehen worden, sondern
+  eine Zeile daneben. Ergänzt, ebenso in `TrialRun` und `ResultPage`
+- 2026-08-19 — `Frontend/src/api/uploadLimits.ts` — die clientseitige Ablehnung
+  einer zu großen Datei nannte Ist-Größe **und** Grenze: „ist 2,0 MB groß —
+  erlaubt sind 1,0 MB je Datei". Das klingt präziser, ist bei knapper
+  Überschreitung aber **selbstwidersprüchlich**: `formatBytes` rundet, und
+  1 MB + 10 Bytes ergibt „ist 1,0 MB groß — erlaubt sind 1,0 MB je Datei".
+  Der Test prüfte mit 2 MB und hat den Fall nie gesehen. Behoben, indem der
+  Satz auf den Wortlaut des Servers gezogen wurde — damit ist zugleich die
+  Doppelpflege aufgelöst, vor der der Kopfkommentar der Datei warnt.
+  **Lehre:** eine Meldung, die zwei gerundete Zahlen gegeneinanderstellt, muss
+  am Randfall geprüft werden, nicht in der Mitte des Bereichs — genau dort
+  fallen die beiden Zahlen zusammen

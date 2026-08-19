@@ -69,7 +69,7 @@ export function TrialRun({ taskItemId }: TrialRunProps) {
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-4" role="alert">
           <p className="font-semibold text-rose-800">Die Auswertung ist nicht durchgelaufen</p>
           {/* Der Grund des Servers im Wortlaut — kein stiller Fehlschlag. */}
-          <p className="mt-2 whitespace-pre-wrap text-sm text-rose-800">{phase.message}</p>
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-rose-800">{phase.message}</p>
         </div>
         <div className="mt-4">{nochmal}</div>
       </div>

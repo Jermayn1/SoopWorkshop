@@ -33,7 +33,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             var outcome = hasForbiddenCharacters
                 ? CheckerOutcome.WithTip(
-                    "Vermeide Umlaute (ä, ö, ü) und das ß-Zeichen im Code. Nutze stattdessen z.B. 'ae', 'oe', 'ue', 'ss'.",
+                    "Vermeide Umlaute (ä, ö, ü) und das ß-Zeichen im Code — auch in Kommentaren und in Ausgabetexten. Nutze stattdessen z. B. „ae“, „oe“, „ue“, „ss“.",
                     result)
                 : CheckerOutcome.Of(result);
 

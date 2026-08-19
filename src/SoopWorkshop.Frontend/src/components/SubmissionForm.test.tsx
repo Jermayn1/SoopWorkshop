@@ -70,7 +70,7 @@ describe('SubmissionForm', () => {
 
     fallenlassen(container, javaDatei('notiz.txt'))
 
-    expect(screen.getByText("'notiz.txt' ist keine .java-Datei.")).toBeInTheDocument()
+    expect(screen.getByText("„notiz.txt“ ist keine .java-Datei.")).toBeInTheDocument()
     expect(screen.queryByText('notiz.txt')).not.toBeInTheDocument()
   })
 
@@ -80,7 +80,7 @@ describe('SubmissionForm', () => {
     fallenlassen(container, javaDatei('Konto.java'), javaDatei('notiz.txt'))
 
     expect(screen.getByText('Konto.java')).toBeInTheDocument()
-    expect(screen.getByText("'notiz.txt' ist keine .java-Datei.")).toBeInTheDocument()
+    expect(screen.getByText("„notiz.txt“ ist keine .java-Datei.")).toBeInTheDocument()
   })
 
   it('laesst eine einzelne Datei wieder entfernen', async () => {
@@ -116,7 +116,7 @@ describe('SubmissionForm', () => {
     const user = userEvent.setup()
     absenden.mockResolvedValue({
       kind: 'rejected',
-      message: "'Konto.java' ist groesser als 1024 KB.",
+      message: '„Konto.java“ ist größer als 1024 KB.',
     })
 
     const { container } = render(<SubmissionForm taskItemId="a1" onSubmitted={vi.fn()} />)
@@ -125,7 +125,7 @@ describe('SubmissionForm', () => {
     await user.click(screen.getByRole('button', { name: /prüfen/i }))
 
     const meldung = await screen.findByRole('alert')
-    expect(meldung).toHaveTextContent("'Konto.java' ist groesser als 1024 KB.")
+    expect(meldung).toHaveTextContent('„Konto.java“ ist größer als 1024 KB.')
   })
 
   it('meldet einen nicht erreichbaren Server als solchen', async () => {

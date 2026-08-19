@@ -42,7 +42,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             if (duplicate is not null)
                 return Result<List<TaskCategoryWeightDto>>.Fail(
-                    $"Fuer die Kategorie {duplicate.Key} sind mehrere Gewichte angegeben.");
+                    $"Für die Kategorie {duplicate.Key} sind mehrere Gewichte angegeben.");
 
             // Die abgeschafften Kategorien (Zeichensatz, Namenskonventionen,
             // Testfaelle, Unit-Tests) nimmt der Scorer nie in die Hand. Ein Gewicht
@@ -54,12 +54,12 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (retired is not null)
                 return Result<List<TaskCategoryWeightDto>>.Fail(
                     $"Die Kategorie {retired.Category} wird nicht mehr bewertet. " +
-                    $"Moeglich sind: {string.Join(", ", EvaluationCategoryOrder.Active)}.");
+                    $"Möglich sind: {string.Join(", ", EvaluationCategoryOrder.Active)}.");
 
             var invalid = dto.Weights.FirstOrDefault(weight => weight.Weight <= 0);
             if (invalid is not null)
                 return Result<List<TaskCategoryWeightDto>>.Fail(
-                    $"Das Gewicht fuer {invalid.Category} muss groesser als 0 sein.");
+                    $"Das Gewicht für {invalid.Category} muss größer als 0 sein.");
 
             var weights = dto.Weights
                 .Select(entry => new TaskCategoryWeight

@@ -74,7 +74,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 
             var testCase = outcome.Results.ShouldHaveSingleItem();
             testCase.Passed.ShouldBeFalse();
-            testCase.ActualOutput.ShouldContain("Zeitueberschreitung");
+            testCase.ActualOutput.ShouldContain("Zeitüberschreitung");
             testCase.ActualOutput.ShouldContain("10 Sekunden");
         }
 

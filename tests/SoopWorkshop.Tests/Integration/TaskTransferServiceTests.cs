@@ -368,7 +368,7 @@ namespace SoopWorkshop.Tests.Integration
                 // Kein stiller Fehlschlag: der Aufrufer erfaehrt, dass nichts
                 // geschrieben wurde.
                 result.IsSuccess.ShouldBeFalse();
-                result.ErrorMessage.ShouldContain("nichts geaendert");
+                result.ErrorMessage.ShouldContain("nichts geändert");
             }
 
             (await BestandAsync()).ShouldBe(vorher);

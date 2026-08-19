@@ -153,7 +153,7 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
           <div className="klapp-inhalt">
             <div className="px-5 pb-5 pt-4 border-t border-slate-100 space-y-2">
               {result.errorTip !== '' && (
-                <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 whitespace-pre-wrap">
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 whitespace-pre-wrap break-words">
                   {result.errorTip}
                 </p>
               )}

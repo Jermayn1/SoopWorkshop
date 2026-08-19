@@ -19,7 +19,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 
         // Relativ zu den anderen Kategorien, nicht in Punkten. Null oder negativ
         // ergibt keine sinnvolle Verteilung und wird abgelehnt.
-        [Range(0.0001, double.MaxValue, ErrorMessage = "Das Gewicht muss groesser als 0 sein.")]
+        [Range(0.0001, double.MaxValue, ErrorMessage = "Das Gewicht muss größer als 0 sein.")]
         public double Weight { get; set; }
     }
 }

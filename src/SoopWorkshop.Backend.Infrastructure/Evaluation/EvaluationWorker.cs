@@ -15,7 +15,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
     public class EvaluationWorker : BackgroundService
     {
         private const string RestartMessage =
-            "Die Auswertung wurde durch einen Neustart des Servers abgebrochen. Bitte reiche deine Loesung erneut ein.";
+            "Die Auswertung wurde durch einen Neustart des Servers abgebrochen. Bitte reiche deine Lösung erneut ein.";
 
         private readonly IEvaluationQueue _queue;
         private readonly IServiceScopeFactory _scopeFactory;

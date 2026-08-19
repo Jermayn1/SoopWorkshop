@@ -102,7 +102,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             if (duplicate is not null)
                 return Result<List<TaskTestDto>>.Fail(
-                    $"Mehrere Testfaelle haben die Reihenfolge {duplicate.Key}.");
+                    $"Mehrere Testfälle haben die Reihenfolge {duplicate.Key}.");
 
             var tests = dto.Tests
                 .Select(entry => new TaskTest

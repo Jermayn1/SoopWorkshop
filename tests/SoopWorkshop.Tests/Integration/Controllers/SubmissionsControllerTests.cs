@@ -100,7 +100,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
 
             var meldung = await response.Content.ReadAsStringAsync();
-            meldung.ShouldBe("'notiz.txt' ist keine .java-Datei.");
+            meldung.ShouldBe("„notiz.txt“ ist keine .java-Datei.");
             meldung.ShouldNotStartWith("\"");
         }
 
@@ -140,7 +140,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 Formular(taskItemId, ("Leer.java", string.Empty)));
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-            (await response.Content.ReadAsStringAsync()).ShouldContain("'Leer.java' ist leer.");
+            (await response.Content.ReadAsStringAsync()).ShouldContain("„Leer.java“ ist leer.");
         }
 
         // Ueber den Browser nicht ausloesbar - das Frontend blockt vorher. Genau
@@ -155,7 +155,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 Formular(taskItemId, ("../Konto.java", "public class Konto {}")));
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-            (await response.Content.ReadAsStringAsync()).ShouldContain("gueltiger Dateiname");
+            (await response.Content.ReadAsStringAsync()).ShouldContain("gültiger Dateiname");
         }
 
         [Fact]

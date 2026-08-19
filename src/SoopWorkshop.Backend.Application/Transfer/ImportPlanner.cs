@@ -48,7 +48,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 if (report.SubmissionsDeleted > 0)
                     report.Warnings.Add(
                         $"Beim Ersetzen gehen {report.SubmissionsDeleted} bereits abgegebene " +
-                        "Loesung(en) samt Auswertung verloren.");
+                        "Lösung(en) samt Auswertung verloren.");
 
                 return report;
             }
@@ -78,7 +78,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
             if (uebrig > 0)
                 report.Warnings.Add(
                     $"{uebrig} Aufgabe(n) im Bestand stehen nicht in der Datei. Beim " +
-                    "Zusammenfuehren bleiben sie unangetastet.");
+                    "Zusammenführen bleiben sie unangetastet.");
 
             return report;
         }

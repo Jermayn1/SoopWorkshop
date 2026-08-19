@@ -31,7 +31,7 @@ export function checkFiles(
 
   for (const file of incoming) {
     if (!file.name.toLowerCase().endsWith(UPLOAD_LIMITS.allowedExtension)) {
-      rejections.push(`'${file.name}' ist keine ${UPLOAD_LIMITS.allowedExtension}-Datei.`)
+      rejections.push(`„${file.name}“ ist keine ${UPLOAD_LIMITS.allowedExtension}-Datei.`)
       continue
     }
 
@@ -42,25 +42,33 @@ export function checkFiles(
     // die Oberflaeche eben noch angenommen hatte. Bei Namensgleichheit
     // ueberschreibt javac ausserdem die eine Klasse mit der anderen.
     if (accepted.some((f) => f.name.toLowerCase() === file.name.toLowerCase())) {
-      rejections.push(`'${file.name}' ist bereits ausgewählt.`)
+      rejections.push(`„${file.name}“ ist bereits ausgewählt.`)
       continue
     }
 
     if (file.size === 0) {
-      rejections.push(`'${file.name}' ist leer.`)
+      rejections.push(`„${file.name}“ ist leer.`)
       continue
     }
 
     if (file.size > UPLOAD_LIMITS.maxFileSizeBytes) {
+      // Wortgleich mit SubmissionUploadValidator.cs — der Teilnehmer soll
+      // denselben Satz lesen, egal ob der Browser oder der Server ablehnt.
+      //
+      // Hier stand vorher die tatsaechliche Groesse neben der erlaubten. Das
+      // klang praeziser, war aber bei knappen Ueberschreitungen falsch: 1 MB
+      // plus 10 Bytes rundet auf "1,0 MB", die Grenze ebenso — herauskam
+      // "ist 1,0 MB gross - erlaubt sind 1,0 MB je Datei". Der Test prueft mit
+      // 2 MB und hat das nie gesehen.
       rejections.push(
-        `'${file.name}' ist ${formatBytes(file.size)} groß — erlaubt sind ${formatBytes(UPLOAD_LIMITS.maxFileSizeBytes)} je Datei.`,
+        `„${file.name}“ ist größer als ${UPLOAD_LIMITS.maxFileSizeBytes / 1024} KB.`,
       )
       continue
     }
 
     if (accepted.length >= UPLOAD_LIMITS.maxFileCount) {
       rejections.push(
-        `'${file.name}' passt nicht mehr dazu — es sind höchstens ${UPLOAD_LIMITS.maxFileCount} Dateien erlaubt.`,
+        `„${file.name}“ passt nicht mehr dazu — es sind höchstens ${UPLOAD_LIMITS.maxFileCount} Dateien erlaubt.`,
       )
       continue
     }
@@ -68,7 +76,7 @@ export function checkFiles(
     const total = accepted.reduce((sum, f) => sum + f.size, 0) + file.size
     if (total > UPLOAD_LIMITS.maxTotalSizeBytes) {
       rejections.push(
-        `'${file.name}' sprengt die Gesamtgröße von ${formatBytes(UPLOAD_LIMITS.maxTotalSizeBytes)}.`,
+        `„${file.name}“ sprengt die Gesamtgröße von ${formatBytes(UPLOAD_LIMITS.maxTotalSizeBytes)}.`,
       )
       continue
     }

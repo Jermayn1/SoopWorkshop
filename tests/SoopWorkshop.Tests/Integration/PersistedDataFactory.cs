@@ -148,7 +148,7 @@ namespace SoopWorkshop.Tests.Integration
                         Passed = false,
                         Points = 50,
                         MaxPoints = 70,
-                        ErrorTip = "Pruefe die Ausgabe.",
+                        ErrorTip = "Prüfe die Ausgabe.",
                         TestCaseResults =
                         [
                             new TestCaseResult

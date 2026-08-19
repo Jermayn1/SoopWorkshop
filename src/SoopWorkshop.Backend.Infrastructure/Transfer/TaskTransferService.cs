@@ -115,7 +115,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
                 _logger.LogError(ex, "Import fehlgeschlagen, es wurde nichts geschrieben.");
 
                 return Result<ImportReportDto>.Fail(
-                    "Der Import ist fehlgeschlagen, es wurde nichts geaendert. " +
+                    "Der Import ist fehlgeschlagen, es wurde nichts geändert. " +
                     "Die Meldung steht im Protokoll des Servers.");
             }
 

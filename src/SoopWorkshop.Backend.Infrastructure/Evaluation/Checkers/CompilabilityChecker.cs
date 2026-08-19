@@ -91,7 +91,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             return success
                 ? CheckerOutcome.Of(result)
                 : CheckerOutcome.WithTip(
-                    "Der Code kompiliert nicht fehlerfrei. Pruefe die Fehlermeldung des Compilers auf Tippfehler oder fehlende Importe.",
+                    "Der Code kompiliert nicht fehlerfrei. Prüfe die Fehlermeldung des Compilers auf Tippfehler oder fehlende Importe.",
                     result);
         }
 
@@ -100,10 +100,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
         private string DescribeFailure(ProcessResult process)
         {
             if (process.ExecutableNotFound)
-                return "'javac' wurde nicht gefunden. Ist das JDK installiert und im PATH?";
+                return "„javac“ wurde nicht gefunden. Ist das JDK installiert und im PATH?";
 
             if (process.TimedOut)
-                return $"Zeitueberschreitung beim Kompilieren (Grenze: {_options.CompileTimeoutSeconds} Sekunden).";
+                return $"Zeitüberschreitung beim Kompilieren (Grenze: {_options.CompileTimeoutSeconds} Sekunden).";
 
             return string.IsNullOrWhiteSpace(process.StandardError)
                 ? process.StandardOutput

@@ -56,7 +56,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 }).ToArray();
 
                 return CheckerOutcome.WithTip(
-                    "Da der Code nicht kompiliert, konnten keine Testfaelle ausgefuehrt werden.",
+                    "Da der Code nicht kompiliert, konnten keine Testfälle ausgeführt werden.",
                     failed);
             }
 
@@ -114,11 +114,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 cancellationToken);
 
             if (process.ExecutableNotFound)
-                return "'java' wurde nicht gefunden. Ist das JDK installiert und im PATH?";
+                return "„java“ wurde nicht gefunden. Ist das JDK installiert und im PATH?";
 
             if (process.TimedOut)
-                return $"Zeitueberschreitung: Das Programm hat laenger als {_options.RunTimeoutSeconds} Sekunden gebraucht. " +
-                       "Pruefe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.";
+                return $"Zeitüberschreitung: Das Programm hat länger als {_options.RunTimeoutSeconds} Sekunden gebraucht. " +
+                       "Prüfe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.";
 
             // Bricht das Programm ab, ohne etwas auszugeben, ist der Stacktrace die
             // einzige Information, die dem Teilnehmer weiterhilft.

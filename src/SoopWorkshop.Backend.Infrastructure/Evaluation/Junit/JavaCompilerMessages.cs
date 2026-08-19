@@ -39,19 +39,19 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
 
             AddMissingSymbol(compilerOutput, explanations);
             AddFirstMatch(IncompatibleTypes, compilerOutput, explanations, match =>
-                $"Ein Typ passt nicht: erwartet wurde '{match.Groups["expected"].Value.Trim()}', " +
-                $"geliefert wurde '{match.Groups["actual"].Value.Trim()}'.");
+                $"Ein Typ passt nicht: erwartet wurde „{match.Groups["expected"].Value.Trim()}“, " +
+                $"geliefert wurde „{match.Groups["actual"].Value.Trim()}“.");
 
             AddFirstMatch(CannotBeApplied, compilerOutput, explanations, match =>
                 match.Groups["kind"].Value == "constructor"
-                    ? $"Der Konstruktor von '{match.Groups["owner"].Value}' passt nicht zu den uebergebenen Werten. " +
-                      "Pruefe Anzahl und Reihenfolge der Parameter."
-                    : $"Die Methode '{match.Groups["name"].Value}' in '{match.Groups["owner"].Value}' passt nicht zu den " +
-                      "uebergebenen Werten. Pruefe Anzahl, Reihenfolge und Typen der Parameter.");
+                    ? $"Der Konstruktor von „{match.Groups["owner"].Value}“ passt nicht zu den übergebenen Werten. " +
+                      "Prüfe Anzahl und Reihenfolge der Parameter."
+                    : $"Die Methode „{match.Groups["name"].Value}“ in „{match.Groups["owner"].Value}“ passt nicht zu den " +
+                      "übergebenen Werten. Prüfe Anzahl, Reihenfolge und Typen der Parameter.");
 
             AddFirstMatch(NotPublic, compilerOutput, explanations, match =>
-                $"'{match.Groups["name"].Value}' in '{match.Groups["owner"].Value}' ist nicht oeffentlich. " +
-                "Damit der Test darauf zugreifen kann, muss es 'public' sein.");
+                $"„{match.Groups["name"].Value}“ in „{match.Groups["owner"].Value}“ ist nicht öffentlich. " +
+                "Damit der Test darauf zugreifen kann, muss es „public“ sein.");
 
             return explanations.Count == 0 ? null : string.Join(" ", explanations);
         }
@@ -75,12 +75,12 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
             var locationMatch = Location.Match(compilerOutput);
 
             var where = locationMatch.Success
-                ? $" in der Klasse '{locationMatch.Groups["name"].Value}'"
+                ? $" in der Klasse „{locationMatch.Groups["name"].Value}“"
                 : string.Empty;
 
             explanations.Add(
-                $"Der Test erwartet {kind} '{name}'{where} - in deiner Abgabe gibt es sie so nicht. " +
-                "Achte auf exakte Schreibweise, Gross-/Kleinschreibung und die Parameter.");
+                $"Der Test erwartet {kind} „{name}“{where} — in deiner Abgabe gibt es sie so nicht. " +
+                "Achte auf exakte Schreibweise, Groß-/Kleinschreibung und die Parameter.");
         }
 
         private static void AddFirstMatch(
