@@ -126,7 +126,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             });
 
             result.IsSuccess.ShouldBeFalse();
-            result.ErrorMessage.ShouldContain("groesser als 0");
+            result.ErrorMessage.ShouldContain("größer als 0");
         }
 
         // Leere Liste heisst "Standardgewichte aus der Konfiguration gelten wieder".

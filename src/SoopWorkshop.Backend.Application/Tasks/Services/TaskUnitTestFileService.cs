@@ -114,8 +114,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             if (duplicate is not null)
                 return Result<List<TaskUnitTestFileDto>>.Fail(
-                    $"Der Dateiname '{duplicate.Key}' kommt mehrfach vor. Im selben Arbeitsverzeichnis " +
-                    "wuerde die eine Datei die andere ueberschreiben.");
+                    $"Der Dateiname „{duplicate.Key}“ kommt mehrfach vor. Im selben Arbeitsverzeichnis " +
+                    "würde die eine Datei die andere überschreiben.");
 
             var files = dto.Files
                 .Select(entry => new TaskUnitTestFile

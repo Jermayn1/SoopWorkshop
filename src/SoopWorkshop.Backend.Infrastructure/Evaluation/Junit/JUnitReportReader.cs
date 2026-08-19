@@ -98,7 +98,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
         private static string ReadMessage(XElement? failure, XElement? skipped)
         {
             if (skipped is not null)
-                return skipped.Attribute("message")?.Value ?? "Der Test wurde uebersprungen.";
+                return skipped.Attribute("message")?.Value ?? "Der Test wurde übersprungen.";
 
             if (failure is null)
                 return string.Empty;

@@ -65,6 +65,28 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
+        // Ist-Verhalten und ausdruecklich gewollt: geprueft wird die ROHE Datei.
+        // Anders als ContractChecker und NamingConventionChecker schickt der
+        // CharacterSetChecker den Quelltext NICHT durch StripCommentsAndLiterals -
+        // ein Umlaut im Kommentar kostet denselben Punkt wie einer im Bezeichner.
+        // Siehe CLAUDE.md 5.6. Der Fall im String-Literal steht in der Theory oben.
+        [Fact]
+        public async Task CheckAsync_UmlautNurImKommentar_GiltAlsNichtBestanden()
+        {
+            var files = SubmissionFileFactory.CreateMany(
+                """
+                public class Main {
+                    // Groesse berechnen - hier steht ein Umlaut: ä
+                    public static void main(String[] args) { }
+                }
+                """);
+
+            var outcome = await CheckAsync(files);
+
+            outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeFalse();
+            outcome.ErrorTip.ShouldNotBeNullOrEmpty();
+        }
+
         // Ist-Verhalten: geprueft wird nur der Dateiinhalt, nicht der Dateiname.
         [Fact]
         public async Task CheckAsync_UmlautNurImDateinamen_GiltAlsBestanden()

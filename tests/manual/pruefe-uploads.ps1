@@ -102,6 +102,13 @@ function Test-Fall {
     return $ergebnis
 }
 
+# Die Erwartungen unten sind bewusst auf umlautfreie Teilstuecke verkuerzt.
+# Die API antwortet inzwischen mit echten Umlauten ("gueltiger Dateiname" heisst
+# dort "g-u-umlaut-ltiger"), diese Datei hat aber keine BOM - und Windows
+# PowerShell 5.1 laese einen Umlaut darin als ANSI. Der Vergleich traefe dann
+# stillschweigend nie zu, und der Test meldete einen Fehler, den es nicht gibt.
+# Die gekuerzten Teilstuecke sind weiterhin eindeutig; der volle Wortlaut steht
+# in SubmissionUploadValidator.cs.
 Write-Host ""
 Write-Host "Upload-Validierung gegen $ApiBaseUrl" -ForegroundColor Cyan
 Write-Host ""
@@ -110,11 +117,11 @@ Test-Fall "Falsche Endung (.png)" 400 "keine .java-Datei" {
     Send-Upload $TaskItemId @(@{ Name = "Bild.png"; Inhalt = $gueltigerInhalt })
 } | Out-Null
 
-Test-Fall "Dateiname mit Pfadanteil (..\..\)" 400 "gueltiger Dateiname" {
+Test-Fall "Dateiname mit Pfadanteil (..\..\)" 400 "Dateiname" {
     Send-Upload $TaskItemId @(@{ Name = "..\..\evil.java"; Inhalt = $gueltigerInhalt })
 } | Out-Null
 
-Test-Fall "Dateiname mit Unterordner" 400 "gueltiger Dateiname" {
+Test-Fall "Dateiname mit Unterordner" 400 "Dateiname" {
     Send-Upload $TaskItemId @(@{ Name = "unterordner/Main.java"; Inhalt = $gueltigerInhalt })
 } | Out-Null
 
@@ -129,11 +136,11 @@ Test-Fall "Leere Datei" 400 "ist leer" {
     Send-Upload $TaskItemId @(@{ Name = "Leer.java"; Inhalt = "" })
 } | Out-Null
 
-Test-Fall "Datei groesser als 1 MB" 400 "groesser als 1024 KB" {
+Test-Fall "Datei groesser als 1 MB" 400 "1024 KB" {
     Send-Upload $TaskItemId @(@{ Name = "Gross.java"; Groesse = 1048577 })
 } | Out-Null
 
-Test-Fall "Elf Dateien" 400 "hoechstens 10" {
+Test-Fall "Elf Dateien" 400 "10 Dateien" {
     $dateien = 1..11 | ForEach-Object { @{ Name = "Datei$_.java"; Inhalt = "public class Datei$_ {}" } }
     Send-Upload $TaskItemId $dateien
 } | Out-Null

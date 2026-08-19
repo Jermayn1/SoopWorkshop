@@ -66,20 +66,20 @@ namespace SoopWorkshop.Backend.Application.Transfer
         private static void CheckCategory(TaskBundleCategoryDto category, List<string> errors)
         {
             if (category.Id == Guid.Empty)
-                errors.Add($"Die Kategorie '{Describe(category.Name)}' hat keine Id.");
+                errors.Add($"Die Kategorie „{Describe(category.Name)}“ hat keine Id.");
 
             if (string.IsNullOrWhiteSpace(category.Name))
                 errors.Add($"Eine Kategorie ({category.Id}) hat keinen Namen.");
             else if (category.Name.Length > TaskFieldLimits.CategoryName)
                 errors.Add(
-                    $"Der Name der Kategorie '{Describe(category.Name)}' ist zu lang " +
-                    $"({category.Name.Length} statt hoechstens {TaskFieldLimits.CategoryName}).");
+                    $"Der Name der Kategorie „{Describe(category.Name)}“ ist zu lang " +
+                    $"({category.Name.Length} statt höchstens {TaskFieldLimits.CategoryName}).");
 
             if (category.IconName.Length > TaskFieldLimits.CategoryIconName)
-                errors.Add($"Der Symbolname der Kategorie '{Describe(category.Name)}' ist zu lang.");
+                errors.Add($"Der Symbolname der Kategorie „{Describe(category.Name)}“ ist zu lang.");
 
             if (category.Order < 0)
-                errors.Add($"Die Kategorie '{Describe(category.Name)}' hat eine negative Reihenfolge.");
+                errors.Add($"Die Kategorie „{Describe(category.Name)}“ hat eine negative Reihenfolge.");
         }
 
         private static void CheckTask(
@@ -87,13 +87,13 @@ namespace SoopWorkshop.Backend.Application.Transfer
             TaskBundleTaskDto task,
             List<string> errors)
         {
-            var wo = $"'{Describe(category.Name)}' / '{Describe(task.Title)}'";
+            var wo = $"„{Describe(category.Name)}“ / „{Describe(task.Title)}“";
 
             if (task.Id == Guid.Empty)
                 errors.Add($"Die Aufgabe {wo} hat keine Id.");
 
             if (string.IsNullOrWhiteSpace(task.Title))
-                errors.Add($"Eine Aufgabe in '{Describe(category.Name)}' hat keinen Titel.");
+                errors.Add($"Eine Aufgabe in „{Describe(category.Name)}“ hat keinen Titel.");
             else if (task.Title.Length > TaskFieldLimits.TaskTitle)
                 errors.Add($"Der Titel von {wo} ist zu lang.");
 
@@ -123,14 +123,14 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 }
 
                 if (type.Name.Length > TaskFieldLimits.ExpectedTypeName)
-                    errors.Add($"Der Klassenname '{type.Name}' in {wo} ist zu lang.");
+                    errors.Add($"Der Klassenname „{type.Name}“ in {wo} ist zu lang.");
 
                 foreach (var signature in type.Methods)
                 {
                     if (string.IsNullOrWhiteSpace(signature))
-                        errors.Add($"In {wo} steht bei '{type.Name}' eine leere Signatur.");
+                        errors.Add($"In {wo} steht bei „{type.Name}“ eine leere Signatur.");
                     else if (signature.Length > TaskFieldLimits.ExpectedMethodSignature)
-                        errors.Add($"Eine Signatur bei '{type.Name}' in {wo} ist zu lang.");
+                        errors.Add($"Eine Signatur bei „{type.Name}“ in {wo} ist zu lang.");
                 }
             }
 
@@ -139,7 +139,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 .FirstOrDefault(group => group.Count() > 1);
 
             if (doppelt is not null)
-                errors.Add($"Die Klasse '{doppelt.Key}' wird in {wo} mehrfach gefordert.");
+                errors.Add($"Die Klasse „{doppelt.Key}“ wird in {wo} mehrfach gefordert.");
         }
 
         private static void CheckTests(string wo, TaskBundleTaskDto task, List<string> errors)
@@ -151,7 +151,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 else if (test.Description.Length > TaskFieldLimits.TestDescription)
                     errors.Add(
                         $"Die Beschreibung eines Testfalls in {wo} ist zu lang " +
-                        $"({test.Description.Length} statt hoechstens {TaskFieldLimits.TestDescription}).");
+                        $"({test.Description.Length} statt höchstens {TaskFieldLimits.TestDescription}).");
 
                 if (string.IsNullOrEmpty(test.ExpectedOutput))
                     errors.Add($"Ein Testfall in {wo} hat keine erwartete Ausgabe.");
@@ -171,16 +171,16 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 }
 
                 if (!file.FileName.EndsWith(".java", StringComparison.OrdinalIgnoreCase))
-                    errors.Add($"'{file.FileName}' in {wo} muss auf .java enden.");
+                    errors.Add($"„{file.FileName}“ in {wo} muss auf .java enden.");
 
                 if (file.FileName.Contains('/') || file.FileName.Contains('\\') || file.FileName.Contains(".."))
-                    errors.Add($"'{file.FileName}' in {wo} darf keinen Pfadanteil enthalten.");
+                    errors.Add($"„{file.FileName}“ in {wo} darf keinen Pfadanteil enthalten.");
 
                 if (file.FileName.Length > TaskFieldLimits.UnitTestFileName)
-                    errors.Add($"Der Dateiname '{file.FileName}' in {wo} ist zu lang.");
+                    errors.Add($"Der Dateiname „{file.FileName}“ in {wo} ist zu lang.");
 
                 if (string.IsNullOrWhiteSpace(file.Content))
-                    errors.Add($"Die JUnit-Datei '{file.FileName}' in {wo} ist leer.");
+                    errors.Add($"Die JUnit-Datei „{file.FileName}“ in {wo} ist leer.");
             }
 
             var doppelt = task.UnitTestFiles
@@ -189,8 +189,8 @@ namespace SoopWorkshop.Backend.Application.Transfer
 
             if (doppelt is not null)
                 errors.Add(
-                    $"Der Dateiname '{doppelt.Key}' kommt in {wo} mehrfach vor. Im selben " +
-                    "Arbeitsverzeichnis wuerde die eine Datei die andere ueberschreiben.");
+                    $"Der Dateiname „{doppelt.Key}“ kommt in {wo} mehrfach vor. Im selben " +
+                    "Arbeitsverzeichnis würde die eine Datei die andere überschreiben.");
         }
 
         private static void CheckWeights(string wo, TaskBundleTaskDto task, List<string> errors)
@@ -200,10 +200,10 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 if (!EvaluationCategoryOrder.IsActive(weight.Category))
                     errors.Add(
                         $"Die Kategorie {weight.Category} in {wo} wird nicht mehr bewertet. " +
-                        $"Moeglich sind: {string.Join(", ", EvaluationCategoryOrder.Active)}.");
+                        $"Möglich sind: {string.Join(", ", EvaluationCategoryOrder.Active)}.");
 
                 if (weight.Weight <= 0)
-                    errors.Add($"Das Gewicht fuer {weight.Category} in {wo} muss groesser als 0 sein.");
+                    errors.Add($"Das Gewicht für {weight.Category} in {wo} muss größer als 0 sein.");
             }
 
             var doppelt = task.Weights
@@ -211,7 +211,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 .FirstOrDefault(group => group.Count() > 1);
 
             if (doppelt is not null)
-                errors.Add($"Fuer die Kategorie {doppelt.Key} sind in {wo} mehrere Gewichte angegeben.");
+                errors.Add($"Für die Kategorie {doppelt.Key} sind in {wo} mehrere Gewichte angegeben.");
         }
 
         // Spiegelt TaskItemService.DescribeMissingTestData.
@@ -232,12 +232,12 @@ namespace SoopWorkshop.Backend.Application.Transfer
 
             if (brauchtKonsole && task.Tests.Count == 0)
                 errors.Add(
-                    $"Die Aufgabe {wo} ist sichtbar und auf '{task.EvaluationMode}' gestellt, " +
+                    $"Die Aufgabe {wo} ist sichtbar und auf „{task.EvaluationMode}“ gestellt, " +
                     "hat aber keinen Konsolen-Testfall.");
 
             if (brauchtUnit && task.UnitTestFiles.Count == 0)
                 errors.Add(
-                    $"Die Aufgabe {wo} ist sichtbar und auf '{task.EvaluationMode}' gestellt, " +
+                    $"Die Aufgabe {wo} ist sichtbar und auf „{task.EvaluationMode}“ gestellt, " +
                     "hat aber keine JUnit-Datei.");
         }
 

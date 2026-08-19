@@ -65,7 +65,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 
             var result = outcome.Results.ShouldHaveSingleItem();
             result.Passed.ShouldBeFalse();
-            result.Description.ShouldBe("Die Klasse 'Main' ist vorhanden");
+            result.Description.ShouldBe("Die Klasse „Main“ ist vorhanden");
             result.ExpectedOutput.ShouldBe("Main");
             result.ActualOutput.ShouldBe("Rechner");
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
@@ -112,7 +112,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 
             // Der Name in der Ueberschrift, die vollstaendige Signatur daneben -
             // sonst sprengt sie die Zeile und laesst sich nicht vergleichen.
-            method.Description.ShouldBe("Die Methode 'addiere' steht in 'Main'");
+            method.Description.ShouldBe("Die Methode „addiere“ steht in „Main“");
             method.ExpectedOutput.ShouldBe("public static int addiere(int a, int b)");
             method.ActualOutput.ShouldBe("in dieser Klasse nicht gefunden");
 
@@ -181,7 +181,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
 
             var method = outcome.Results.Single(result => result.Description.Contains("Methode"));
             method.Passed.ShouldBeFalse();
-            method.Description.ShouldBe("Die Methode 'einzahlen' steht in 'Konto'");
+            method.Description.ShouldBe("Die Methode „einzahlen“ steht in „Konto“");
             method.ActualOutput.ShouldBe("in dieser Klasse nicht gefunden");
 
             // Beide Klassen selbst sind da.
@@ -203,7 +203,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => !result.Passed);
 
             var method = outcome.Results.Single(result => result.Description.Contains("Methode"));
-            method.ActualOutput.ShouldBe("Klasse 'Konto' fehlt");
+            method.ActualOutput.ShouldBe("Klasse „Konto“ fehlt");
         }
 
         // Ist-Verhalten, bewusst hingenommen: der Rumpf wird ueber Klammern

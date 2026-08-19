@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Ban, Search, X } from 'lucide-react'
-import { ICON_COUNT, ICON_GROUPS } from '../icons'
+import { filterIcons, ICON_COUNT } from '../icons'
 import { inputClass } from './formStyles'
 
 type IconPickerDialogProps = {
@@ -56,20 +56,7 @@ export function IconPickerDialog({
     }
   }, [])
 
-  // Gesucht wird über den englischen Namen UND die deutschen Stichwörter —
-  // wer "schleife" tippt, soll Repeat finden, ohne das Wort zu kennen.
-  const gefiltert = useMemo(() => {
-    const begriff = suche.trim().toLowerCase()
-    if (begriff.length === 0) return ICON_GROUPS
-
-    return ICON_GROUPS.map((group) => ({
-      titel: group.titel,
-      eintraege: group.eintraege.filter(
-        (entry) =>
-          entry.name.toLowerCase().includes(begriff) || entry.suche.includes(begriff),
-      ),
-    })).filter((group) => group.eintraege.length > 0)
-  }, [suche])
+  const gefiltert = useMemo(() => filterIcons(suche), [suche])
 
   const treffer = gefiltert.reduce((sum, group) => sum + group.eintraege.length, 0)
 

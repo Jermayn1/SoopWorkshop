@@ -43,7 +43,7 @@ describe('checkFiles', () => {
     const { accepted, rejections } = checkFiles([], [datei('notiz.txt')])
 
     expect(accepted).toEqual([])
-    expect(rejections).toEqual(["'notiz.txt' ist keine .java-Datei."])
+    expect(rejections).toEqual(["„notiz.txt“ ist keine .java-Datei."])
   })
 
   // Die Pruefreihenfolge ist selbst eine Zusicherung. Eine 2 MB grosse .txt
@@ -52,7 +52,7 @@ describe('checkFiles', () => {
   it('meldet bei mehreren Verstoessen den erstgepruefen', () => {
     const { rejections } = checkFiles([], [datei('notiz.txt', 2 * 1024 * 1024)])
 
-    expect(rejections).toEqual(["'notiz.txt' ist keine .java-Datei."])
+    expect(rejections).toEqual(["„notiz.txt“ ist keine .java-Datei."])
   })
 
   it('erlaubt die Endung auch in Grossbuchstaben', () => {
@@ -65,21 +65,30 @@ describe('checkFiles', () => {
     const { accepted, rejections } = checkFiles([datei('Main.java')], [datei('Main.java')])
 
     expect(accepted).toHaveLength(1)
-    expect(rejections).toEqual(["'Main.java' ist bereits ausgewählt."])
+    expect(rejections).toEqual(["„Main.java“ ist bereits ausgewählt."])
   })
 
   it('verwirft eine leere Datei', () => {
     const { rejections } = checkFiles([], [datei('Leer.java', 0)])
 
-    expect(rejections).toEqual(["'Leer.java' ist leer."])
+    expect(rejections).toEqual(["„Leer.java“ ist leer."])
   })
 
-  it('verwirft eine zu grosse Datei und nennt beide Zahlen', () => {
+  it('verwirft eine zu grosse Datei und nennt die Grenze', () => {
     const { accepted, rejections } = checkFiles([], [datei('Gross.java', 2 * 1024 * 1024)])
 
     expect(accepted).toEqual([])
-    expect(rejections[0]).toContain('2,0 MB')
-    expect(rejections[0]).toContain('1,0 MB')
+    expect(rejections).toEqual(['„Gross.java“ ist größer als 1024 KB.'])
+  })
+
+  // Knapp ueber der Grenze: frueher stand hier die gerundete Ist-Groesse neben
+  // der gerundeten Grenze, und beide lauteten "1,0 MB" - die Meldung
+  // widersprach sich selbst. Der Wortlaut nennt jetzt nur noch die Grenze und
+  // ist damit wortgleich mit dem Server (SubmissionUploadValidator.cs).
+  it('bleibt auch knapp ueber der Grenze widerspruchsfrei', () => {
+    const { rejections } = checkFiles([], [datei('Knapp.java', 1024 * 1024 + 10)])
+
+    expect(rejections).toEqual(['„Knapp.java“ ist größer als 1024 KB.'])
   })
 
   it('nimmt hoechstens zehn Dateien', () => {
@@ -124,6 +133,6 @@ describe('checkFiles', () => {
     const { accepted, rejections } = checkFiles([datei('A.java')], [datei('a.java')])
 
     expect(accepted.map((f) => f.name)).toEqual(['A.java'])
-    expect(rejections).toEqual(["'a.java' ist bereits ausgewählt."])
+    expect(rejections).toEqual(["„a.java“ ist bereits ausgewählt."])
   })
 })

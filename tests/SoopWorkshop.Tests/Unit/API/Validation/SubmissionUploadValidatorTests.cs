@@ -62,7 +62,7 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
             List<IFormFile> files =
                 [FormFileFactory.CreateWithSize("Main.java", SubmissionUploadLimits.MaxFileSizeBytes + 1)];
 
-            SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("groesser");
+            SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("größer");
         }
 
         [Fact]
@@ -81,7 +81,7 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
                 .Select(index => FormFileFactory.Create($"Datei{index}.java"))
                 .ToList();
 
-            SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("hoechstens");
+            SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("höchstens");
         }
 
         // Gleichnamige Dateien wuerden sich im Arbeitsverzeichnis still ueberschreiben.

@@ -9,7 +9,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation
     public static class EvaluationMessages
     {
         public const string ComparisonHint =
-            "Vergleiche 'Erwartet' und 'Erhalten' genau - Gross-/Kleinschreibung, " +
-            "Leerzeichen und Zeilenumbrueche zaehlen mit.";
+            "Vergleiche „Erwartet“ und „Erhalten“ genau — Groß-/Kleinschreibung, " +
+            "Leerzeichen und Zeilenumbrüche zählen mit.";
     }
 }

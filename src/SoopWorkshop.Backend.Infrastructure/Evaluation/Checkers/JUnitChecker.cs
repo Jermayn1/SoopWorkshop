@@ -62,8 +62,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             if (context.Compilation is null || !context.Compilation.Success)
             {
                 return CheckerOutcome.WithTip(
-                    "Da dein Code nicht kompiliert, konnten die Unit-Tests nicht ausgefuehrt werden.",
-                    Failed("Die Unit-Tests konnten ausgefuehrt werden", string.Empty));
+                    "Da dein Code nicht kompiliert, konnten die Unit-Tests nicht ausgeführt werden.",
+                    Failed("Die Unit-Tests konnten ausgeführt werden", string.Empty));
             }
 
             await WriteTestFilesAsync(context.WorkingDirectory, testFiles, cancellationToken);
@@ -135,7 +135,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             if (compilation.TimedOut)
             {
                 return CheckerOutcome.WithTip(
-                    $"Das Kompilieren der Testdatei hat laenger als {_options.CompileTimeoutSeconds} Sekunden gebraucht.",
+                    $"Das Kompilieren der Testdatei hat länger als {_options.CompileTimeoutSeconds} Sekunden gebraucht.",
                     Failed("Die Testdatei passt zu deiner Abgabe", string.Empty));
             }
 
@@ -146,8 +146,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var explanation = JavaCompilerMessages.Translate(rawOutput);
 
             var tip = explanation is null
-                ? "Die hinterlegten Tests lassen sich nicht gegen deine Abgabe uebersetzen. " +
-                  "Pruefe, ob Klassen- und Methodennamen genau wie in der Aufgabenstellung geschrieben sind."
+                ? "Die hinterlegten Tests lassen sich nicht gegen deine Abgabe übersetzen. " +
+                  "Prüfe, ob Klassen- und Methodennamen genau wie in der Aufgabenstellung geschrieben sind."
                 : explanation;
 
             _logger.LogInformation("JUnit-Testdatei kompiliert nicht gegen die Abgabe: {Output}", rawOutput);
@@ -206,9 +206,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             if (process.TimedOut)
             {
                 return CheckerOutcome.WithTip(
-                    $"Der Testlauf hat laenger als {_options.JUnitRunTimeoutSeconds} Sekunden gebraucht und wurde abgebrochen. " +
-                    "Pruefe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.",
-                    Failed("Die Unit-Tests konnten ausgefuehrt werden", string.Empty));
+                    $"Der Testlauf hat länger als {_options.JUnitRunTimeoutSeconds} Sekunden gebraucht und wurde abgebrochen. " +
+                    "Prüfe, ob eine Schleife nie endet oder auf eine Eingabe gewartet wird, die es nicht gibt.",
+                    Failed("Die Unit-Tests konnten ausgeführt werden", string.Empty));
             }
 
             // Ein Rueckgabewert ungleich 0 heisst hier nur "Tests sind
@@ -262,8 +262,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             return CheckerOutcome.WithTip(
                 "Der Testlauf hat kein Ergebnis hinterlassen. Ruft dein Programm System.exit(...) auf? " +
-                "Das beendet die virtuelle Maschine und bricht die Pruefung ab, bevor ein Ergebnis entsteht.",
-                Failed("Die Unit-Tests konnten ausgefuehrt werden", process.StandardOutput));
+                "Das beendet die virtuelle Maschine und bricht die Prüfung ab, bevor ein Ergebnis entsteht.",
+                Failed("Die Unit-Tests konnten ausgeführt werden", process.StandardOutput));
         }
 
         private static TestCaseResult Failed(string description, string actualOutput) => new()

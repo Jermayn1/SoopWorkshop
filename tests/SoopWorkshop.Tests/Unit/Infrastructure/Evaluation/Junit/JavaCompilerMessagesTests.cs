@@ -49,8 +49,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
                 "Test.java:9: error: incompatible types: int cannot be converted to String");
 
             explanation.ShouldNotBeNull();
-            explanation.ShouldContain("erwartet wurde 'String'");
-            explanation.ShouldContain("geliefert wurde 'int'");
+            explanation.ShouldContain("erwartet wurde „String“");
+            explanation.ShouldContain("geliefert wurde „int“");
         }
 
         [Fact]

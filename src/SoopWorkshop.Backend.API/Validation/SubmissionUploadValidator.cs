@@ -19,7 +19,7 @@ namespace SoopWorkshop.Backend.API.Validation
 
             if (files.Count > SubmissionUploadLimits.MaxFileCount)
             {
-                errors.Add($"Es sind hoechstens {SubmissionUploadLimits.MaxFileCount} Dateien erlaubt.");
+                errors.Add($"Es sind höchstens {SubmissionUploadLimits.MaxFileCount} Dateien erlaubt.");
             }
 
             var seenFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -30,30 +30,30 @@ namespace SoopWorkshop.Backend.API.Validation
 
                 if (!IsSafeFileName(fileName))
                 {
-                    errors.Add($"'{fileName}' ist kein gueltiger Dateiname.");
+                    errors.Add($"„{fileName}“ ist kein gültiger Dateiname.");
                     continue;
                 }
 
                 if (!fileName.EndsWith(SubmissionUploadLimits.AllowedExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    errors.Add($"'{fileName}' ist keine {SubmissionUploadLimits.AllowedExtension}-Datei.");
+                    errors.Add($"„{fileName}“ ist keine {SubmissionUploadLimits.AllowedExtension}-Datei.");
                 }
 
                 if (file.Length == 0)
                 {
-                    errors.Add($"'{fileName}' ist leer.");
+                    errors.Add($"„{fileName}“ ist leer.");
                 }
                 else if (file.Length > SubmissionUploadLimits.MaxFileSizeBytes)
                 {
                     var maxKilobytes = SubmissionUploadLimits.MaxFileSizeBytes / 1024;
-                    errors.Add($"'{fileName}' ist groesser als {maxKilobytes} KB.");
+                    errors.Add($"„{fileName}“ ist größer als {maxKilobytes} KB.");
                 }
 
                 // Zwei Dateien mit gleichem Namen wuerden sich im Arbeitsverzeichnis
                 // gegenseitig ueberschreiben — ohne dass es jemand merkt.
                 if (!seenFileNames.Add(fileName))
                 {
-                    errors.Add($"'{fileName}' wurde mehrfach hochgeladen.");
+                    errors.Add($"„{fileName}“ wurde mehrfach hochgeladen.");
                 }
             }
 

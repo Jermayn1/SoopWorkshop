@@ -75,7 +75,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
             var bundle = TaskBundleFactory.Bundle(TaskBundleFactory.Category(tasks: task));
 
             TaskBundleValidator.Validate(bundle)
-                .ShouldContain(error => error.Contains("mehrfach") && error.Contains("ueberschreiben"));
+                .ShouldContain(error => error.Contains("mehrfach") && error.Contains("überschreiben"));
         }
 
         [Theory]
@@ -101,7 +101,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
             var bundle = TaskBundleFactory.Bundle(TaskBundleFactory.Category(tasks: task));
 
             TaskBundleValidator.Validate(bundle)
-                .ShouldContain(error => error.Contains("groesser als 0"));
+                .ShouldContain(error => error.Contains("größer als 0"));
         }
 
         // Die Luecke, gegen die diese Pruefung gebaut ist: IsVisible kommt beim

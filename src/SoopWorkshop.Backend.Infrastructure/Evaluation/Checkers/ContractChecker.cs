@@ -54,7 +54,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 results.Add(new TestCaseResult
                 {
                     Id = Guid.NewGuid(),
-                    Description = $"Die Klasse '{type.Name}' ist vorhanden",
+                    Description = $"Die Klasse „{type.Name}“ ist vorhanden",
                     ExpectedOutput = type.Name,
                     ActualOutput = found
                         ? type.Name
@@ -63,7 +63,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 });
 
                 if (!found)
-                    missing.Add($"die Klasse '{type.Name}'");
+                    missing.Add($"die Klasse „{type.Name}“");
 
                 foreach (var method in type.Methods.OrderBy(method => method.Order))
                 {
@@ -78,16 +78,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                         Id = Guid.NewGuid(),
                         // Die Klasse gehoert in die Ueberschrift - sonst stehen bei
                         // mehreren Klassen zwei gleichnamige Pruefungen nebeneinander.
-                        Description = $"Die Methode '{method.Name}' steht in '{type.Name}'",
+                        Description = $"Die Methode „{method.Name}“ steht in „{type.Name}“",
                         ExpectedOutput = method.Signature,
                         ActualOutput = declared
                             ? method.Signature
-                            : found ? "in dieser Klasse nicht gefunden" : $"Klasse '{type.Name}' fehlt",
+                            : found ? "in dieser Klasse nicht gefunden" : $"Klasse „{type.Name}“ fehlt",
                         Passed = declared
                     });
 
                     if (!declared && found)
-                        missing.Add($"die Methode '{method.Signature}' in '{type.Name}'");
+                        missing.Add($"die Methode „{method.Signature}“ in „{type.Name}“");
                 }
             }
 
@@ -95,9 +95,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 return Task.FromResult(CheckerOutcome.Of([.. results]));
 
             return Task.FromResult(CheckerOutcome.WithTip(
-                $"Deine Abgabe enthaelt {string.Join(" und ", missing)} nicht. " +
-                "Die Aufgabenstellung gibt die Namen genau vor - achte auf Schreibweise " +
-                "und Gross-/Kleinschreibung.",
+                $"Deine Abgabe enthält {string.Join(" und ", missing)} nicht. " +
+                "Die Aufgabenstellung gibt die Namen genau vor — achte auf Schreibweise " +
+                "und Groß-/Kleinschreibung.",
                 [.. results]));
         }
 

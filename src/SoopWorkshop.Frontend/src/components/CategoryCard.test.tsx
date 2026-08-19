@@ -190,10 +190,10 @@ describe('CategoryCard', () => {
   })
 
   it('klappt allein wegen eines Hinweises auf', () => {
-    zeige(kategorie({ passed: false, testCaseResults: [], errorTip: 'Pruefe die Ausgabe.' }))
+    zeige(kategorie({ passed: false, testCaseResults: [], errorTip: 'Prüfe die Ausgabe.' }))
 
     expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('Pruefe die Ausgabe.')).toBeInTheDocument()
+    expect(screen.getByText('Prüfe die Ausgabe.')).toBeInTheDocument()
   })
 
   // Was eingeklappt ist, bekommt inert - sonst bleiben die Elemente darin

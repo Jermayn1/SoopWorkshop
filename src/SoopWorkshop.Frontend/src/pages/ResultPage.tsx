@@ -86,7 +86,7 @@ export function ResultPage() {
             </div>
             <div className="p-5 space-y-4">
               {/* Der Grund des Servers im Wortlaut — kein stiller Fehlschlag. */}
-              <p className="whitespace-pre-wrap text-slate-700">{phase.message}</p>
+              <p className="whitespace-pre-wrap break-words text-slate-700">{phase.message}</p>
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Clock className="w-4 h-4" aria-hidden="true" />
                 Du kannst die Aufgabe erneut abgeben.

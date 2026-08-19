@@ -68,7 +68,7 @@ class MainTest {
     }
 
     @Test
-    @DisplayName("Das Programm gibt den Gruss aus")
+    @DisplayName("Das Programm gibt den Gruß aus")
     void gibtGrussAus() {
         Main.main(new String[0]);
 
@@ -150,7 +150,7 @@ class BankTest {
     }
 
     @Test
-    @DisplayName("Die Methode einzahlen erhoeht den Kontostand")
+    @DisplayName("Die Methode einzahlen erhöht den Kontostand")
     void einzahlenErhoehtStand() {
         Konto konto = new Konto(new Kunde("Ben"));
 
@@ -166,7 +166,7 @@ class BankTest {
         konto.einzahlen(20.0);
 
         assertFalse(konto.abheben(50.0), "abheben soll false liefern, wenn zu wenig Geld da ist");
-        assertEquals(20.0, konto.getStand(), 0.001, "Ein abgelehntes Abheben darf den Stand nicht aendern");
+        assertEquals(20.0, konto.getStand(), 0.001, "Ein abgelehntes Abheben darf den Stand nicht ändern");
     }
 
     @Test
@@ -216,7 +216,7 @@ class PruefungTest {
     }
 
     @Test
-    @DisplayName("Die Methode wurzel rechnet bei gueltigen Zahlen richtig")
+    @DisplayName("Die Methode wurzel rechnet bei gültigen Zahlen richtig")
     void wurzelAusPositiverZahl() {
         assertEquals(3.0, Main.wurzel(9), 0.001);
     }

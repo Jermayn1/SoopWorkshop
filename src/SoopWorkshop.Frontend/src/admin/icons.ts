@@ -36,6 +36,44 @@ export type IconEntry = {
   suche: string
 }
 
+// Faltet Umlaute auf ihre Ersatzschreibung und macht klein. Damit findet
+// sowohl "prüfung" als auch "pruefung" dasselbe Symbol.
+//
+// Noetig, seit der Index oben mit echten Umlauten geschrieben ist: ein reiner
+// Austausch der Schreibweise haette "pruefung" ins Leere laufen lassen, ohne
+// dass irgendwo ein Fehler entsteht - die Suche haette einfach nichts mehr
+// gefunden. Gehoert hierher und nicht in den Dialog, weil sie zum Index
+// gehoert, nicht zur Darstellung.
+export function falte(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+}
+
+// Gesucht wird ueber den englischen Namen UND die deutschen Stichwoerter -
+// wer "schleife" tippt, soll Repeat finden, ohne das Wort zu kennen.
+// Ein leerer Begriff liefert den vollen Bestand.
+//
+// Steht hier statt im Dialog, damit die Suche ohne Anmeldung und ohne
+// gerendertes <dialog> pruefbar ist - ein Test, der den Filter nachbaut,
+// wuerde nur sich selbst bestaetigen.
+export function filterIcons(begriff: string): IconGroup[] {
+  const gesucht = falte(begriff.trim())
+  if (gesucht.length === 0) return ICON_GROUPS
+
+  return ICON_GROUPS
+    .map((group) => ({
+      titel: group.titel,
+      eintraege: group.eintraege.filter(
+        (entry) => falte(entry.name).includes(gesucht) || falte(entry.suche).includes(gesucht),
+      ),
+    }))
+    .filter((group) => group.eintraege.length > 0)
+}
+
 export type IconGroup = {
   titel: string
   eintraege: IconEntry[]
@@ -49,11 +87,11 @@ export const ICON_GROUPS: IconGroup[] = [
       { name: 'Code', icon: Code, suche: 'quelltext programm' },
       { name: 'FileCode2', icon: FileCode2, suche: 'datei quelltext java' },
       { name: 'Brackets', icon: Brackets, suche: 'klammern array' },
-      { name: 'Binary', icon: Binary, suche: 'binaer bits zahlen' },
+      { name: 'Binary', icon: Binary, suche: 'binär bits zahlen' },
       { name: 'Variable', icon: Variable, suche: 'variable wert' },
-      { name: 'Regex', icon: Regex, suche: 'regulaerer ausdruck muster' },
-      { name: 'Bug', icon: Bug, suche: 'fehler debugging kaefer' },
-      { name: 'TestTube', icon: TestTube, suche: 'test pruefung labor' },
+      { name: 'Regex', icon: Regex, suche: 'regulärer ausdruck muster' },
+      { name: 'Bug', icon: Bug, suche: 'fehler debugging käfer' },
+      { name: 'TestTube', icon: TestTube, suche: 'test prüfung labor' },
       { name: 'FlaskConical', icon: FlaskConical, suche: 'test experiment labor' },
       { name: 'Keyboard', icon: Keyboard, suche: 'tastatur eingabe' },
       { name: 'Cpu', icon: Cpu, suche: 'prozessor rechner' },
@@ -82,14 +120,14 @@ export const ICON_GROUPS: IconGroup[] = [
       { name: 'Infinity', icon: InfinityIcon, suche: 'endlos unendlich schleife' },
       { name: 'Split', icon: Split, suche: 'verzweigung bedingung if' },
       { name: 'GitBranch', icon: GitBranch, suche: 'verzweigung zweig branch' },
-      { name: 'GitMerge', icon: GitMerge, suche: 'zusammenfuehren merge' },
+      { name: 'GitMerge', icon: GitMerge, suche: 'zusammenführen merge' },
       { name: 'GitCommitHorizontal', icon: GitCommitHorizontal, suche: 'schritt commit' },
       { name: 'Workflow', icon: Workflow, suche: 'ablauf prozess' },
       { name: 'Route', icon: Route, suche: 'weg pfad ablauf' },
       { name: 'Shuffle', icon: Shuffle, suche: 'mischen zufall tauschen' },
       { name: 'ArrowLeftRight', icon: ArrowLeftRight, suche: 'tauschen swap' },
       { name: 'ArrowDownUp', icon: ArrowDownUp, suche: 'sortieren tauschen' },
-      { name: 'Undo2', icon: Undo2, suche: 'rekursion zurueck' },
+      { name: 'Undo2', icon: Undo2, suche: 'rekursion zurück' },
       { name: 'ToggleLeft', icon: ToggleLeft, suche: 'schalter boolean wahr falsch' },
       { name: 'CircleDot', icon: CircleDot, suche: 'zustand punkt' },
       { name: 'Signpost', icon: Signpost, suche: 'entscheidung wegweiser' },
@@ -108,10 +146,10 @@ export const ICON_GROUPS: IconGroup[] = [
       { name: 'FolderTree', icon: FolderTree, suche: 'baum ordner struktur' },
       { name: 'Folder', icon: Folder, suche: 'ordner ablage' },
       { name: 'Archive', icon: Archive, suche: 'archiv sammlung' },
-      { name: 'Filter', icon: Filter, suche: 'filtern auswaehlen' },
+      { name: 'Filter', icon: Filter, suche: 'filtern auswählen' },
       { name: 'Search', icon: Search, suche: 'suchen finden' },
-      { name: 'Hash', icon: Hash, suche: 'hash schluessel map' },
-      { name: 'Key', icon: Key, suche: 'schluessel map' },
+      { name: 'Hash', icon: Hash, suche: 'hash schlüssel map' },
+      { name: 'Key', icon: Key, suche: 'schlüssel map' },
       { name: 'Server', icon: Server, suche: 'server speicher' },
       { name: 'Cloud', icon: Cloud, suche: 'wolke netz' },
       { name: 'Save', icon: Save, suche: 'speichern datei' },
@@ -127,13 +165,13 @@ export const ICON_GROUPS: IconGroup[] = [
       { name: 'Percent', icon: Percent, suche: 'prozent anteil' },
       { name: 'Equal', icon: Equal, suche: 'gleich vergleich' },
       { name: 'Scale', icon: Scale, suche: 'waage vergleich gewicht' },
-      { name: 'Ruler', icon: Ruler, suche: 'messen laenge' },
+      { name: 'Ruler', icon: Ruler, suche: 'messen länge' },
       { name: 'Gauge', icon: Gauge, suche: 'anzeige messen tempo' },
       { name: 'ChartBar', icon: ChartBar, suche: 'diagramm balken statistik' },
       { name: 'ChartLine', icon: ChartLine, suche: 'diagramm linie verlauf' },
       { name: 'TrendingUp', icon: TrendingUp, suche: 'wachstum steigend' },
       { name: 'Activity', icon: Activity, suche: 'verlauf puls' },
-      { name: 'Dice5', icon: Dice5, suche: 'wuerfel zufall random' },
+      { name: 'Dice5', icon: Dice5, suche: 'würfel zufall random' },
       { name: 'Timer', icon: Timer, suche: 'zeit stoppuhr' },
       { name: 'Hourglass', icon: Hourglass, suche: 'sanduhr warten zeit' },
       { name: 'AlarmClock', icon: AlarmClock, suche: 'wecker zeit' },
@@ -143,7 +181,7 @@ export const ICON_GROUPS: IconGroup[] = [
   {
     titel: 'Werkzeug und Einstellung',
     eintraege: [
-      { name: 'Wrench', icon: Wrench, suche: 'werkzeug schluessel' },
+      { name: 'Wrench', icon: Wrench, suche: 'werkzeug schlüssel' },
       { name: 'Hammer', icon: Hammer, suche: 'werkzeug hammer bauen' },
       { name: 'Settings', icon: Settings, suche: 'einstellungen zahnrad' },
       { name: 'Cog', icon: Cog, suche: 'zahnrad technik' },
@@ -156,25 +194,25 @@ export const ICON_GROUPS: IconGroup[] = [
       { name: 'Move', icon: Move, suche: 'verschieben bewegen' },
       { name: 'MousePointer', icon: MousePointer, suche: 'maus zeiger klicken' },
       { name: 'Printer', icon: Printer, suche: 'drucken ausgabe' },
-      { name: 'Trash2', icon: Trash2, suche: 'loeschen muell' },
+      { name: 'Trash2', icon: Trash2, suche: 'löschen müll' },
     ],
   },
   {
     titel: 'Lernen und Fortschritt',
     eintraege: [
       { name: 'BookOpen', icon: BookOpen, suche: 'buch lernen lesen' },
-      { name: 'Library', icon: Library, suche: 'bibliothek buecher' },
+      { name: 'Library', icon: Library, suche: 'bibliothek bücher' },
       { name: 'Notebook', icon: Notebook, suche: 'heft notizen' },
       { name: 'GraduationCap', icon: GraduationCap, suche: 'abschluss studium lernen' },
       { name: 'Brain', icon: Brain, suche: 'denken gehirn logik' },
-      { name: 'Lightbulb', icon: Lightbulb, suche: 'idee tipp gluehbirne' },
+      { name: 'Lightbulb', icon: Lightbulb, suche: 'idee tipp glühbirne' },
       { name: 'Microscope', icon: Microscope, suche: 'untersuchen analyse' },
       { name: 'Compass', icon: Compass, suche: 'orientierung richtung' },
       { name: 'Rocket', icon: Rocket, suche: 'start rakete beginn' },
       { name: 'Trophy', icon: Trophy, suche: 'pokal gewinn abschluss' },
       { name: 'Medal', icon: Medal, suche: 'medaille auszeichnung' },
       { name: 'Award', icon: Award, suche: 'auszeichnung preis' },
-      { name: 'Crown', icon: Crown, suche: 'krone koenig meister' },
+      { name: 'Crown', icon: Crown, suche: 'krone könig meister' },
       { name: 'Target', icon: Target, suche: 'ziel zielscheibe' },
       { name: 'Flag', icon: Flag, suche: 'flagge ziel etappe' },
       { name: 'Star', icon: Star, suche: 'stern favorit' },
@@ -187,9 +225,9 @@ export const ICON_GROUPS: IconGroup[] = [
   {
     titel: 'Anwendungen und Alltag',
     eintraege: [
-      { name: 'Landmark', icon: Landmark, suche: 'bank gebaeude konto' },
+      { name: 'Landmark', icon: Landmark, suche: 'bank gebäude konto' },
       { name: 'PiggyBank', icon: PiggyBank, suche: 'sparschwein geld konto' },
-      { name: 'Wallet', icon: Wallet, suche: 'geldboerse konto' },
+      { name: 'Wallet', icon: Wallet, suche: 'geldbörse konto' },
       { name: 'CreditCard', icon: CreditCard, suche: 'karte zahlung konto' },
       { name: 'ShoppingCart', icon: ShoppingCart, suche: 'einkauf warenkorb' },
       { name: 'Truck', icon: Truck, suche: 'lieferung transport' },
