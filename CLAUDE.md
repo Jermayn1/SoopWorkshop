@@ -745,6 +745,13 @@ Klasse zuordnet.
 Das Passwort kommt aus der `.env`, oder über `-AdminPassword`. Die gemeinsame
 Anmeldung steht in `tests/manual/admin-anmeldung.ps1`.
 
+> **Die Seed-Skripte sind Testdaten für die Abnahme, nicht der Workshop-Bestand.**
+> Die echten Aufgaben liegen seit 2026-08-19 im eigenen Repository
+> **`SoopJudgeAufgaben`** (je Aufgabe ein Ordner mit Aufgabentext, JUnit-Tests,
+> Musterlösung, Gegenprobe und importfertiger `bundle.json`) und kommen über den
+> Bestands-Transfer im Modus *Merge* herein. Die Autorenregeln stehen dort als
+> Skill `soop-aufgabe` — sie sind aus diesem Code abgeleitet, nicht erfunden.
+
 Von Hand geht es auch über `/scalar`: Kategorie und Aufgabe anlegen, Testfälle bzw.
 JUnit-Dateien ergänzen, **danach** per `PATCH .../visibility` sichtbar schalten. Die
 Reihenfolge ist Pflicht — eine Aufgabe, deren `EvaluationMode` Daten verlangt, die es

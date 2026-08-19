@@ -76,6 +76,13 @@ die Teilnehmer.
 
 **Fertiger Bestand:** *Transfer → Datei wählen*. Fertig.
 
+> Die Aufgaben des Workshops liegen im eigenen Repository
+> **`SoopJudgeAufgaben`** — je Aufgabe ein Ordner mit Aufgabentext, JUnit-Tests,
+> Musterlösung und einer importfertigen `bundle.json`. Dort steht auch, nach
+> welchen Regeln eine Aufgabe geschrieben wird. Importiert wird im Modus
+> *Merge*; ein zweiter Import derselben Datei aktualisiert die Aufgabe, statt
+> sie zu verdoppeln.
+
 **Von Hand**, Reihenfolge ist Pflicht:
 
 1. Kategorie → 2. Aufgabe → 3. Testfälle bzw. JUnit-Dateien → 4. **danach**
