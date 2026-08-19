@@ -1100,7 +1100,7 @@ Abnahme-Anleitung: `tests/manual/abnahme-phase5.md`.*
 - [x] Bestätigungsdialoge vor dem Löschen — 5.2, über das native `<dialog>`
 - [x] Formularvalidierung gegen die DataAnnotations — 5.1 in `admin/validation.ts`,
       serverseitig zusätzlich in `TaskBundleValidator` für den Import
-- [ ] **Bewusst auf Phase 6 geschoben:** Submissions-Übersicht mit
+- [x] **Auf Phase 6 geschoben, dort auf 7 — erledigt in Etappe 7.4:** Submissions-Übersicht mit
       Auswertungshistorie. Sie braucht neue Endpunkte und hilft beim Pflegen der
       Aufgaben nicht — der Probelauf deckt den Bedarf des Betreuers ab
 
@@ -1168,7 +1168,7 @@ auffällig war; die Admin-Seiten sind es bewusst nicht.
 
 **Bewusst nicht umgesetzt:**
 
-- [ ] **GitHub Actions — auf Phase 7 verschoben.** Bei genau einem Betreuer
+- [x] **GitHub Actions — auf Phase 7 verschoben, dort erledigt.** Bei genau einem Betreuer
       greift der Hauptnutzen von CI („bricht bei jemand anderem") kaum, und in
       Phase 7 passt es zu den Dockerfiles. Das Sammelskript deckt den Alltag ab
 - [ ] **Keine Coverage-Schwelle.** Eine Prozentmarke fängt nichts von dem, was
@@ -1177,7 +1177,7 @@ auffällig war; die Admin-Seiten sind es bewusst nicht.
 - [ ] **Kein Playwright.** Der Durchlauf aus §7 bleibt der Ende-zu-Ende-Nachweis
 - [ ] **Komponententests für die Admin-Seiten.** Sie ändern sich noch und werden
       vom Betreuer bedient, nicht von Teilnehmern
-- [ ] Aus Phase 5 weiterhin offen: **Submissions-Übersicht mit
+- [x] Aus Phase 5 mitgeschleppt, in Etappe 7.4 erledigt: **Submissions-Übersicht mit
       Auswertungshistorie** — sie braucht neue Endpunkte und ist Feature-Arbeit
 
 ### Phase 7 — Auslieferung, Betrieb, Abschluss ✅
