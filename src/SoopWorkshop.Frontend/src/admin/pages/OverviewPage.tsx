@@ -159,8 +159,14 @@ export function OverviewPage() {
           <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <p className="font-medium text-slate-700">Noch nichts angelegt.</p>
             <p className="mt-1 text-sm text-slate-500">
-              Kategorien und Aufgaben lassen sich ab Etappe 5.2 hier anlegen.
+              Eine Aufgabe gehört immer in eine Kategorie — leg zuerst eine an.
             </p>
+            <Link
+              to="/admin/kategorien"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700"
+            >
+              Zu den Kategorien
+            </Link>
           </div>
         )}
 
