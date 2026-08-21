@@ -1,7 +1,7 @@
 namespace SoopWorkshop.Shared.DTOs.Tasks
 {
-    // Lese-DTO fuer eine hinterlegte JUnit-Quelldatei.
-    // Zum Anlegen und Aendern dienen die DTOs unter DTOs/Tasks/Requests.
+    // Lese-DTO für eine hinterlegte JUnit-Quelldatei.
+    // Zum Anlegen und Ändern dienen die DTOs unter DTOs/Tasks/Requests.
     public class TaskUnitTestFileDto
     {
         public Guid Id { get; set; }

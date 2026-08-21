@@ -26,8 +26,8 @@ describe('checkMaxLength', () => {
     expect(checkMaxLength('titel', 'Der Titel', 'x'.repeat(200), 200)).toBeNull()
   })
 
-  // Die Meldung nennt beide Zahlen. Ein blosses "zu lang" zwingt den Betreuer
-  // zum Nachzaehlen.
+  // Die Meldung nennt beide Zahlen. Ein bloßes "zu lang" zwingt den Betreuer
+  // zum Nachzählen.
   it('nennt bei Ueberschreitung Ist und Soll', () => {
     const problem = checkMaxLength('titel', 'Der Titel', 'x'.repeat(201), 200)
 
@@ -62,7 +62,7 @@ describe('checkJavaFileName', () => {
     expect(checkJavaFileName('datei', 'notiz.txt')?.message).toContain('.java')
   })
 
-  // Der Name wird spaeter zu einer echten Datei im Arbeitsverzeichnis.
+  // Der Name wird später zu einer echten Datei im Arbeitsverzeichnis.
   it.each(['unter/Test.java', 'unter\\Test.java', '../Test.java'])(
     'beanstandet den Pfadanteil in %s',
     (name) => {
@@ -78,7 +78,7 @@ describe('checkJavaFileName', () => {
 })
 
 describe('collect', () => {
-  // Bewusst alle Verstoesse auf einmal: wer ein Formular abschickt, will nicht
+  // Bewusst alle Verstöße auf einmal: wer ein Formular abschickt, will nicht
   // viermal hintereinander einen neuen Fehler entdecken.
   it('sammelt alle Verstoesse und laesst die bestandenen weg', () => {
     const problems = collect(
@@ -95,9 +95,9 @@ describe('collect', () => {
   })
 })
 
-// Die Grenze fuer die Testfallbeschreibung ist bewusst die kleinere der beiden:
+// Die Grenze für die Testfallbeschreibung ist bewusst die kleinere der beiden:
 // das Request-DTO erlaubt 2000, die Datenbankspalte nur 500. Wer sich auf das
-// DTO verlaesst, kommt durch die Validierung und knallt in der Datenbank.
+// DTO verlässt, kommt durch die Validierung und knallt in der Datenbank.
 describe('FIELD_LIMITS', () => {
   it('nimmt fuer die Testfallbeschreibung die wahre Spaltengrenze', () => {
     expect(FIELD_LIMITS.testDescription).toBe(500)

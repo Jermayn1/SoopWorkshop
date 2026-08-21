@@ -66,7 +66,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
             report.Warnings.ShouldContain(warning => warning.Contains("unangetastet"));
         }
 
-        // Das Loeschen einer Kategorie nimmt per Cascade die Abgaben mit. Die
+        // Das Löschen einer Kategorie nimmt per Cascade die Abgaben mit. Die
         // Zahl muss vorher auf dem Tisch liegen.
         [Fact]
         public void Plan_ErsetzenZaehltAbgabenMit()
@@ -88,7 +88,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
             report.Warnings.ShouldContain(warning => warning.Contains("20"));
         }
 
-        // Auch was in der Datei steht, wird beim Ersetzen geloescht und neu
+        // Auch was in der Datei steht, wird beim Ersetzen gelöscht und neu
         // angelegt - nicht aktualisiert.
         [Fact]
         public void Plan_ErsetzenMitBekanntenIds_ZaehltTrotzdemAlsAngelegt()

@@ -6,8 +6,8 @@ import { SubmissionForm } from '../components/SubmissionForm'
 import { fetchTask } from '../api/endpoints'
 import type { Task } from '../api/types'
 
-// Vier Ausgaenge, nicht zwei: bei gestopptem Backend stand hier frueher
-// "Diese Aufgabe gibt es nicht (mehr)" — die denkbar irrefuehrendste Auskunft.
+// Vier Ausgänge, nicht zwei: bei gestopptem Backend stand hier früher
+// "Diese Aufgabe gibt es nicht (mehr)" — die denkbar irreführendste Auskunft.
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ok'; task: Task }
@@ -85,9 +85,9 @@ export function TaskPage() {
         <TaskView task={state.task} />
 
         <section>
-          {/* Der Schluessel sorgt dafuer, dass die Auswahl beim Wechsel auf eine
-              andere Aufgabe geleert wird — sonst haenge die vorige Datei noch
-              in einem Formular, das zu einer anderen Aufgabe gehoert. */}
+          {/* Der Schlüssel sorgt dafür, dass die Auswahl beim Wechsel auf eine
+              andere Aufgabe geleert wird — sonst hänge die vorige Datei noch
+              in einem Formular, das zu einer anderen Aufgabe gehört. */}
           <SubmissionForm
             key={state.task.id}
             taskItemId={state.task.id}

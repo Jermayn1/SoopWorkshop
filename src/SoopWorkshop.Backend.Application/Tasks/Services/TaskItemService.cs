@@ -36,7 +36,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         public async Task<Result<TaskItemDto>> CreateAsync(CreateTaskItemDto dto)
         {
-            // Ohne diese Pruefung schlaegt erst die Fremdschluesselbedingung zu.
+            // Ohne diese Prüfung schlägt erst die Fremdschlüsselbedingung zu.
             // Daraus wird eine DbUpdateException, aus der die Middleware ein
             // "Ein unerwarteter Fehler ist aufgetreten." mit Status 500 macht -
             // eine Auskunft, die nicht sagt, was falsch war.
@@ -102,10 +102,10 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 item.Hints.Add(new TaskHint
                 {
                     // Bewusst OHNE Id: die Aufgabe ist hier bereits verfolgt, und
-                    // an einem gesetzten Schluessel erkennt die Aenderungsverfolgung
+                    // an einem gesetzten Schlüssel erkennt die Änderungsverfolgung
                     // eine BESTEHENDE Zeile. Sie schickt dann ein UPDATE auf eine
                     // Zeile, die es nicht gibt, und wirft DbUpdateConcurrency-
-                    // Exception. Ohne Id gilt der Eintrag als neu und wird eingefuegt.
+                    // Exception. Ohne Id gilt der Eintrag als neu und wird eingefügt.
                     TaskItemId = item.Id,
                     Content = content,
                     Order = index + 1
@@ -141,9 +141,9 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (!item.IsVisible)
             {
                 // Kein NotFound: die Aufgabe gibt es, ihr fehlen nur die Daten,
-                // die ihr Auswertungsmodus verlangt. Das ist eine ungueltige
+                // die ihr Auswertungsmodus verlangt. Das ist eine ungültige
                 // Anfrage (400), keine fehlende Ressource - sonst zeigte das
-                // Frontend "gibt es nicht" fuer etwas, das offen vor einem liegt.
+                // Frontend "gibt es nicht" für etwas, das offen vor einem liegt.
                 var problem = DescribeMissingTestData(item);
                 if (problem is not null)
                     return Result<bool>.Fail(problem);
@@ -165,7 +165,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
         // steht.
         //
         // Durchgehend ohne Id, aus demselben Grund wie bei den Tipps oben: beim
-        // Aendern ist die Aufgabe verfolgt, und ein gesetzter Schluessel laesst
+        // Ändern ist die Aufgabe verfolgt, und ein gesetzter Schlüssel lässt
         // den neuen Eintrag wie eine bestehende Zeile aussehen.
         private static List<TaskExpectedType> BuildExpectedTypes(List<ExpectedTypeInputDto> types) =>
             [.. types
@@ -187,12 +187,12 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                     Order = index + 1
                 })];
 
-        // Eine sichtbare Aufgabe muss auch pruefbar sein. Geprueft wird erst beim
+        // Eine sichtbare Aufgabe muss auch prüfbar sein. Geprüft wird erst beim
         // Sichtbarschalten und nicht beim Anlegen: beim Anlegen gibt es die
-        // Testfaelle noch gar nicht, die Aufgabe entsteht ja erst.
+        // Testfälle noch gar nicht, die Aufgabe entsteht ja erst.
         //
-        // Ohne diese Pruefung wird eine Aufgabe mit vergessener Testdatei still
-        // milder bewertet - die Kategorie faellt weg und ihr Gewicht verteilt sich.
+        // Ohne diese Prüfung wird eine Aufgabe mit vergessener Testdatei still
+        // milder bewertet - die Kategorie fällt weg und ihr Gewicht verteilt sich.
         private static string? DescribeMissingTestData(TaskItem item)
         {
             var needsConsoleTests = item.EvaluationMode is EvaluationMode.ConsoleOnly or EvaluationMode.Both;

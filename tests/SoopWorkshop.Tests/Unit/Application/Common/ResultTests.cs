@@ -24,7 +24,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Common
             result.Value.ShouldBe(default);
         }
 
-        // Ist-Verhalten: Ok() prueft den uebergebenen Wert nicht auf null.
+        // Ist-Verhalten: Ok() prüft den übergebenen Wert nicht auf null.
         // Bewusst nicht repariert, sondern nur festgehalten.
         [Fact]
         public void Ok_MitNull_IstAktuellErlaubt()

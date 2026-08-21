@@ -6,7 +6,7 @@ using SoopWorkshop.Shared.DTOs.Tasks.Requests;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
 {
-    // JUnit-Dateien einer Aufgabe. Bewusst bequemer geschnitten als die aelteren
+    // JUnit-Dateien einer Aufgabe. Bewusst bequemer geschnitten als die älteren
     // Admin-Endpunkte: die Sichtbarkeit kommt beim Anlegen mit, und PUT auf die
     // Sammlung speichert alle Dateien in einem Aufruf.
     [ApiController]
@@ -48,7 +48,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
                 : BadRequest(result.ErrorMessage);
         }
 
-        // Ersetzt alle Dateien der Aufgabe. Was nicht im Body steht, wird geloescht.
+        // Ersetzt alle Dateien der Aufgabe. Was nicht im Body steht, wird gelöscht.
         [HttpPut]
         [ProducesResponseType<List<TaskUnitTestFileDto>>(StatusCodes.Status200OK)]
         [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]

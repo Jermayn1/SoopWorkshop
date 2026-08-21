@@ -13,7 +13,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             _checker.CheckAsync(EvaluationContextFactory.For(files: files), CancellationToken.None);
 
         // Ohne Dateien gibt es nichts zu beanstanden. Anders als beim TestCaseChecker
-        // sind das keine Gratispunkte, denn ohne Code gibt es auch keinen Verstoss.
+        // sind das keine Gratispunkte, denn ohne Code gibt es auch keinen Verstoß.
         [Fact]
         public async Task CheckAsync_OhneDateien_GiltAlsBestanden()
         {
@@ -65,18 +65,21 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
-        // Ist-Verhalten und ausdruecklich gewollt: geprueft wird die ROHE Datei.
-        // Anders als ContractChecker und NamingConventionChecker schickt der
+        // Ausdrücklich gewollt: geprüft wird die ROHE Datei. Anders als
+        // ContractChecker und NamingConventionChecker schickt der
         // CharacterSetChecker den Quelltext NICHT durch StripCommentsAndLiterals -
         // ein Umlaut im Kommentar kostet denselben Punkt wie einer im Bezeichner.
-        // Siehe CLAUDE.md 5.6. Der Fall im String-Literal steht in der Theory oben.
+        //
+        // Der Grund: die Regel existiert wegen der Kodierungsfallen der
+        // Java-Konsole, und die treffen gerade Kommentare und Ausgabetexte. Der
+        // Fall im String-Literal steht in der Theory oben.
         [Fact]
         public async Task CheckAsync_UmlautNurImKommentar_GiltAlsNichtBestanden()
         {
             var files = SubmissionFileFactory.CreateMany(
                 """
                 public class Main {
-                    // Groesse berechnen - hier steht ein Umlaut: ä
+                    // Größe berechnen - hier steht ein Umlaut: ä
                     public static void main(String[] args) { }
                 }
                 """);
@@ -87,7 +90,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
-        // Ist-Verhalten: geprueft wird nur der Dateiinhalt, nicht der Dateiname.
+        // Ist-Verhalten: geprüft wird nur der Dateiinhalt, nicht der Dateiname.
         [Fact]
         public async Task CheckAsync_UmlautNurImDateinamen_GiltAlsBestanden()
         {
@@ -113,7 +116,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeFalse();
         }
 
-        // Zeichensatz ist seit der Bewertungs-Engine v2 eine Teilpruefung unter
+        // Zeichensatz ist seit der Bewertungs-Engine v2 eine Teilprüfung unter
         // Clean Code und keine eigene Kategorie mehr.
         [Fact]
         public void Category_IstCleanCode()

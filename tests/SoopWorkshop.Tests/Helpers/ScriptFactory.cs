@@ -2,10 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace SoopWorkshop.Tests.Helpers
 {
-    // Legt kleine Skripte in einem temporaeren Verzeichnis an, damit der ProcessRunner
-    // gegen echte Prozesse geprueft werden kann — ohne installiertes JDK.
+    // Legt kleine Skripte in einem temporären Verzeichnis an, damit der ProcessRunner
+    // gegen echte Prozesse geprüft werden kann — ohne installiertes JDK.
     // Windows und Unix brauchen unterschiedliche Skriptsprachen, deshalb bekommt
-    // jeder Testfall beide Varianten uebergeben.
+    // jeder Testfall beide Varianten übergeben.
     public sealed class ScriptFactory : IDisposable
     {
         private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -20,7 +20,7 @@ namespace SoopWorkshop.Tests.Helpers
             Directory.CreateDirectory(WorkingDirectory);
         }
 
-        // Gibt die Argumentliste zurueck, mit der das Skript ausgefuehrt wird.
+        // Gibt die Argumentliste zurück, mit der das Skript ausgeführt wird.
         public IReadOnlyList<string> Create(string windowsScript, string unixScript)
         {
             var fileName = IsWindows ? "script.bat" : "script.sh";

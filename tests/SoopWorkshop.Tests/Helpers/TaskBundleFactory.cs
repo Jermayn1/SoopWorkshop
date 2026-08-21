@@ -4,7 +4,7 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Tests.Helpers
 {
-    // Baut gueltige Transferdateien, an denen ein Test dann genau eine Sache
+    // Baut gültige Transferdateien, an denen ein Test dann genau eine Sache
     // kaputt macht. Ohne das steht in jedem Test dieselbe halbe Seite Aufbau,
     // und man sieht nicht mehr, worum es geht.
     public static class TaskBundleFactory

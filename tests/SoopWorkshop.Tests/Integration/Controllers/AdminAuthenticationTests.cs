@@ -10,13 +10,14 @@ using SoopWorkshop.Shared.DTOs.Auth.Requests;
 namespace SoopWorkshop.Tests.Integration.Controllers
 {
     /// <summary>
-    /// Der Zugangsschutz aus Etappe 5.0, bisher nur von Hand geprueft.
+    /// Der Zugangsschutz vor allen api/admin/*-Endpunkten: Anmeldung, Cookie und
+    /// die Abweisung ohne Anmeldung.
     /// </summary>
     public class AdminAuthenticationTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
-        // Die Endpunkte, an denen das HTTP-Verhalten geprueft wird. Bewusst eine
-        // Stichprobe und NICHT die Zusicherung, dass ueberall [Authorize] steht -
-        // die traegt JederAdminEndpunkt_... weiter unten.
+        // Die Endpunkte, an denen das HTTP-Verhalten geprüft wird. Bewusst eine
+        // Stichprobe und NICHT die Zusicherung, dass überall [Authorize] steht -
+        // die trägt JederAdminEndpunkt_... weiter unten.
         public static TheoryData<string, string> GeschuetzteEndpunkte => new()
         {
             { "GET", "/api/admin/auth/session" },
@@ -25,10 +26,10 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             { "GET", "/api/admin/transfer/export" }
         };
 
-        // Die einzigen Admin-Aktionen, die ohne Anmeldung erreichbar sein duerfen.
+        // Die einzigen Admin-Aktionen, die ohne Anmeldung erreichbar sein dürfen.
         // Kommt eine dazu, muss sie hier eingetragen werden - und genau dieser
         // Zwang ist der Zweck: eine bewusste Ausnahme wird aufgeschrieben, eine
-        // vergessene faellt auf.
+        // vergessene fällt auf.
         private static readonly string[] AbsichtlichOhneAnmeldung =
         [
             "api/admin/auth/login",
@@ -44,25 +45,25 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 .ToList();
 
         /// <summary>
-        /// Prueft JEDE Aktion unter api/admin, nicht eine Auswahl davon.
+        /// Prüft JEDE Aktion unter api/admin, nicht eine Auswahl davon.
         /// </summary>
         /// <remarks>
-        /// Der Vorgaenger dieses Tests war eine handgepflegte Liste geschuetzter
+        /// Der Vorgänger dieses Tests war eine handgepflegte Liste geschützter
         /// Pfade. Sie deckte vier von sieben Admin-Controllern ab - die Endpunkte
-        /// fuer Testfaelle, JUnit-Dateien und Gewichte fehlten. Haette jemand dort
-        /// [Authorize] entfernt, waeren alle Tests gruen geblieben, waehrend die
-        /// JUnit-Dateien aller Aufgaben fuer jeden les- und ueberschreibbar
-        /// gewesen waeren, der den Port erreicht.
+        /// für Testfälle, JUnit-Dateien und Gewichte fehlten. Hätte jemand dort
+        /// [Authorize] entfernt, wären alle Tests grün geblieben, während die
+        /// JUnit-Dateien aller Aufgaben für jeden les- und überschreibbar
+        /// gewesen wären, der den Port erreicht.
         ///
-        /// Eine Liste geschuetzter Pfade faellt bei einem neuen Controller nach
-        /// OFFEN aus. Diese Richtung faellt nach ZU.
+        /// Eine Liste geschützter Pfade fällt bei einem neuen Controller nach
+        /// OFFEN aus. Diese Richtung fällt nach ZU.
         /// </remarks>
         [Fact]
         public void JederAdminEndpunkt_IstEntwederGeschuetztOderAusdruecklichOffen()
         {
             var adminAktionen = AdminAktionen();
 
-            // Ohne diese Zusicherung koennte der Test gruen sein, weil er gar
+            // Ohne diese Zusicherung könnte der Test grün sein, weil er gar
             // nichts gefunden hat - etwa nach einer Umbenennung der Route.
             adminAktionen.Count.ShouldBeGreaterThan(10);
 
@@ -100,9 +101,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             var response = await CreateClient().SendAsync(
                 new HttpRequestMessage(new HttpMethod(methode), pfad));
 
-            // 401, nicht 302. Die Cookie-Authentifizierung leitet standardmaessig
+            // 401, nicht 302. Die Cookie-Authentifizierung leitet standardmäßig
             // auf eine Anmeldeseite um, die es in einer API nicht gibt - der fetch
-            // im Frontend wuerde ihr folgen und am Ende einen 404 auf
+            // im Frontend würde ihr folgen und am Ende einen 404 auf
             // /Account/Login melden. OnRedirectToLogin ist deshalb umgebogen.
             response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
             response.Headers.Location.ShouldBeNull();
@@ -125,7 +126,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
 
             cookie.ShouldContain(AdminAuthenticationExtensions.CookieName);
 
-            // Der Grund, warum es ueberhaupt ein Cookie ist und kein Token im
+            // Der Grund, warum es überhaupt ein Cookie ist und kein Token im
             // Speicher der Seite: kein Zugriff aus JavaScript. Ein eingeschleustes
             // Skript kann den Zugang so nicht auslesen.
             cookie.ShouldContain("httponly", Case.Insensitive);
@@ -133,7 +134,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             // Die Tests laufen unter "Testing", also im BETRIEBSZWEIG der
             // Cookie-Politik - und damit gegen die Einstellung, die ausgeliefert
             // wird. Hinter dem Reverse Proxy liefern Frontend und API denselben
-            // Ursprung aus; es gibt keine Origin-Grenze mehr zu ueberqueren, Lax
+            // Ursprung aus; es gibt keine Origin-Grenze mehr zu überqueren, Lax
             // ist die engere und richtige Angabe.
             cookie.ShouldContain("samesite=lax", Case.Insensitive);
 
@@ -143,19 +144,19 @@ namespace SoopWorkshop.Tests.Integration.Controllers
         }
 
         /// <summary>
-        /// Ueber http traegt dasselbe Cookie kein Secure - und kommt damit zurueck.
+        /// Über http trägt dasselbe Cookie kein Secure - und kommt damit zurück.
         /// </summary>
         /// <remarks>
         /// Das ist der Fall, auf dem der ganze Betriebsaufbau steht: der Betreuer
         /// verwaltet von einem anderen Rechner im Netz, nicht vom Server selbst.
-        /// Mit dem frueheren CookieSecurePolicy.Always haette der Browser das
-        /// Cookie ueber http nie zurueckgeschickt (localhost ist die Ausnahme, ein
-        /// Rechner im LAN nicht) - die Anmeldung haette kommentarlos nie
-        /// funktioniert, und der Fehler haette wie ein kaputter Server ausgesehen.
+        /// Mit dem früheren CookieSecurePolicy.Always hätte der Browser das
+        /// Cookie über http nie zurückgeschickt (localhost ist die Ausnahme, ein
+        /// Rechner im LAN nicht) - die Anmeldung hätte kommentarlos nie
+        /// funktioniert, und der Fehler hätte wie ein kaputter Server ausgesehen.
         ///
-        /// SameAsRequest ist dabei kein Ausschalter: der Test darueber belegt,
-        /// dass ueber https weiterhin Secure gesetzt wird. Sobald ein Zertifikat
-        /// auf dem Server liegt, zieht die Absicherung ohne Codeaenderung nach.
+        /// SameAsRequest ist dabei kein Ausschalter: der Test darüber belegt,
+        /// dass über https weiterhin Secure gesetzt wird. Sobald ein Zertifikat
+        /// auf dem Server liegt, zieht die Absicherung ohne Codeänderung nach.
         /// </remarks>
         [Fact]
         public async Task Anmelden_UeberHttp_SetztKeinSecureUndDasCookieKommtZurueck()
@@ -177,9 +178,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             cookie.ShouldNotContain("secure", Case.Insensitive);
 
             // Der eigentliche Beleg: nicht der Kopf, sondern dass der Zugang
-            // damit auch wirklich traegt. Der CookieContainer von .NET verhaelt
-            // sich hier wie ein Browser - ein Secure-Cookie waere ueber http gar
-            // nicht erst zurueckgeschickt worden.
+            // damit auch wirklich trägt. Der CookieContainer von .NET verhält
+            // sich hier wie ein Browser - ein Secure-Cookie wäre über http gar
+            // nicht erst zurückgeschickt worden.
             var geschuetzt = await client.GetAsync("/api/admin/auth/session");
             geschuetzt.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
@@ -232,7 +233,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         }
 
-        // Die oeffentliche Seite darf von all dem nichts merken.
+        // Die öffentliche Seite darf von all dem nichts merken.
         [Fact]
         public async Task OeffentlicheEndpunkte_BrauchenKeineAnmeldung()
         {

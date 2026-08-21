@@ -7,8 +7,8 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    // Schreibt die Abgabe ins Arbeitsverzeichnis und ruft javac auf. Laeuft als
-    // erster Checker, weil alle spaeteren das Kompilierergebnis aus dem Kontext
+    // Schreibt die Abgabe ins Arbeitsverzeichnis und ruft javac auf. Läuft als
+    // erster Checker, weil alle späteren das Kompilierergebnis aus dem Kontext
     // brauchen.
     public class CompilabilityChecker : IEvaluationChecker
     {
@@ -35,7 +35,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             foreach (var file in files)
             {
-                // Zweite Verteidigungslinie hinter der Upload-Pruefung: nur der reine
+                // Zweite Verteidigungslinie hinter der Upload-Prüfung: nur der reine
                 // Dateiname darf ins Arbeitsverzeichnis, niemals ein Pfad.
                 var fileName = Path.GetFileName(file.FileName);
                 await File.WriteAllTextAsync(Path.Combine(context.WorkingDirectory, fileName), file.Content, cancellationToken);
@@ -44,12 +44,12 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             var arguments = new List<string>
             {
-                // Die Dateien werden als UTF-8 geschrieben; ohne diese Angabe wuerde javac
+                // Die Dateien werden als UTF-8 geschrieben; ohne diese Angabe würde javac
                 // unter Windows mit der Plattform-Codepage lesen und Umlaute zerlegen.
                 "-encoding", "UTF-8",
 
                 // Auch die Fehlermeldungen des Compilers als UTF-8 ausgeben — sonst
-                // haengt ihre Lesbarkeit von der Codepage des Servers ab.
+                // hängt ihre Lesbarkeit von der Codepage des Servers ab.
                 "-J-Dstdout.encoding=UTF-8",
                 "-J-Dstderr.encoding=UTF-8"
             };
@@ -71,7 +71,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var success = process.Success;
             var errorOutput = success ? string.Empty : DescribeFailure(process);
 
-            // Ergebnis fuer die nachfolgenden Checker hinterlegen.
+            // Ergebnis für die nachfolgenden Checker hinterlegen.
             context.Compilation = new CompilationResult
             {
                 Success = success,
@@ -95,8 +95,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     result);
         }
 
-        // Uebersetzt das Prozessergebnis in eine Meldung, die dem Teilnehmer sagt,
-        // was schiefgelaufen ist — ein leerer Text waere hier wertlos.
+        // Übersetzt das Prozessergebnis in eine Meldung, die dem Teilnehmer sagt,
+        // was schiefgelaufen ist — ein leerer Text wäre hier wertlos.
         private string DescribeFailure(ProcessResult process)
         {
             if (process.ExecutableNotFound)
@@ -110,8 +110,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 : process.StandardError;
         }
 
-        // Sucht die Datei mit "public static void main" und gibt den dazugehoerigen
-        // Klassennamen zurueck. In Java muss der Dateiname mit dem Klassennamen uebereinstimmen.
+        // Sucht die Datei mit "public static void main" und gibt den dazugehörigen
+        // Klassennamen zurück. In Java muss der Dateiname mit dem Klassennamen übereinstimmen.
         private static string? FindMainClassName(IReadOnlyList<SubmissionFile> files)
         {
             var mainFile = files.FirstOrDefault(f => f.Content.Contains("public static void main"));

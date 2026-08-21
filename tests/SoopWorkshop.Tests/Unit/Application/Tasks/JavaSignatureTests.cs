@@ -17,7 +17,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             JavaSignature.ExtractMethodName(signature).ShouldBe(expected);
         }
 
-        // Generische Rueckgabetypen duerfen den Namen nicht verschlucken.
+        // Generische Rückgabetypen dürfen den Namen nicht verschlucken.
         [Fact]
         public void ExtractMethodName_MitGenerischemRueckgabetyp_LiefertDenNamen()
         {

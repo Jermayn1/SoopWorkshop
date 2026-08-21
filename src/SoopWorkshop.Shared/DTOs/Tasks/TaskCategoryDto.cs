@@ -7,8 +7,8 @@
         public int Order { get; set; }
         public bool IsVisible { get; set; }
 
-        // Name des Symbols in der Seitenleiste. Leer heisst "kein eigenes";
-        // welche Namen es gibt, weiss das Frontend.
+        // Name des Symbols in der Seitenleiste. Leer heißt "kein eigenes";
+        // welche Namen es gibt, weiß das Frontend.
         public string IconName { get; set; } = string.Empty;
 
         public List<TaskItemDto> Tasks { get; set; } = [];

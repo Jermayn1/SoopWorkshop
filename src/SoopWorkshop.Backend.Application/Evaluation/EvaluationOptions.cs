@@ -21,10 +21,10 @@ namespace SoopWorkshop.Backend.Application.Evaluation
         public int QueueCapacity { get; set; } = 100;
 
         // Pfad zum JUnit-Platform-Console-Standalone-JAR. Relative Angaben werden
-        // gegen das Anwendungsverzeichnis aufgeloest.
+        // gegen das Anwendungsverzeichnis aufgelöst.
         public string JUnitJarPath { get; set; } = "lib/junit-platform-console-standalone-6.1.3.jar";
 
-        // Zeitgrenze fuer den JUnit-Lauf. Grosszuegiger als RunTimeoutSeconds, weil
+        // Zeitgrenze für den JUnit-Lauf. Großzügiger als RunTimeoutSeconds, weil
         // ein Lauf alle Testmethoden einer Aufgabe auf einmal abarbeitet und die
         // JVM samt Platform erst hochfahren muss.
         public int JUnitRunTimeoutSeconds { get; set; } = 30;
@@ -32,10 +32,10 @@ namespace SoopWorkshop.Backend.Application.Evaluation
         // Standardgewichte der Bewertungskategorien. Nicht in Punkten, sondern
         // relativ zueinander - erst die Normierung im EvaluationScorer macht
         // daraus die erreichbaren Punkte. Eine Aufgabe kann einzelne Gewichte
-        // ueber TaskCategoryWeight ueberschreiben.
+        // über TaskCategoryWeight überschreiben.
         //
-        // Die Werte sind so gewaehlt, dass eine Aufgabe genau die Verteilung von
-        // vorher behaelt (15 = 5 Zeichensatz + 10 Namenskonventionen).
+        // Die Werte sind so gewählt, dass eine Aufgabe genau die Verteilung von
+        // vorher behält (15 = 5 Zeichensatz + 10 Namenskonventionen).
         public Dictionary<EvaluationCategory, double> CategoryWeights { get; set; } = new()
         {
             [EvaluationCategory.CleanCode] = 15,

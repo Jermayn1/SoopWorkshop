@@ -10,8 +10,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <!-- NSubstitute wird erst ab Phase 2 gebraucht (IProcessRunner); hier schon
-         eingerichtet, damit die Paketbasis vollstaendig steht. -->
+    <!-- NSubstitute stellt die Attrappen für die Repository- und
+         IProcessRunner-Schnittstellen. -->
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />
@@ -21,10 +21,10 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- Integrationstests (Phase 6): echte Anwendung im Speicher gegen echtes
-       PostgreSQL im Container. Sie tragen alle [Trait("Category", "Integration")],
-       damit sich der Lauf per Filter "Category!=Integration" auch ohne Docker
-       durchfuehren laesst. -->
+  <!-- Integrationstests: echte Anwendung im Speicher gegen echtes PostgreSQL im
+       Container. Sie tragen alle [Trait("Category", "Integration")], damit sich
+       der Lauf per Filter "Category!=Integration" auch ohne Docker durchführen
+       lässt. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Respawn" />

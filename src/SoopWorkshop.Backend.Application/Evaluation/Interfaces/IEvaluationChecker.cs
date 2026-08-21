@@ -3,26 +3,26 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Application.Evaluation.Interfaces
 {
-    // Eine Pruefung innerhalb der Auswertung. Neue Pruefungen werden nur noch
-    // registriert, der JavaAnalyzer muss dafuer nicht mehr angefasst werden.
+    // Eine Prüfung innerhalb der Auswertung. Neue Prüfungen werden nur noch
+    // registriert, der JavaAnalyzer muss dafür nicht mehr angefasst werden.
     public interface IEvaluationChecker
     {
-        // Mehrere Checker duerfen dieselbe Kategorie liefern - Clean Code besteht
-        // genau so aus mehreren unabhaengigen Teilpruefungen.
+        // Mehrere Checker dürfen dieselbe Kategorie liefern - Clean Code besteht
+        // genau so aus mehreren unabhängigen Teilprüfungen.
         EvaluationCategory Category { get; }
 
-        // Ausfuehrungsreihenfolge, nicht Anzeigereihenfolge (die steht in
+        // Ausführungsreihenfolge, nicht Anzeigereihenfolge (die steht in
         // EvaluationCategoryOrder). Wer das Kompilierergebnis aus dem Kontext
         // braucht, muss hinter dem CompilabilityChecker liegen.
         int Order { get; }
 
-        // Ob die Pruefung fuer diese Aufgabe ueberhaupt gilt.
+        // Ob die Prüfung für diese Aufgabe überhaupt gilt.
         //
-        // WICHTIG: Diese Frage haengt allein an der Aufgabendefinition - Modus,
-        // hinterlegte Testfaelle, hinterlegte JUnit-Dateien. Niemals am Ergebnis
-        // des Laufs. Wuerde eine nicht kompilierende Abgabe hier als "nicht
+        // WICHTIG: Diese Frage hängt allein an der Aufgabendefinition - Modus,
+        // hinterlegte Testfälle, hinterlegte JUnit-Dateien. Niemals am Ergebnis
+        // des Laufs. Würde eine nicht kompilierende Abgabe hier als "nicht
         // anwendbar" gelten, fiele ihre Kategorie aus der Wertung, das Gewicht
-        // wuerde auf die uebrigen verteilt - und kaputter Code bekaeme eine
+        // würde auf die übrigen verteilt - und kaputter Code bekäme eine
         // bessere Note als halb funktionierender.
         bool IsApplicable(EvaluationContext context);
 

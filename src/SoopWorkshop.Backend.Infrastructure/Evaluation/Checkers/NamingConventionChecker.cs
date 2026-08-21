@@ -10,7 +10,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
     // Prüft auf Nameconventions
     // Klassennamen in PascalCase
     // Variablen und Methodennamen in lowerCamelCase
-    // Teilpruefung der Sammelkategorie Clean Code.
+    // Teilprüfung der Sammelkategorie Clean Code.
     public class NamingConventionChecker : IEvaluationChecker
     {
         private static readonly Regex ClassDeclaration = new(@"\bclass\s+([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
@@ -27,8 +27,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
         public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
-            // Nur echter Code wird geprueft. Was in Kommentaren oder in Ausgaben
-            // steht, sagt nichts ueber die Benennung im Programm aus.
+            // Nur echter Code wird geprüft. Was in Kommentaren oder in Ausgaben
+            // steht, sagt nichts über die Benennung im Programm aus.
             var code = string.Join(
                 "\n",
                 context.Files.Select(file => JavaSourceText.StripCommentsAndLiterals(file.Content)));

@@ -4,22 +4,23 @@ namespace SoopWorkshop.Shared.Enums
 {
     // Wie ein Import mit dem vorhandenen Bestand umgeht.
     //
-    // Ueber die Leitung als Zeichenkette, und der Konverter steht hier am Typ und
+    // Über die Leitung als Zeichenkette, und der Konverter steht hier am Typ und
     // nicht in AddJsonOptions: eine globale Registrierung wirkt nur zur Laufzeit,
-    // der OpenAPI-Erzeuger liest den Typ. Beides getrennt zu pflegen hiesse, zwei
-    // Wahrheiten zu haben (§9, Fund aus Phase 4).
+    // der OpenAPI-Erzeuger dagegen liest den Typ. Stünde er nur global, schickte
+    // die API "Merge", während das erzeugte Schema - und damit die daraus
+    // erzeugten TypeScript-Typen - eine Zahl behauptet.
     [JsonConverter(typeof(JsonStringEnumConverter<ImportMode>))]
     public enum ImportMode
     {
         // Was dieselbe Id hat, wird aktualisiert; alles Neue kommt dazu. Nichts
-        // wird geloescht - eine zuhause geloeschte Aufgabe bleibt auf dem Server
+        // wird gelöscht - eine zuhause gelöschte Aufgabe bleibt auf dem Server
         // also bestehen.
         Merge,
 
         // Der Bestand wird geleert, danach ist die Datei die Wahrheit.
         //
-        // Achtung: das Loeschen einer Kategorie nimmt per Cascade alles mit, was
-        // darunter haengt - einschliesslich der Abgaben der Teilnehmer und ihrer
+        // Achtung: das Löschen einer Kategorie nimmt per Cascade alles mit, was
+        // darunter hängt - einschließlich der Abgaben der Teilnehmer und ihrer
         // Auswertungen. Der Bericht nennt die Zahl vorher.
         Replace
     }

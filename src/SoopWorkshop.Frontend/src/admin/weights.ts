@@ -1,8 +1,8 @@
 import type { EvaluationCategory } from '../api/types'
 
 // Nur die drei Kategorien, die noch bewertet werden — in der Anzeigereihenfolge
-// aus EvaluationCategoryOrder. Die uebrigen Enum-Werte sind Altlast (§5.6) und
-// werden vom Backend abgelehnt.
+// aus EvaluationCategoryOrder. Die übrigen Werte von EvaluationCategory stehen
+// nur noch wegen der Altdaten im Enum und werden vom Backend abgelehnt.
 export const WEIGHTED_CATEGORIES = [
   { category: 'CleanCode' as const, label: 'Clean Code' },
   { category: 'Compilability' as const, label: 'Kompilierbarkeit' },
@@ -12,7 +12,7 @@ export const WEIGHTED_CATEGORIES = [
 export type WeightValues = Record<'CleanCode' | 'Compilability' | 'Functionality', number>
 
 // Bildet DistributeMaxPoints aus dem EvaluationScorer nach: Gewichte auf 100
-// normieren, abrunden, den Rest nach groesstem Nachkommaanteil verteilen, bei
+// normieren, abrunden, den Rest nach größtem Nachkommaanteil verteilen, bei
 // Gleichstand nach Position. Bewusst dieselbe Rechnung — eine Vorschau, die
 // anders rundet als die Bewertung, ist schlimmer als gar keine.
 export function distributePoints(weights: number[]): number[] {

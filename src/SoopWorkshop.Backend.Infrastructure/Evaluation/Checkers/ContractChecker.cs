@@ -7,37 +7,37 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    // Prueft, ob die Abgabe die von der Aufgabe geforderten Namen ueberhaupt
+    // Prüft, ob die Abgabe die von der Aufgabe geforderten Namen überhaupt
     // verwendet - die Klassen und die Methoden darin.
     //
     // Warum eigens: Java erzwingt nur, dass Dateiname und Klassenname
-    // zusammenpassen, nicht dass sie heissen wie gefordert. Eine Aufgabe verlangt
+    // zusammenpassen, nicht dass sie heißen wie gefordert. Eine Aufgabe verlangt
     // 'Main' mit 'addiere', jemand gibt 'Rechner.java' mit 'class Rechner' ab -
-    // das kompiliert, die Konsolen-Testfaelle laufen durch, und die Abgabe besteht.
-    // Bei JUnit faellt es zwar auf, aber erst als Compilerfehler.
+    // das kompiliert, die Konsolen-Testfälle laufen durch, und die Abgabe besteht.
+    // Bei JUnit fällt es zwar auf, aber erst als Compilerfehler.
     //
     // Seit dem Umbau auf mehrere Klassen wird die Methode im Rumpf IHRER Klasse
-    // gesucht. Vorher lief die Suche ueber den gesamten Quelltext: 'einzahlen'
-    // zaehlte auch dann als vorhanden, wenn es in 'Kunde' statt in 'Konto' stand.
-    // Fuer die OOP-Aufgaben am Ende des Workshops war das zu grob.
+    // gesucht. Vorher lief die Suche über den gesamten Quelltext: 'einzahlen'
+    // zählte auch dann als vorhanden, wenn es in 'Kunde' statt in 'Konto' stand.
+    // Für die OOP-Aufgaben am Ende des Workshops war das zu grob.
     //
-    // Laeuft vor dem Kompilieren und braucht nur den Quelltext.
+    // Läuft vor dem Kompilieren und braucht nur den Quelltext.
     public class ContractChecker : IEvaluationChecker
     {
-        // Teil der Kompilierbarkeit: hier geht es darum, ob der Code ueberhaupt
+        // Teil der Kompilierbarkeit: hier geht es darum, ob der Code überhaupt
         // zur Aufgabe passt - nicht um Stil und nicht um das Ergebnis.
         public EvaluationCategory Category => EvaluationCategory.Compilability;
 
         public int Order => EvaluationCheckerOrder.Contract;
 
-        // Nur wenn die Aufgabe ueberhaupt Namen vorgibt.
+        // Nur wenn die Aufgabe überhaupt Namen vorgibt.
         public bool IsApplicable(EvaluationContext context) => context.Task.ExpectedTypes.Count > 0;
 
         public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)
         {
-            // Nur echter Code: eine Klasse, die bloss im Kommentar erwaehnt wird,
+            // Nur echter Code: eine Klasse, die bloß im Kommentar erwähnt wird,
             // ist nicht deklariert. Das Bereinigen ist zugleich die Voraussetzung
-            // dafuer, dass unten Klammern gezaehlt werden duerfen.
+            // dafür, dass unten Klammern gezählt werden dürfen.
             var code = string.Join(
                 "\n",
                 context.Files.Select(file => JavaSourceText.StripCommentsAndLiterals(file.Content)));
@@ -68,16 +68,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 foreach (var method in type.Methods.OrderBy(method => method.Order))
                 {
                     // Fehlt die Klasse, fehlt auch ihre Methode. Das trotzdem als
-                    // eigene Teilpruefung zu zeigen ist richtig: die Aufgabe hat
-                    // sie verlangt, und eine verschwiegene Pruefung waere eine
+                    // eigene Teilprüfung zu zeigen ist richtig: die Aufgabe hat
+                    // sie verlangt, und eine verschwiegene Prüfung wäre eine
                     // stillschweigend mildere Bewertung.
                     var declared = found && DeclaresMethod(body!, method.Name);
 
                     results.Add(new TestCaseResult
                     {
                         Id = Guid.NewGuid(),
-                        // Die Klasse gehoert in die Ueberschrift - sonst stehen bei
-                        // mehreren Klassen zwei gleichnamige Pruefungen nebeneinander.
+                        // Die Klasse gehört in die Überschrift - sonst stehen bei
+                        // mehreren Klassen zwei gleichnamige Prüfungen nebeneinander.
                         Description = $"Die Methode „{method.Name}“ steht in „{type.Name}“",
                         ExpectedOutput = method.Signature,
                         ActualOutput = declared
@@ -101,11 +101,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 [.. results]));
         }
 
-        // Geprueft wird die reine Anwesenheit des Namens vor einer Klammer.
-        // Ist-Verhalten: ein blosser Aufruf 'addiere(1, 2)' im selben Rumpf
-        // zaehlt bereits als Treffer. Das ist hingenommen - wer die Methode
-        // aufruft, hat sie meistens auch. Die exakte Signatur prueft ohnehin der
-        // Java-Compiler beim Uebersetzen der JUnit-Datei.
+        // Geprüft wird die reine Anwesenheit des Namens vor einer Klammer.
+        // Ist-Verhalten: ein bloßer Aufruf 'addiere(1, 2)' im selben Rumpf
+        // zählt bereits als Treffer. Das ist hingenommen - wer die Methode
+        // aufruft, hat sie meistens auch. Die exakte Signatur prüft ohnehin der
+        // Java-Compiler beim Übersetzen der JUnit-Datei.
         private static bool DeclaresMethod(string body, string methodName) =>
             !string.IsNullOrWhiteSpace(methodName)
             && Regex.IsMatch(body, $@"(?<![.\w]){Regex.Escape(methodName)}\s*\(");

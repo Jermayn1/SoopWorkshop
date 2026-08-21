@@ -46,8 +46,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Submissions
             await _evaluationQueue.Received(1).EnqueueAsync(result.Value.Id, Arg.Any<CancellationToken>());
         }
 
-        // Frueher schlug erst die Fremdschluesselbedingung zu — der Teilnehmer
-        // bekam einen 500er statt einer Erklaerung.
+        // Früher schlug erst die Fremdschlüsselbedingung zu — der Teilnehmer
+        // bekam einen 500er statt einer Erklärung.
         [Fact]
         public async Task CreateAsync_AufgabeExistiertNicht_LiefertFehlerUndReihtNichtsEin()
         {
@@ -84,7 +84,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Submissions
             result.Value.SubmittedAt.ShouldBe(submission.SubmittedAt);
         }
 
-        // "Laeuft noch" ist eine gueltige Antwort, kein Fehler — genau daran
+        // "Läuft noch" ist eine gültige Antwort, kein Fehler — genau daran
         // scheiterte das Frontend beim alten /result-Endpunkt.
         [Fact]
         public async Task GetStatusAsync_AuswertungLaeuftNoch_LiefertErfolgMitStatusRunning()

@@ -2,9 +2,9 @@ import type { Difficulty, EvaluationMode } from './types'
 
 // Deutsche Beschriftungen der Enums aus dem Vertrag.
 //
-// Herausgezogen aus TaskPage, weil die Verwaltung dieselben Woerter braucht.
-// Zwei Listen nebeneinander laufen frueher oder spaeter auseinander, und dann
-// heisst dieselbe Aufgabe an zwei Stellen verschieden schwer.
+// Herausgezogen aus TaskPage, weil die Verwaltung dieselben Wörter braucht.
+// Zwei Listen nebeneinander laufen früher oder später auseinander, und dann
+// heißt dieselbe Aufgabe an zwei Stellen verschieden schwer.
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   Easy: 'Leicht',
   Medium: 'Mittel',

@@ -64,8 +64,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
         }
 
         // Die Blockspeicherung darf nur die eigene Aufgabe anfassen. Ohne den
-        // Where-Filter beim Loeschen raeumte ein Speichern in Aufgabe A die
-        // Testfaelle von Aufgabe B mit ab.
+        // Where-Filter beim Löschen räumte ein Speichern in Aufgabe A die
+        // Testfälle von Aufgabe B mit ab.
         [Fact]
         public async Task TaskTestRepository_ReplaceForTaskItemAsync_LaesstFremdeAufgabenInRuhe()
         {
@@ -133,7 +133,7 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             });
         }
 
-        // Laeuft ueber ExecuteDelete, also am Kontext vorbei. Die Pruefung muss
+        // Läuft über ExecuteDelete, also am Kontext vorbei. Die Prüfung muss
         // deshalb aus einem frischen Kontext kommen.
         [Fact]
         public async Task TaskUnitTestFileRepository_DeleteAsync_LoeschtGenauEine()
@@ -184,13 +184,13 @@ namespace SoopWorkshop.Tests.Integration.Repositories
 
                 gewichte.Count.ShouldBe(2);
 
-                // **Ist-Verhalten**: OrderBy(Category) sortiert nach dem Zahlenwert
-                // des Enums, und der traegt die Altlasten aus Phase 3 - CharacterSet
-                // und NamingConventions stehen davor, weshalb Compilability (2) vor
-                // CleanCode (3) liegt. Die Anzeigereihenfolge ist eine andere und
-                // kommt aus EvaluationCategoryOrder (CleanCode zuerst). Beides
-                // nebeneinander ist unauffaellig, solange niemand die Reihenfolge
-                // aus dem Repository fuer die Anzeige haelt.
+                // Festgehaltenes Ist-Verhalten: OrderBy(Category) sortiert nach dem
+                // Zahlenwert des Enums. Weil dort die nicht mehr vergebenen Werte
+                // CharacterSet und NamingConventions vorn stehen, liegt
+                // Compilability (2) vor CleanCode (3). Die Anzeigereihenfolge ist
+                // eine andere und kommt aus EvaluationCategoryOrder (CleanCode
+                // zuerst). Beides nebeneinander ist unauffällig, solange niemand
+                // die Reihenfolge aus dem Repository für die Anzeige hält.
                 gewichte.Select(w => w.Category)
                     .ShouldBe([EvaluationCategory.Compilability, EvaluationCategory.CleanCode]);
 
@@ -250,8 +250,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
 
                 var kategorie = ergebnis.CategoryResults.ShouldHaveSingleItem();
 
-                // Ohne ThenInclude kaeme die Kategorie ohne ihre Teilpruefungen,
-                // und die Ergebnisseite zeigte eine leere Karte statt der Gruende.
+                // Ohne ThenInclude käme die Kategorie ohne ihre Teilprüfungen,
+                // und die Ergebnisseite zeigte eine leere Karte statt der Gründe.
                 var teilpruefung = kategorie.TestCaseResults.ShouldHaveSingleItem();
                 teilpruefung.ExpectedOutput.ShouldBe("Stand: 100");
                 teilpruefung.ActualOutput.ShouldBe("Stand: 0");

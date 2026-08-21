@@ -4,7 +4,7 @@ import type { EvaluationResult } from '../api/types'
 
 const INTERVAL_MS = 2000
 
-// Nach etwa fuenf Minuten wird abgebrochen. Ohne Obergrenze dreht sich die
+// Nach etwa fünf Minuten wird abgebrochen. Ohne Obergrenze dreht sich die
 // Seite endlos, falls der Status wider Erwarten nie einen Endzustand erreicht.
 const MAX_ATTEMPTS = 150
 
@@ -104,7 +104,7 @@ export function useSubmissionPolling(submissionId: string | null) {
 
     // Sofort fragen, nicht erst nach dem ersten Intervall. Sonst zeigt die
     // Ergebnisseite zwei Sekunden lang "In der Warteschlange", obwohl die
-    // Auswertung laengst fertig ist — beim Aufruf eines geteilten Links
+    // Auswertung längst fertig ist — beim Aufruf eines geteilten Links
     // ist das der Normalfall, nicht die Ausnahme.
     void tick()
 

@@ -16,7 +16,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
 
         public async Task<Submission?> GetByIdAsync(Guid id)
         {
-            // Die Auswertung liest alles ueber submission.Task - was hier fehlt,
+            // Die Auswertung liest alles über submission.Task - was hier fehlt,
             // sieht der JavaAnalyzer als "nicht vorhanden" und bewertet entsprechend.
             return await _context.Submissions
                 .Include(s => s.Files)
@@ -55,13 +55,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
             if (status is not null)
                 abfrage = abfrage.Where(s => s.Status == status);
 
-            // Vor dem Blaettern zaehlen, sonst zaehlt man die Seite statt der
+            // Vor dem Blättern zählen, sonst zählt man die Seite statt der
             // Menge - und die Seitennavigation im Panel zeigte immer "1 von 1".
             var gesamt = await abfrage.CountAsync(cancellationToken);
 
             var items = await abfrage
                 // Aufgabe UND deren Kategorie: die Zeile nennt beide. Fehlte das
-                // Include, stuende dort ein leerer Name statt einer Fehlermeldung
+                // Include, stünde dort ein leerer Name statt einer Fehlermeldung
                 // - dieselbe stille Fehlerquelle wie bei GetByIdAsync.
                 .Include(s => s.Task)
                     .ThenInclude(t => t.Category)
@@ -69,9 +69,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
                 .OrderByDescending(s => s.SubmittedAt)
                 // Zweites Kriterium, damit die Reihenfolge TOTAL ist. Ohne das
                 // entscheidet die Datenbank bei gleichem Zeitstempel, und zwar
-                // je Abfrage neu: dieselbe Zeile koennte auf Seite 1 und auf
-                // Seite 2 auftauchen, waehrend eine andere ganz ausfaellt.
-                // Ueber HTTP kollidieren die Zeitstempel praktisch nie, ein
+                // je Abfrage neu: dieselbe Zeile könnte auf Seite 1 und auf
+                // Seite 2 auftauchen, während eine andere ganz ausfällt.
+                // Über HTTP kollidieren die Zeitstempel praktisch nie, ein
                 // Seed-Skript legt seine Zeilen aber im selben Augenblick an.
                 .ThenByDescending(s => s.Id)
                 .Skip(skip)

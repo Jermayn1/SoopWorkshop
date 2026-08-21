@@ -8,9 +8,9 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         [Required]
         public Guid Id { get; set; }
 
-        // Erlaubt das Umhaengen in eine andere Kategorie. Fehlte bis Phase 5.2,
-        // damit war eine falsch einsortierte Aufgabe ueber die API nicht mehr zu
-        // verschieben - nur ueber Loeschen und Neuanlegen.
+        // Erlaubt das Umhängen in eine andere Kategorie. Ohne dieses Feld wäre
+        // eine falsch einsortierte Aufgabe über die API nicht mehr zu verschieben,
+        // sondern nur über Löschen und Neuanlegen - und das nähme ihre Abgaben mit.
         [Required]
         public Guid TaskCategoryId { get; set; }
 

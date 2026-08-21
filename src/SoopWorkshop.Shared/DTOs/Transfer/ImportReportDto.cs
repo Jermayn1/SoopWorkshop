@@ -2,8 +2,8 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
 {
     // Was ein Import tun wird beziehungsweise getan hat.
     //
-    // Dieselbe Form fuer Vorschau und Ausfuehrung, aus demselben Rechenweg -
-    // eine Vorschau, die etwas anderes anzeigt als danach passiert, waere
+    // Dieselbe Form für Vorschau und Ausführung, aus demselben Rechenweg -
+    // eine Vorschau, die etwas anderes anzeigt als danach passiert, wäre
     // schlimmer als keine.
     public class ImportReportDto
     {
@@ -12,7 +12,7 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
         // vierzigmal probieren.
         public List<string> Errors { get; set; } = [];
 
-        // Auffaelligkeiten, die den Import nicht verhindern.
+        // Auffälligkeiten, die den Import nicht verhindern.
         public List<string> Warnings { get; set; } = [];
 
         public int CategoriesCreated { get; set; }
@@ -24,7 +24,7 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
         public int TasksDeleted { get; set; }
 
         // Abgaben werden nie importiert. Beim Ersetzen gehen sie aber per
-        // Cascade mit den geloeschten Aufgaben verloren - deshalb steht die Zahl
+        // Cascade mit den gelöschten Aufgaben verloren - deshalb steht die Zahl
         // hier, damit der Dialog sie nennen kann.
         public int SubmissionsDeleted { get; set; }
 

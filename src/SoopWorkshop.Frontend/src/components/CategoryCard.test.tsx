@@ -8,9 +8,10 @@ function zeige(result: Parameters<typeof CategoryCard>[0]['result']) {
   return render(<CategoryCard result={result} delay={0} />)
 }
 
-// Die Regeln aus CLAUDE.md §5.7. Sie sind der Grund, warum die Ergebnisseite
-// ueberhaupt verstaendlich ist - und sie stehen hier, nicht in ResultView.
-describe('Darstellung einer Teilpruefung (§5.7)', () => {
+// Die Darstellungsregeln aus CategoryCard. Sie sind der Grund, warum die
+// Ergebnisseite überhaupt verständlich ist - und sie werden hier geprüft,
+// nicht in ResultView, weil CategoryCard sie umsetzt.
+describe('Darstellung einer Teilprüfung', () => {
   it('zeigt bei einer bestandenen Pruefung nur die Aussage', () => {
     zeige(
       kategorie({
@@ -29,7 +30,7 @@ describe('Darstellung einer Teilpruefung (§5.7)', () => {
 
     expect(screen.getByText('Das Programm gibt den Gruss aus')).toBeInTheDocument()
 
-    // Bestandene Pruefungen zeigen nichts weiter - die Zustimmung steht schon
+    // Bestandene Prüfungen zeigen nichts weiter - die Zustimmung steht schon
     // im Haken. Auch dann nicht, wenn Werte vorliegen.
     expect(screen.queryByText('Eingabe')).not.toBeInTheDocument()
     expect(screen.queryByText('Erwartet')).not.toBeInTheDocument()
@@ -64,7 +65,7 @@ describe('Darstellung einer Teilpruefung (§5.7)', () => {
     expect(screen.getByText('3 4')).toBeInTheDocument()
   })
 
-  // Ein "Erwartet" ohne Gegenstueck laesst den Leser raten. Die beiden gehoeren
+  // Ein "Erwartet" ohne Gegenstück lässt den Leser raten. Die beiden gehören
   // zusammen, immer.
   it.each([
     ['nur Erwartet', 'Hallo', ''],
@@ -129,7 +130,7 @@ describe('CategoryCard', () => {
   })
 
   // Altlast-Kategorien kommen in alten Ergebnissen noch vor und brauchen einen
-  // Namen, sonst stuende dort der englische Enum-Wert.
+  // Namen, sonst stünde dort der englische Enum-Wert.
   it('kennt auch die abgeschafften Kategorien', () => {
     zeige(kategorie({ category: 'TestCases' }))
 
@@ -156,7 +157,7 @@ describe('CategoryCard', () => {
   })
 
   // Eine durchgefallene Kategorie steht offen da: dort will man sofort
-  // nachsehen. Eine bestandene bleibt zu und haelt die Seite kurz.
+  // nachsehen. Eine bestandene bleibt zu und hält die Seite kurz.
   it('startet aufgeklappt, wenn die Kategorie durchgefallen ist', () => {
     zeige(kategorie({ passed: false, testCaseResults: [teilpruefung({ passed: false })] }))
 
@@ -181,8 +182,8 @@ describe('CategoryCard', () => {
     expect(knopf).toHaveAttribute('aria-expanded', 'false')
   })
 
-  // Ohne Teilpruefungen und ohne Hinweis gibt es nichts aufzuklappen - dann
-  // darf der Knopf auch nicht so tun, als gaebe es etwas.
+  // Ohne Teilprüfungen und ohne Hinweis gibt es nichts aufzuklappen - dann
+  // darf der Knopf auch nicht so tun, als gäbe es etwas.
   it('bietet ohne Inhalt kein Aufklappen an', () => {
     zeige(kategorie({ testCaseResults: [], errorTip: '' }))
 
@@ -196,9 +197,9 @@ describe('CategoryCard', () => {
     expect(screen.getByText('Prüfe die Ausgabe.')).toBeInTheDocument()
   })
 
-  // Was eingeklappt ist, bekommt inert - sonst bleiben die Elemente darin
-  // antabbar, obwohl niemand sie sieht. Eine unsichtbare Tastaturfalle, in
-  // Phase 4 schon einmal gefunden.
+  // Was eingeklappt ist, bekommt inert. "overflow: hidden" beschneidet nur das
+  // Zeichnen: ohne inert blieben die Elemente darin antabbar, obwohl niemand
+  // sie sieht - eine unsichtbare Tastaturfalle.
   it('macht den eingeklappten Bereich unerreichbar', () => {
     const { container } = zeige(
       kategorie({ passed: true, testCaseResults: [teilpruefung({ passed: true })] }),

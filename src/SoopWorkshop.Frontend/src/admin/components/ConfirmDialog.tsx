@@ -3,7 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 
 type ConfirmDialogProps = {
   title: string
-  /** Was genau passiert. Bei Loeschungen gehoert der Umfang hier hinein. */
+  /** Was genau passiert. Bei Löschungen gehört der Umfang hier hinein. */
   message: string
   confirmLabel: string
   onConfirm: () => void
@@ -12,10 +12,10 @@ type ConfirmDialogProps = {
 }
 
 // Bewusst das native <dialog> mit showModal() und nicht ein eigenes Overlay.
-// Es bringt mit, was ein Dialog braucht und was nachgebaut regelmaessig
-// schiefgeht: der Fokus bleibt darin gefangen, Escape schliesst, und der
-// Hintergrund ist fuer Maus und Tastatur inert. Genau die Tastaturfalle, die
-// in Phase 4 schon einmal in der Seitenleiste steckte.
+// Es bringt mit, was ein Dialog braucht und was nachgebaut regelmäßig
+// schiefgeht: der Fokus bleibt darin gefangen, Escape schließt, und der
+// Hintergrund ist für Maus und Tastatur inert. Ein nachgebautes Overlay lässt
+// die Elemente dahinter antabbar — eine unsichtbare Tastaturfalle.
 export function ConfirmDialog({
   title,
   message,
@@ -28,8 +28,8 @@ export function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
 
-  // Der Escape-Listener wird genau einmal gehaengt, soll aber die aktuellen
-  // Werte sehen. Ueber Refs statt ueber die Abhaengigkeitsliste, sonst wird der
+  // Der Escape-Listener wird genau einmal gehängt, soll aber die aktuellen
+  // Werte sehen. Über Refs statt über die Abhängigkeitsliste, sonst wird der
   // Listener bei jedem Tastendruck des Elternteils neu gesetzt.
   const busyRef = useRef(busy)
   const onCancelRef = useRef(onCancel)
@@ -41,22 +41,22 @@ export function ConfirmDialog({
     if (!dialog) return
 
     dialog.showModal()
-    // Der Fokus startet auf "Abbrechen", nicht auf der Bestaetigung: ein
-    // versehentliches Enter soll nichts loeschen.
+    // Der Fokus startet auf "Abbrechen", nicht auf der Bestätigung: ein
+    // versehentliches Enter soll nichts löschen.
     cancelRef.current?.focus()
 
     const schliessen = () => {
       if (!busyRef.current) onCancelRef.current()
     }
 
-    // Zwei Wege zum selben Ziel, beide noetig:
+    // Zwei Wege zum selben Ziel, beide nötig:
     //
-    // 1. "cancel" ist das native Ereignis beim Schliessen per Escape. Der
-    //    Listener haengt von Hand und nicht als onCancel im JSX, weil "cancel"
+    // 1. "cancel" ist das native Ereignis beim Schließen per Escape. Der
+    //    Listener hängt von Hand und nicht als onCancel im JSX, weil "cancel"
     //    nicht blubbert und Reacts Ereignis-Delegation am Wurzelknoten es damit
     //    nie zu sehen bekommt — nachgemessen, der Dialog blieb offen.
-    // 2. Zusaetzlich Escape direkt am Dialog. Chrome behandelt Escape fuer
-    //    <dialog> ueber den CloseWatcher, und der springt nicht bei jeder
+    // 2. Zusätzlich Escape direkt am Dialog. Chrome behandelt Escape für
+    //    <dialog> über den CloseWatcher, und der springt nicht bei jeder
     //    Eingabequelle an. Der Aufruf ist doppelt abgesichert statt darauf zu
     //    vertrauen; onCancel zweimal aufzurufen schadet nicht, es setzt beide
     //    Male denselben Zustand.

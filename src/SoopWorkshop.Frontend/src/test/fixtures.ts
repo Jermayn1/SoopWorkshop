@@ -1,8 +1,8 @@
 import type { CategoryResult, EvaluationResult, TestCaseResult } from '../api/types'
 
 // Alle Felder in api/types.ts sind nicht-optional - das ist Absicht (der
-// Mapper fuellt sie), macht aber jedes Testobjekt von Hand unnoetig lang.
-// Diese Bauer setzen die Pflichtfelder und lassen ueberschreiben, was der
+// Mapper füllt sie), macht aber jedes Testobjekt von Hand unnötig lang.
+// Diese Bauer setzen die Pflichtfelder und lassen überschreiben, was der
 // jeweilige Test wirklich aussagt.
 
 export function teilpruefung(overrides: Partial<TestCaseResult> = {}): TestCaseResult {

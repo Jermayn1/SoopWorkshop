@@ -70,7 +70,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             // Der zweite Teil des Testnamens, bis hierher unbelegt: Pending in der
             // Datenbank sagt nur, dass die Abgabe angekommen ist - nicht, dass sie
             // je in der Warteschlange landete. Ohne das Einreihen bliebe sie
-            // liegen, und niemand saehe es.
+            // liegen, und niemand sähe es.
             var warteschlange = (SoopWorkshopFactory.MitschreibendeWarteschlange)
                 Fixture.Factory.Services.GetRequiredService<IEvaluationQueue>();
 
@@ -79,10 +79,11 @@ namespace SoopWorkshop.Tests.Integration.Controllers
 
         // Der Kern dieses Tests ist nicht der Statuscode, sondern der WORTLAUT
         // und der Inhaltstyp. Die API antwortet mit BadRequest("..."), also einem
-        // nackten String; ASP.NET waehlt den Formatter nach dem Accept-Kopf. Kam
-        // application/json zuerst, wurde daraus »"'notiz.txt' ist keine
-        // .java-Datei."« - mit Anfuehrungszeichen, dem Teilnehmer so angezeigt.
-        // Der Client schickt deshalb text/plain zuerst (Fund aus Phase 5).
+        // nackten String, und ASP.NET wählt den Formatter nach der REIHENFOLGE im
+        // Accept-Kopf. Steht application/json vorn, wird daraus
+        // »"'notiz.txt' ist keine .java-Datei."« - JSON-kodiert samt
+        // Anführungszeichen, und genau so läse es der Teilnehmer. Der Client
+        // schickt deshalb text/plain zuerst.
         [Fact]
         public async Task Create_FalscheEndung_LiefertDenSatzAlsKlartext()
         {
@@ -104,10 +105,10 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             meldung.ShouldNotStartWith("\"");
         }
 
-        // Die Gegenprobe zum Test darueber, und der Beleg, dass die
-        // Kopfreihenfolge im Client kein Zierrat ist: kehrt man sie um, waehlt
-        // ASP.NET den JSON-Formatter fuer denselben nackten String - und der
-        // Teilnehmer laese Anfuehrungszeichen mit.
+        // Die Gegenprobe zum Test darüber, und der Beleg, dass die
+        // Kopfreihenfolge im Client kein Zierrat ist: kehrt man sie um, wählt
+        // ASP.NET den JSON-Formatter für denselben nackten String - und der
+        // Teilnehmer läse Anführungszeichen mit.
         [Fact]
         public async Task Create_FalscheEndung_MitJsonZuerst_KommtDerSatzJsonKodiertAn()
         {
@@ -143,8 +144,8 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             (await response.Content.ReadAsStringAsync()).ShouldContain("„Leer.java“ ist leer.");
         }
 
-        // Ueber den Browser nicht ausloesbar - das Frontend blockt vorher. Genau
-        // deshalb gehoert der Fall hierher und nicht in die Klickanleitung.
+        // Über den Browser nicht auslösbar - das Frontend blockt vorher. Genau
+        // deshalb gehört der Fall hierher und nicht in die Klickanleitung.
         [Fact]
         public async Task Create_DateinameMitPfadanteil_WirdAbgelehnt()
         {
@@ -173,7 +174,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             (await response.Content.ReadAsStringAsync()).ShouldContain("mehrfach hochgeladen");
         }
 
-        // Fuehrte frueher in die Fremdschluesselbedingung und kam als 500 zurueck.
+        // Führte früher in die Fremdschlüsselbedingung und kam als 500 zurück.
         [Fact]
         public async Task Create_UnbekannteAufgabe_Liefert400StattServerfehler()
         {
@@ -204,12 +205,12 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             stand.ShouldNotBeNull();
             stand.Status.ShouldBe(SubmissionStatus.Running);
 
-            // Ohne dieses Feld fuehrt der Zurueck-Link der Ergebnisseite ins Leere.
+            // Ohne dieses Feld führt der Zurück-Link der Ergebnisseite ins Leere.
             stand.TaskItemId.ShouldBe(taskItemId);
         }
 
-        // "Gibt es nicht" und "Server nicht erreichbar" muessen im Frontend
-        // unterscheidbar bleiben - dafuer braucht es hier einen echten 404.
+        // "Gibt es nicht" und "Server nicht erreichbar" müssen im Frontend
+        // unterscheidbar bleiben - dafür braucht es hier einen echten 404.
         [Fact]
         public async Task GetStatus_UnbekannteAbgabe_Liefert404()
         {

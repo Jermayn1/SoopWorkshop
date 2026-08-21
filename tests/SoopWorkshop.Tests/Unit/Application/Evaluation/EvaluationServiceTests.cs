@@ -62,7 +62,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
                 submission.Id, SubmissionStatus.Running, string.Empty, Arg.Any<CancellationToken>());
         }
 
-        // Frueher wurde die Exception stumm geschluckt und der Grund war nirgends
+        // Früher wurde die Exception stumm geschluckt und der Grund war nirgends
         // sichtbar — das Frontend konnte den Fehlschlag gar nicht erkennen.
         [Fact]
         public async Task EvaluateAsync_AnalyzerWirft_SetztStatusFailedMitFehlermeldung()
@@ -84,7 +84,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation
         }
 
         // Ein Abbruch beim Herunterfahren ist kein Fehler der Abgabe: der Status
-        // bleibt Running und wird beim naechsten Start aufgeraeumt.
+        // bleibt Running und wird beim nächsten Start aufgeräumt.
         [Fact]
         public async Task EvaluateAsync_BeimHerunterfahrenAbgebrochen_MarkiertNichtAlsFehlgeschlagen()
         {

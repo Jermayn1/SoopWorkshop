@@ -57,7 +57,7 @@ export function UnitTestFileEditor({ files, onChange }: UnitTestFileEditorProps)
   }
 
   // Datei einlesen statt hochladen: der Inhalt landet im Formular und wird mit
-  // allem anderen zusammen gespeichert. Dafuer braucht es keinen Endpunkt.
+  // allem anderen zusammen gespeichert. Dafür braucht es keinen Endpunkt.
   const einlesen = async (auswahl: FileList | null) => {
     if (!auswahl || auswahl.length === 0) return
 
@@ -71,8 +71,8 @@ export function UnitTestFileEditor({ files, onChange }: UnitTestFileEditorProps)
         continue
       }
 
-      // Ausdruecklich UTF-8. Ohne Angabe raet der Browser, und ein Umlaut im
-      // @DisplayName kaeme zerlegt in der Datenbank an.
+      // Ausdrücklich UTF-8. Ohne Angabe rät der Browser, und ein Umlaut im
+      // @DisplayName käme zerlegt in der Datenbank an.
       const inhalt = await datei.text()
       angenommen.push({ fileName: datei.name, content: inhalt, isVisibleToParticipant: false })
     }
@@ -206,9 +206,9 @@ export function UnitTestFileEditor({ files, onChange }: UnitTestFileEditorProps)
           .java hochladen
         </button>
 
-        {/* Ein echter Knopf, der das versteckte Feld anstoesst — nicht ein
+        {/* Ein echter Knopf, der das versteckte Feld anstößt — nicht ein
             onClick auf einem div wie in der Dropzone der Teilnehmerseite. Der
-            waere mit der Tastatur nicht erreichbar. */}
+            wäre mit der Tastatur nicht erreichbar. */}
         <input
           ref={dateiRef}
           type="file"
@@ -217,7 +217,7 @@ export function UnitTestFileEditor({ files, onChange }: UnitTestFileEditorProps)
           className="hidden"
           onChange={(event) => {
             void einlesen(event.target.files)
-            // Zuruecksetzen, damit dieselbe Datei erneut gewaehlt werden kann.
+            // Zurücksetzen, damit dieselbe Datei erneut gewählt werden kann.
             event.target.value = ''
           }}
         />

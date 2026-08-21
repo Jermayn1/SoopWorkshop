@@ -4,13 +4,13 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Application.Transfer
 {
-    // Prueft eine Transferdatei, bevor irgendetwas geschrieben wird.
+    // Prüft eine Transferdatei, bevor irgendetwas geschrieben wird.
     //
     // Reine Funktion ohne Datenbank und ohne Prozesse - wie der EvaluationScorer
-    // und aus demselben Grund: so laesst sich die Pruefung vollstaendig
+    // und aus demselben Grund: so lässt sich die Prüfung vollständig
     // durchtesten, ohne eine Datenbank hochzufahren.
     //
-    // Gesammelt werden ALLE Verstoesse, nicht nur der erste. Result<T> traegt
+    // Gesammelt werden ALLE Verstöße, nicht nur der erste. Result<T> trägt
     // nur eine Meldung; bei vierzig Aufgaben will aber niemand vierzigmal
     // hochladen, um vierzig Fehler nacheinander zu erfahren.
     public static class TaskBundleValidator
@@ -21,13 +21,13 @@ namespace SoopWorkshop.Backend.Application.Transfer
 
             if (bundle.FormatVersion != TaskBundleFormat.CurrentVersion)
             {
-                // Ohne diese Pruefung liest eine spaetere Fassung die Datei still
+                // Ohne diese Prüfung liest eine spätere Fassung die Datei still
                 // falsch, statt zu sagen, dass sie sie nicht kennt.
                 errors.Add(
                     $"Die Datei hat das Format {bundle.FormatVersion}, dieses Programm liest " +
                     $"Format {TaskBundleFormat.CurrentVersion}.");
 
-                // Weiter zu pruefen waere Raten - die Struktur ist ja womoeglich
+                // Weiter zu prüfen wäre Raten - die Struktur ist ja womöglich
                 // eine andere.
                 return errors;
             }
@@ -116,8 +116,8 @@ namespace SoopWorkshop.Backend.Application.Transfer
             {
                 if (string.IsNullOrWhiteSpace(type.Name))
                 {
-                    // Ohne Klassennamen gaebe es keinen Rumpf, in dem der
-                    // ContractChecker nach der Methode suchen koennte.
+                    // Ohne Klassennamen gäbe es keinen Rumpf, in dem der
+                    // ContractChecker nach der Methode suchen könnte.
                     errors.Add($"In {wo} steht eine geforderte Klasse ohne Namen.");
                     continue;
                 }
@@ -163,7 +163,7 @@ namespace SoopWorkshop.Backend.Application.Transfer
             foreach (var file in task.UnitTestFiles)
             {
                 // Dieselben Regeln wie in TaskUnitTestFileService.ValidateFileName:
-                // der Name wird spaeter zu einem Dateinamen im Arbeitsverzeichnis.
+                // der Name wird später zu einem Dateinamen im Arbeitsverzeichnis.
                 if (string.IsNullOrWhiteSpace(file.FileName))
                 {
                     errors.Add($"Eine JUnit-Datei in {wo} hat keinen Namen.");
@@ -216,12 +216,12 @@ namespace SoopWorkshop.Backend.Application.Transfer
 
         // Spiegelt TaskItemService.DescribeMissingTestData.
         //
-        // Wichtig, weil IsVisible beim Anlegen und Aendern an dieser Pruefung
-        // vorbeikommt - sie greift dort nur ueber PATCH .../visibility. Ohne
-        // diese Stelle koennte eine Datei genau die Lage herstellen, gegen die
-        // die Pruefung gebaut wurde: eine sichtbare Aufgabe, deren Modus
-        // Testdaten verlangt, die es nicht gibt. Die wuerde still milder
-        // bewertet, weil ihre Kategorie aus der Wertung faellt.
+        // Wichtig, weil IsVisible beim Anlegen und Ändern an dieser Prüfung
+        // vorbeikommt - sie greift dort nur über PATCH .../visibility. Ohne
+        // diese Stelle könnte eine Datei genau die Lage herstellen, gegen die
+        // die Prüfung gebaut wurde: eine sichtbare Aufgabe, deren Modus
+        // Testdaten verlangt, die es nicht gibt. Die würde still milder
+        // bewertet, weil ihre Kategorie aus der Wertung fällt.
         private static void CheckVisibility(string wo, TaskBundleTaskDto task, List<string> errors)
         {
             if (!task.IsVisible)

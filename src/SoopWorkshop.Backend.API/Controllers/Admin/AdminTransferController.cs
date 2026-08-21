@@ -16,7 +16,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
     public class AdminTransferController : ControllerBase
     {
         // 20 MB. Der Rumpf besteht fast nur aus Java-Quelltext, das ist reichlich.
-        // Ausdruecklich gesetzt, weil Kestrels stiller Standard von 30 MB keine
+        // Ausdrücklich gesetzt, weil Kestrels stiller Standard von 30 MB keine
         // bewusste Grenze ist.
         private const int MaxRequestBytes = 20 * 1024 * 1024;
 
@@ -39,10 +39,10 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
                 : BadRequest(result.ErrorMessage);
         }
 
-        // Rechnet durch, was passieren wuerde, und schreibt nichts.
+        // Rechnet durch, was passieren würde, und schreibt nichts.
         //
         // Der Rumpf kommt als JSON und nicht als Datei-Upload: das Frontend liest
-        // die Datei selbst und parst sie. Ein kaputtes JSON faellt damit schon
+        // die Datei selbst und parst sie. Ein kaputtes JSON fällt damit schon
         // dort mit einer Meldung auf, statt als 400 aus dem Modelbinder zu kommen.
         [HttpPost("import/preview")]
         [RequestSizeLimit(MaxRequestBytes)]
@@ -59,9 +59,9 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
                 : BadRequest(result.ErrorMessage);
         }
 
-        // Fehler in der Datei kommen NICHT als 400 zurueck, sondern als Bericht
+        // Fehler in der Datei kommen NICHT als 400 zurück, sondern als Bericht
         // mit Status 200: es sind keine kaputten Aufrufe, sondern ein Befund
-        // ueber den Inhalt - und davon will der Aufrufer alle sehen, nicht den
+        // über den Inhalt - und davon will der Aufrufer alle sehen, nicht den
         // ersten als Fehlermeldung.
         [HttpPost("import")]
         [RequestSizeLimit(MaxRequestBytes)]

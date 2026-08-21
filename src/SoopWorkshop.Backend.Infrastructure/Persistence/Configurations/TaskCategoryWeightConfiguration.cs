@@ -13,8 +13,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
             builder.Property(w => w.Weight)
                 .IsRequired();
 
-            // Zwei Gewichte fuer dieselbe Kategorie einer Aufgabe waeren
-            // widerspruechlich - die Datenbank laesst das gar nicht erst zu.
+            // Zwei Gewichte für dieselbe Kategorie einer Aufgabe wären
+            // widersprüchlich - die Datenbank lässt das gar nicht erst zu.
             builder.HasIndex(w => new { w.TaskItemId, w.Category })
                 .IsUnique();
         }

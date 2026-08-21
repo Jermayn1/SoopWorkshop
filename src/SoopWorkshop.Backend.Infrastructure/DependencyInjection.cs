@@ -40,13 +40,13 @@ namespace SoopWorkshop.Backend.Infrastructure
                 options.UseNpgsql(connectionString));
 
             // Sagt, ob die Datenbank wirklich antwortet - der Healthcheck im
-            // Compose-Aufbau haengt daran. Ein Backend, das steht, aber nicht an
+            // Compose-Aufbau hängt daran. Ein Backend, das steht, aber nicht an
             // seine Datenbank kommt, ist nicht "bereit".
             services.AddHealthChecks()
                 .AddDbContextCheck<AppDbContext>("datenbank");
 
             // VOR dem EvaluationWorker: dessen erste Handlung ist ein Zugriff auf
-            // die Datenbank, und dieser Dienst haelt den Start auf, bis das Schema
+            // die Datenbank, und dieser Dienst hält den Start auf, bis das Schema
             // steht. Die Reihenfolge der Registrierung ist die Reihenfolge des
             // Starts - sie ist hier keine Kosmetik.
             services.AddHostedService<DatabaseMigrationService>();
@@ -62,12 +62,12 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<IProcessRunner, ProcessRunner>();
 
             // Singleton, weil sich Einreihen (Request-Scope) und Abarbeiten
-            // (Hintergrunddienst) dieselbe Warteschlange teilen muessen.
+            // (Hintergrunddienst) dieselbe Warteschlange teilen müssen.
             services.AddSingleton<IEvaluationQueue, EvaluationQueue>();
             services.AddHostedService<EvaluationWorker>();
 
             // Reihenfolge hier ist egal - der JavaAnalyzer sortiert nach
-            // IEvaluationChecker.Order. Eine neue Pruefung wird nur ergaenzt.
+            // IEvaluationChecker.Order. Eine neue Prüfung wird nur ergänzt.
             services.AddScoped<IEvaluationChecker, ContractChecker>();
             services.AddScoped<IEvaluationChecker, CompilabilityChecker>();
             services.AddScoped<IEvaluationChecker, CharacterSetChecker>();
@@ -78,7 +78,7 @@ namespace SoopWorkshop.Backend.Infrastructure
             services.AddScoped<IJavaAnalyzer, JavaAnalyzer>();
 
             // Liegt hier und nicht in Application: der Import braucht eine
-            // Transaktion ueber den DbContext, die Repositories committen
+            // Transaktion über den DbContext, die Repositories committen
             // einzeln.
             services.AddScoped<ITaskTransferService, TaskTransferService>();
 

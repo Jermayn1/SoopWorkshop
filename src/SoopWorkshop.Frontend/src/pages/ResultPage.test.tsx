@@ -30,7 +30,7 @@ beforeEach(() => {
   stand.mockReset()
   polling.mockReset()
 
-  // Die Seite fragt den Stand ein zweites Mal ab, nur fuer den Zurueck-Link.
+  // Die Seite fragt den Stand ein zweites Mal ab, nur für den Zurück-Link.
   stand.mockResolvedValue({
     kind: 'ok',
     value: {
@@ -48,7 +48,7 @@ afterEach(() => {
 })
 
 describe('ResultPage', () => {
-  // Warteschlange und Pruefung sind verschiedene Zustaende. Wer sie
+  // Warteschlange und Prüfung sind verschiedene Zustände. Wer sie
   // zusammenfasst, behauptet zwei Minuten lang, es passiere gerade etwas,
   // obwohl die Abgabe nur wartet.
   it('nennt die Warteschlange beim Namen', () => {
@@ -94,9 +94,10 @@ describe('ResultPage', () => {
     expect(screen.getByText('Clean Code')).toBeInTheDocument()
   })
 
-  // Der Zurueck-Link muss zur richtigen Aufgabe fuehren. Dafuer traegt der
-  // Status seit Etappe 4.0 die TaskItemId - sonst landete ein direkt
-  // aufgerufener Ergebnis-Link im Nichts.
+  // Der Zurück-Link muss zur richtigen Aufgabe führen. Dafür trägt der Status
+  // die TaskItemId - sonst landete ein direkt aufgerufener Ergebnis-Link im
+  // Nichts, weil es keine Navigationshistorie gibt, aus der sich das ableiten
+  // ließe.
   it('fuehrt zurueck zur richtigen Aufgabe', async () => {
     zeige({ kind: 'done', result: auswertung() })
 
@@ -104,8 +105,8 @@ describe('ResultPage', () => {
     expect(link).toHaveAttribute('href', '/aufgaben/aufgabe-7')
   })
 
-  // Der Zurueck-Link ist Beiwerk. Laesst sich die Aufgabe nicht ermitteln,
-  // fuehrt er zur Liste statt zu verschwinden.
+  // Der Zurück-Link ist Beiwerk. Lässt sich die Aufgabe nicht ermitteln,
+  // führt er zur Liste statt zu verschwinden.
   it('weicht auf die Aufgabenliste aus, wenn die Aufgabe unbekannt bleibt', async () => {
     stand.mockResolvedValue({ kind: 'notFound', message: 'Gibt es nicht.' })
 
@@ -115,7 +116,7 @@ describe('ResultPage', () => {
     expect(link).toHaveAttribute('href', '/')
   })
 
-  // Waehrend des Wartens gibt es noch keinen Zurueck-Link - die Seite besteht
+  // Während des Wartens gibt es noch keinen Zurück-Link - die Seite besteht
   // dann nur aus der Statusmeldung.
   it('zeigt beim Warten keinen Zurueck-Link', () => {
     zeige({ kind: 'pending' })

@@ -5,7 +5,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
     // Liest die XML-Reports des JUnit-Console-Launchers.
     //
     // Bewusst der XML-Report und nicht die Konsolenausgabe: die ist auf Menschen
-    // ausgelegt, aendert sich zwischen Versionen und laesst sich nicht zuverlaessig
+    // ausgelegt, ändert sich zwischen Versionen und lässt sich nicht zuverlässig
     // zerlegen. Der Launcher schreibt je Engine eine Datei (TEST-junit-jupiter.xml,
     // TEST-junit-vintage.xml, ...), von denen die meisten leer sind - deshalb
     // werden alle gelesen und zusammengefasst.
@@ -38,8 +38,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
             {
                 // Abgeschnittener Report, etwa weil die JVM mitten im Lauf beendet
                 // wurde. Der Aufrufer erkennt das an der fehlenden Testmethode und
-                // erklaert es dem Teilnehmer - hier still ueberspringen ist richtig,
-                // weil eine kaputte Datei keine Aussage ueber die Abgabe enthaelt.
+                // erklärt es dem Teilnehmer - hier still überspringen ist richtig,
+                // weil eine kaputte Datei keine Aussage über die Abgabe enthält.
                 yield break;
             }
 
@@ -51,7 +51,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
                 var failure = element.Element("failure") ?? element.Element("error");
                 var skipped = element.Element("skipped");
 
-                // Uebersprungene Tests gelten als nicht bestanden: der Teilnehmer
+                // Übersprungene Tests gelten als nicht bestanden: der Teilnehmer
                 // hat die geforderte Leistung nicht gezeigt.
                 var passed = failure is null && skipped is null;
                 var message = ReadMessage(failure, skipped);
@@ -71,7 +71,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
         // Der Launcher legt den @DisplayName in system-out ab, als Zeile
         // "display-name: JUnit Jupiter > MainTest > main gibt Hallo Soop aus".
         // Der letzte Abschnitt ist der Text, den der Admin geschrieben hat - und
-        // damit weit verstaendlicher als ein Methodenname.
+        // damit weit verständlicher als ein Methodenname.
         private static string? ReadDisplayName(XElement testCase)
         {
             var systemOut = testCase.Element("system-out")?.Value;

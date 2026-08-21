@@ -40,7 +40,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Configuration
             DotEnvConfiguration.Parse([line])["PASSWORT"].ShouldBe(expected);
         }
 
-        // Passwoerter duerfen Gleichheitszeichen enthalten — getrennt wird nur beim ersten.
+        // Passwörter dürfen Gleichheitszeichen enthalten — getrennt wird nur beim ersten.
         [Fact]
         public void Parse_WertEnthaeltGleichheitszeichen_BleibtVollstaendig()
         {

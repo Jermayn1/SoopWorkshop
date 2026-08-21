@@ -9,8 +9,8 @@ type CheckboxProps = {
   disabled?: boolean
 }
 
-// Nicht ueber Field gebaut: bei einem Kaestchen steht die Beschriftung daneben
-// und nicht darueber, und das ganze Paar soll anklickbar sein.
+// Nicht über Field gebaut: bei einem Kästchen steht die Beschriftung daneben
+// und nicht darüber, und das ganze Paar soll anklickbar sein.
 export function Checkbox({ label, checked, onChange, hint, disabled }: CheckboxProps) {
   const id = useId()
 

@@ -4,7 +4,7 @@ import { ArrowLeft, KeyRound, Loader2 } from 'lucide-react'
 import { BrandMark } from '../../components/BrandMark'
 
 type LoginPageProps = {
-  /** Liefert die Begruendung des Servers, oder null bei Erfolg. */
+  /** Liefert die Begründung des Servers, oder null bei Erfolg. */
   onSignIn: (password: string) => Promise<string | null>
 }
 
@@ -26,8 +26,8 @@ export function LoginPage({ onSignIn }: LoginPageProps) {
 
     if (problem !== null) {
       setError(problem)
-      // Das falsche Passwort stehen zu lassen hilft niemandem — der naechste
-      // Versuch faengt von vorn an.
+      // Das falsche Passwort stehen zu lassen hilft niemandem — der nächste
+      // Versuch fängt von vorn an.
       setPassword('')
     }
   }

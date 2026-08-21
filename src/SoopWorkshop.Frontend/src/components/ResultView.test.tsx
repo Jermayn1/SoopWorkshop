@@ -5,7 +5,7 @@ import { auswertung, kategorie, teilpruefung } from '../test/fixtures'
 
 describe('ResultView', () => {
   // Die Reihenfolge steht in EvaluationCategoryOrder und ist bewusst eine
-  // andere als die Zahlenreihenfolge des Enums (§5.8). Die API liefert bereits
+  // andere als die Zahlenreihenfolge des Enums. Die API liefert bereits
   // sortiert; das Frontend sortiert trotzdem selbst, weil eine wechselnde
   // Reihenfolge mehr verwirrt, als das Sortieren kostet.
   it('zeigt die Kategorien in der Anzeigereihenfolge', () => {
@@ -63,8 +63,8 @@ describe('ResultView', () => {
   })
 
   // matchMedia meldet im Test prefers-reduced-motion: reduce, deshalb steht der
-  // Zielwert sofort statt hochgezaehlt zu werden. Bewegung selbst laesst sich
-  // nicht automatisiert pruefen (CLAUDE.md §6.1) - das muss ein Mensch ansehen.
+  // Zielwert sofort da, statt hochgezählt zu werden. Geprüft wird also das
+  // Ergebnis der Animation, nicht ihr Ablauf.
   it('zeigt die erreichte Punktzahl', () => {
     render(<ResultView result={auswertung({ totalScore: 73 })} />)
 

@@ -1,13 +1,10 @@
 // Vorlagen für JUnit-Testdateien.
 //
-// Abgeleitet aus den erprobten Dateien unter tests/manual/junit/tests/ — die
-// laufen dort seit Phase 3 gegen echte Abgaben. Wer hier etwas ändert, sollte
-// es dort gegenprüfen.
-//
-// Bewusst KEINE Vorlage für simulierte Eingaben über System.setIn: die ist in
-// Phase 3.1 abgeschafft worden. Eine im Testcode versteckte Eingabe kann die
-// Anzeige nicht kennen — der Teilnehmer sähe „Erwartet 7", ohne zu erfahren,
-// womit gerechnet wurde. Eingaben gehören in Konsolen-Testfälle (§5.7).
+// Bewusst KEINE Vorlage für simulierte Eingaben über System.setIn. Eine im
+// Testcode versteckte Eingabe kann die Anzeige nicht kennen — der Teilnehmer
+// sähe „Erwartet 7", ohne zu erfahren, womit gerechnet wurde. Eingaben gehören
+// deshalb in Konsolen-Testfälle: JUnit prüft Methoden, Konsolen-Testfälle
+// prüfen das Programm.
 // Faustregel: JUnit prüft Methoden, Konsolen-Testfälle prüfen das Programm.
 
 export type JUnitTemplate = {
@@ -39,16 +36,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /*
- * Prueft, was das Programm auf der Konsole ausgibt.
+ * Prüft, was das Programm auf der Konsole ausgibt.
  *
  * Drei Dinge stehen hier absichtlich so:
  *
- *  1. Der PrintStream bekommt StandardCharsets.UTF_8 ausdruecklich mit. Ohne
+ *  1. Der PrintStream bekommt StandardCharsets.UTF_8 ausdrücklich mit. Ohne
  *     das schreibt er in der Codepage des Systems (unter Windows Cp1252) und
  *     Umlaute kommen zerlegt an.
- *  2. System.setOut wird in @AfterEach zurueckgesetzt, sonst beeinflussen sich
+ *  2. System.setOut wird in @AfterEach zurückgesetzt, sonst beeinflussen sich
  *     die Testmethoden gegenseitig.
- *  3. Statische Felder der Abgabe ueberleben zwischen den Testmethoden - alle
+ *  3. Statische Felder der Abgabe überleben zwischen den Testmethoden - alle
  *     laufen in derselben JVM.
  */
 class MainTest {
@@ -89,14 +86,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /*
- * Prueft eine Methode ueber ihren Rueckgabewert.
+ * Prüft eine Methode über ihren Rückgabewert.
  *
  * Der @DisplayName ist nicht Zierde: er landet im XML-Report und ist genau der
  * Text, den der Teilnehmer im Ergebnis liest. "addiereZweiPositiveZahlen" hilft
  * ihm nicht, "Die Methode addiere addiert zwei positive Zahlen" schon.
  *
  * Bewusst ohne Eingabesimulation: was das Programm mit einer Eingabe macht,
- * gehoert in einen Konsolen-Testfall. Dort erscheint die Eingabe im Ergebnis.
+ * gehört in einen Konsolen-Testfall. Dort erscheint die Eingabe im Ergebnis.
  */
 class RechnerTest {
 
@@ -128,15 +125,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /*
- * Prueft mehrere Klassen, die voneinander abhaengen.
+ * Prüft mehrere Klassen, die voneinander abhängen.
  *
  * Dass das geht, ist keine Zusatzeinstellung: alle abgegebenen Dateien landen
  * in einem Arbeitsverzeichnis und gehen zusammen durch javac, und die Testdatei
- * wird danach gegen genau diese Klassen uebersetzt.
+ * wird danach gegen genau diese Klassen übersetzt.
  *
- * Jeder Test baut sich seine Objekte selbst. Statische Felder ueberleben
+ * Jeder Test baut sich seine Objekte selbst. Statische Felder überleben
  * zwischen Testmethoden - geteilter Zustand macht die Reihenfolge der Tests
- * ploetzlich bedeutsam.
+ * plötzlich bedeutsam.
  */
 class BankTest {
 
@@ -194,14 +191,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /*
- * Prueft, dass eine Methode bei unzulaessigen Werten abbricht.
+ * Prüft, dass eine Methode bei unzulässigen Werten abbricht.
  *
- * assertThrows gibt die gefangene Ausnahme zurueck - so laesst sich zusaetzlich
- * pruefen, ob die Meldung etwas taugt. Der Teilnehmer soll ja nicht nur
+ * assertThrows gibt die gefangene Ausnahme zurück - so lässt sich zusätzlich
+ * prüfen, ob die Meldung etwas taugt. Der Teilnehmer soll ja nicht nur
  * irgendetwas werfen.
  *
  * Wichtig: der Aufruf steht INNERHALB der Lambda. Wer ihn davor schreibt,
- * bricht den Test ab, statt die Ausnahme zu pruefen.
+ * bricht den Test ab, statt die Ausnahme zu prüfen.
  */
 class PruefungTest {
 

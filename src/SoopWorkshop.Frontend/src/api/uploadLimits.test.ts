@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { UPLOAD_LIMITS, checkFiles, formatBytes } from './uploadLimits'
 
-// File-Objekte mit echtem Inhalt zu bauen wird bei 1 MB teuer. Die Groesse
+// File-Objekte mit echtem Inhalt zu bauen wird bei 1 MB teuer. Die Größe
 // wird deshalb aufgesetzt - checkFiles liest ohnehin nur file.size.
 function datei(name: string, size = 100): File {
   const file = new File(['x'], name)
@@ -46,9 +46,9 @@ describe('checkFiles', () => {
     expect(rejections).toEqual(["„notiz.txt“ ist keine .java-Datei."])
   })
 
-  // Die Pruefreihenfolge ist selbst eine Zusicherung. Eine 2 MB grosse .txt
-  // verstoesst gegen zwei Regeln; genannt werden muss die Endung, denn die ist
-  // der eigentliche Grund - die Groesse waere eine irrefuehrende Auskunft.
+  // Die Prüfreihenfolge ist selbst eine Zusicherung. Eine 2 MB große .txt
+  // verstößt gegen zwei Regeln; genannt werden muss die Endung, denn die ist
+  // der eigentliche Grund - die Größe wäre eine irreführende Auskunft.
   it('meldet bei mehreren Verstoessen den erstgepruefen', () => {
     const { rejections } = checkFiles([], [datei('notiz.txt', 2 * 1024 * 1024)])
 
@@ -81,7 +81,7 @@ describe('checkFiles', () => {
     expect(rejections).toEqual(['„Gross.java“ ist größer als 1024 KB.'])
   })
 
-  // Knapp ueber der Grenze: frueher stand hier die gerundete Ist-Groesse neben
+  // Knapp über der Grenze: früher stand hier die gerundete Ist-Größe neben
   // der gerundeten Grenze, und beide lauteten "1,0 MB" - die Meldung
   // widersprach sich selbst. Der Wortlaut nennt jetzt nur noch die Grenze und
   // ist damit wortgleich mit dem Server (SubmissionUploadValidator.cs).
@@ -121,14 +121,13 @@ describe('checkFiles', () => {
     expect(rejections).toHaveLength(1)
   })
 
-  // Bis Phase 7 war das ein Ist-Verhalten-Test mit umgekehrter Erwartung: die
-  // beiden Seiten waren sich NICHT einig. checkFiles verglich bitgenau, der
-  // SubmissionUploadValidator im Backend mit OrdinalIgnoreCase - 'A.java' kam
-  // neben 'a.java' durch die Oberflaeche und wurde erst vom Server abgelehnt.
+  // Der Vergleich läuft ohne Rücksicht auf Groß- und Kleinschreibung, genau wie
+  // im SubmissionUploadValidator des Backends. Verglichen das Frontend bitgenau,
+  // käme 'A.java' neben 'a.java' durch die Oberfläche und würde erst vom Server
+  // abgelehnt.
   //
-  // Der Server ist die Autoritaet, also zieht das Frontend nach. Dass javac
-  // bei gleichem Namen die eine Klasse mit der anderen ueberschreibt, ist das
-  // fachliche Argument dafuer, dass der Server recht hat.
+  // Fachlich richtig ist die unempfindliche Variante: javac überschreibt bei
+  // gleichem Namen die eine Klasse mit der anderen.
   it('haelt A.java und a.java fuer dieselbe Datei', () => {
     const { accepted, rejections } = checkFiles([datei('A.java')], [datei('a.java')])
 

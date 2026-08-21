@@ -6,7 +6,7 @@ import type { Category } from '../../api/types'
 type Schemas = components['schemas']
 
 // Gleicher Helfer wie in api/endpoints.ts: hebt eine Umsetzung in ApiResult
-// hinein, ohne die Fehlerfaelle anzufassen. Die bleiben unterscheidbar.
+// hinein, ohne die Fehlerfälle anzufassen. Die bleiben unterscheidbar.
 export function mapResult<A, B>(result: ApiResult<A>, project: (value: A) => B): ApiResult<B> {
   return result.kind === 'ok' ? { kind: 'ok', value: project(result.value) } : result
 }
@@ -15,10 +15,10 @@ export function mapResult<A, B>(result: ApiResult<A>, project: (value: A) => B):
 // Kategorien und Aufgaben — die Verwaltung muss ja gerade das sehen, was der
 // Teilnehmer (noch) nicht sieht.
 //
-// Was hier NICHT mitkommt: Hints, erwartete Methoden, Testfaelle, JUnit-Dateien
-// und Gewichte. Der Service fuellt die Aufgaben in der Kategorie nur mit den
-// Skalarfeldern. Fuer eine Uebersicht reicht das; der Aufgaben-Editor holt sich
-// den Rest ueber die eigenen Endpunkte.
+// Was hier NICHT mitkommt: Hints, erwartete Methoden, Testfälle, JUnit-Dateien
+// und Gewichte. Der Service füllt die Aufgaben in der Kategorie nur mit den
+// Skalarfeldern. Für eine Übersicht reicht das; der Aufgaben-Editor holt sich
+// den Rest über die eigenen Endpunkte.
 export async function fetchAdminCategories(signal?: AbortSignal): Promise<ApiResult<Category[]>> {
   const result = await request<Schemas['TaskCategoryDto'][]>('/api/admin/categories', { signal })
   return mapResult(result, (dtos) => dtos.map(toCategory).sort((a, b) => a.order - b.order))
@@ -61,7 +61,7 @@ export async function updateCategory(
   return mapResult(result, toCategory)
 }
 
-// Achtung: loescht per Cascade die gesamte Kategorie samt Aufgaben, Testfaellen,
+// Achtung: löscht per Cascade die gesamte Kategorie samt Aufgaben, Testfällen,
 // JUnit-Dateien, Gewichten UND allen Abgaben darunter. Der Aufrufer muss das
 // vorher sagen.
 export function deleteCategory(id: string, signal?: AbortSignal): Promise<ApiResult<void>> {
@@ -69,7 +69,7 @@ export function deleteCategory(id: string, signal?: AbortSignal): Promise<ApiRes
 }
 
 // Umschalten statt Setzen: der Endpunkt kennt nur PATCH ohne Rumpf und
-// antwortet mit dem Zustand danach. Genau der wird uebernommen, statt ihn im
+// antwortet mit dem Zustand danach. Genau der wird übernommen, statt ihn im
 // Frontend zu erraten — beim Einschalten kann der Server ablehnen, wenn die
 // Testdaten zum Auswertungsmodus fehlen.
 export function toggleCategoryVisibility(

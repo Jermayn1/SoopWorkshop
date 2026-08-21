@@ -7,12 +7,12 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
         string MethodName,
         bool Passed,
 
-        // Was uebrig bleibt, wenn Erwartet und Erhalten herausgeloest sind:
+        // Was übrig bleibt, wenn Erwartet und Erhalten herausgelöst sind:
         // entweder die eigene Meldung des Admins oder - wenn sich nichts
-        // zerlegen liess - die vollstaendige Fehlermeldung.
+        // zerlegen ließ - die vollständige Fehlermeldung.
         string Message,
 
-        // Aus "expected: <5> but was: <-1>" herausgeloest, damit ein
+        // Aus "expected: <5> but was: <-1>" herausgelöst, damit ein
         // fehlgeschlagener Unit-Test genauso dargestellt wird wie ein
         // fehlgeschlagener Konsolen-Testfall.
         string Expected,

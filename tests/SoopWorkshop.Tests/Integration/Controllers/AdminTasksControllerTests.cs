@@ -23,10 +23,10 @@ namespace SoopWorkshop.Tests.Integration.Controllers
         }
 
         // Die Kernregel aus Paragraph 5.1: eine Aufgabe, deren Modus Daten
-        // verlangt, die es nicht gibt, laesst sich nicht sichtbar schalten.
-        // Ohne sie wuerde die fehlende Kategorie aus der Wertung fallen und die
-        // Aufgabe still MILDER bewertet - der Teilnehmer bekaeme Punkte fuer
-        // etwas, das nie geprueft wurde.
+        // verlangt, die es nicht gibt, lässt sich nicht sichtbar schalten.
+        // Ohne sie würde die fehlende Kategorie aus der Wertung fallen und die
+        // Aufgabe still MILDER bewertet - der Teilnehmer bekäme Punkte für
+        // etwas, das nie geprüft wurde.
         [Fact]
         public async Task ToggleVisibility_ModusVerlangtTestdatenDieFehlen_WirdAbgelehnt()
         {
@@ -56,10 +56,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             (await response.Content.ReadAsStringAsync()).ShouldContain("JUnit-Datei");
 
             // 400, nicht 404: die Aufgabe GIBT es, ihr fehlen nur die Testdaten
-            // ihres Modus. Bis Phase 7 bildete der Controller jeden Fehlschlag
-            // auf 404 ab - im Frontend kam das als notFound an, also als "gibt
-            // es nicht" fuer etwas, das offen im Editor liegt. Genau die
-            // Zusammenlegung, gegen die ApiResult gebaut wurde.
+            // ihres Modus. Käme hier 404, läse das Frontend "gibt es nicht" für
+            // etwas, das offen im Editor liegt - genau die Zusammenlegung zweier
+            // Ausgänge, gegen die ApiResult gebaut ist.
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             await WithDbAsync(async db =>
@@ -67,9 +66,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                     .IsVisible.ShouldBeFalse());
         }
 
-        // Die Gegenprobe zum Test darueber. Ohne sie belegte nichts mehr, dass
-        // die beiden Faelle ueberhaupt noch unterscheidbar sind - ein Controller,
-        // der pauschal 400 liefert, bestuende oben genauso.
+        // Die Gegenprobe zum Test darüber. Ohne sie belegte nichts mehr, dass
+        // die beiden Fälle überhaupt noch unterscheidbar sind - ein Controller,
+        // der pauschal 400 liefert, bestünde oben genauso.
         [Fact]
         public async Task ToggleVisibility_AufgabeGibtEsNicht_Liefert404()
         {
@@ -100,9 +99,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             stand.IsVisible.ShouldBeTrue();
         }
 
-        // Der Endpunkt, auf dem die Vorschau aus Etappe 5.5 steht. Er liefert
-        // denselben DTO wie die oeffentliche Seite - samt derselben Filterung.
-        // Genau deshalb ist die Vorschau ehrlich durch Konstruktion.
+        // Der Endpunkt, auf dem die Vorschau im Verwaltungsbereich steht. Er
+        // liefert denselben DTO wie die öffentliche Seite - samt derselben
+        // Filterung. Genau deshalb ist die Vorschau ehrlich durch Konstruktion.
         [Fact]
         public async Task GetById_LiefertNurFreigeschalteteJUnitDateien()
         {
@@ -146,10 +145,10 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         }
 
-        // Regression zum Fund aus Phase 5.2: das Aendern einer Aufgabe mit Tipps
-        // oder erwarteten Methoden endete in einem 500er, weil die neuen
-        // Kindzeilen mit gesetzter Id in einen bereits verfolgten Graphen kamen.
-        // Der Aufgaben-Editor war der erste Aufrufer dieses Endpunkts.
+        // Regression: neue Kindzeilen müssen OHNE Id in den Graphen, wenn die
+        // Aufgabe bereits von EF verfolgt wird. An einem gesetzten Schlüssel
+        // erkennt die Änderungsverfolgung eine bestehende Zeile, schickt ein
+        // UPDATE ins Leere und der Aufruf endet in einem 500er.
         [Fact]
         public async Task Update_MitTippsUndErwartetenTypen_Gelingt()
         {
@@ -186,7 +185,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             aufgabe.Hints.Count.ShouldBe(2);
             aufgabe.ExpectedTypes.Select(type => type.Name).ShouldBe(["Konto", "Kunde"]);
 
-            // Ein zweites Mal speichern: derselbe Fund trat erst beim Aendern
+            // Ein zweites Mal speichern: derselbe Fund trat erst beim Ändern
             // einer Aufgabe auf, die die Kinder schon hatte.
             var zweitesMal = await client.PutAsJsonAsync($"/api/admin/tasks/{taskId}", new UpdateTaskItemDto
             {

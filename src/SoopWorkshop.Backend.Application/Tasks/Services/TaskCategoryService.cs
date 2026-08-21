@@ -82,7 +82,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
             await _repository.DeleteAsync(id);
 
-            // Loeschen entfernt per Kaskade auch alle Aufgaben darunter.
+            // Löschen entfernt per Kaskade auch alle Aufgaben darunter.
             _logger.LogInformation("Kategorie {CategoryId} '{Name}' geloescht.", id, category.Name);
 
             return Result<bool>.Ok(true);
@@ -113,7 +113,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             IsVisible = category.IsVisible,
             IconName = category.IconName,
             // Nach Order sortieren: die Aufgaben einer Kategorie bauen aufeinander auf.
-            // Ohne das kam heraus, was die Datenbank gerade zurueckgab - und das ist
+            // Ohne das kam heraus, was die Datenbank gerade zurückgab - und das ist
             // keine Reihenfolge, auf die man sich verlassen kann.
             Tasks = category.Tasks.OrderBy(t => t.Order).Select(t => new TaskItemDto
             {

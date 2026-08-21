@@ -24,9 +24,9 @@ export function ResultPage() {
   const { submissionId = '' } = useParams()
   const { phase } = useSubmissionPolling(submissionId)
 
-  // Für den Zurück-Link zur richtigen Aufgabe. Das Feld kommt seit
-  // Etappe 4.0 auf dem Status mit, damit ein direkt aufgerufener
-  // Ergebnis-Link ebenfalls einen Weg zurück hat.
+  // Für den Zurück-Link zur richtigen Aufgabe. Die Id kommt auf dem Status mit,
+  // damit auch ein direkt aufgerufener Ergebnis-Link einen Weg zurück hat — ohne
+  // sie wäre der Link nur aus der Navigationshistorie ableitbar.
   const [taskId, setTaskId] = useState<string | null>(null)
 
   useEffect(() => {

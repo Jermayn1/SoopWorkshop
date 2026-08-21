@@ -2,9 +2,9 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Shared.DTOs.Submissions
 {
-    // Eine Zeile in der Abgaben-Uebersicht des Panels.
+    // Eine Zeile in der Abgaben-Übersicht des Panels.
     //
-    // Bewusst OHNE die Dateien und ohne die Teilpruefungen: die Liste zeigt
+    // Bewusst OHNE die Dateien und ohne die Teilprüfungen: die Liste zeigt
     // hunderte Zeilen, und beides braucht sie nicht. Wer die Auswertung sehen
     // will, folgt dem Link auf die Ergebnisseite - dieselbe, die auch der
     // Teilnehmer sieht.
@@ -22,20 +22,20 @@ namespace SoopWorkshop.Shared.DTOs.Submissions
 
         public SubmissionStatus Status { get; set; }
 
-        // Nur bei Status Failed gefuellt.
+        // Nur bei Status Failed gefüllt.
         public string ErrorMessage { get; set; } = string.Empty;
 
         // Null, solange keine Auswertung vorliegt - und das ist etwas anderes
-        // als 0 Punkte. Eine 0 waere eine Aussage ueber die Loesung, null sagt
+        // als 0 Punkte. Eine 0 wäre eine Aussage über die Lösung, null sagt
         // nur, dass noch nichts bewertet wurde.
         public int? TotalScore { get; set; }
 
         public int? MaxScore { get; set; }
 
-        // Kein FileCount: dafuer muesste die Abfrage die Dateien mitladen
-        // (deren Inhalt bis zu 1 MB je Stueck betraegt) oder eine zweite
-        // Abfrage stellen. Fuer eine Liste, die ohnehin auf die Ergebnisseite
+        // Kein FileCount: dafür müsste die Abfrage die Dateien mitladen
+        // (deren Inhalt bis zu 1 MB je Stück beträgt) oder eine zweite
+        // Abfrage stellen. Für eine Liste, die ohnehin auf die Ergebnisseite
         // verlinkt, ist beides den Preis nicht wert - dort stehen die
-        // Dateinamen vollstaendig.
+        // Dateinamen vollständig.
     }
 }

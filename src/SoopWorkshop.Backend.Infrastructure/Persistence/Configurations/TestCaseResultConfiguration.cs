@@ -23,7 +23,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
             builder.Property(t => t.ActualOutput)
                 .HasColumnType("text");
 
-            // Sortierschluessel der Anzeige - ohne Index, es sind wenige Zeilen
+            // Sortierschlüssel der Anzeige - ohne Index, es sind wenige Zeilen
             // je Kategorie und sie werden ohnehin immer zusammen geladen.
             builder.Property(t => t.Order);
         }

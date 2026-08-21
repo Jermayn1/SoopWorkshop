@@ -96,9 +96,10 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
             if (result.IsSuccess)
                 return Ok(new VisibilityStateDto { IsVisible = result.Value });
 
-            // Zwei unterscheidbare Fehlschlaege, zwei Statuscodes. Bis Phase 7
-            // wurde auch "der Aufgabe fehlen die Testdaten ihres Modus" als 404
-            // gemeldet - fuer eine Aufgabe, die es offensichtlich gibt.
+            // Zwei unterscheidbare Fehlschläge, zwei Statuscodes. "Aufgabe nicht
+            // gefunden" ist 404, "der Aufgabe fehlen die Testdaten ihres Modus"
+            // ist 400 — im zweiten Fall gibt es die Aufgabe ja, sie ist nur noch
+            // nicht vollständig.
             return result.Failure == ResultFailure.NotFound
                 ? NotFound(result.ErrorMessage)
                 : BadRequest(result.ErrorMessage);

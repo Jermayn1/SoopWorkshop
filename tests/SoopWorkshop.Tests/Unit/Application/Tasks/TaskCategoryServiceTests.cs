@@ -36,7 +36,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
 
         // Die Aufgaben einer Kategorie bauen aufeinander auf. Kommen sie in der
         // Reihenfolge der Datenbank heraus, ist das keine Reihenfolge, sondern
-        // Zufall - genau das war schon einmal ein Finding.
+        // Zufall: ohne ORDER BY entscheidet PostgreSQL je Abfrage neu.
         [Fact]
         public async Task GetAllAsync_AufgabenUnsortiert_LiefertSieNachOrder()
         {
@@ -52,8 +52,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 .ShouldBe(["Erste", "Zweite", "Dritte"]);
         }
 
-        // Die oeffentliche Seite fragt ueber diesen Weg. Griffe er auf GetAllAsync
-        // zurueck, saehen Teilnehmer jede noch unfertige Kategorie.
+        // Die öffentliche Seite fragt über diesen Weg. Griffe er auf GetAllAsync
+        // zurück, sähen Teilnehmer jede noch unfertige Kategorie.
         [Fact]
         public async Task GetAllVisibleAsync_FragtDasRepositoryNachDenSichtbaren()
         {
@@ -94,7 +94,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             result.ErrorMessage.ShouldContain("Kategorie");
         }
 
-        // Neu angelegt wird immer verborgen. Erst fuellen, dann sichtbar
+        // Neu angelegt wird immer verborgen. Erst füllen, dann sichtbar
         // schalten - sonst steht eine leere Kategorie in der Teilnehmersicht.
         [Fact]
         public async Task CreateAsync_NeueKategorie_IstZunaechstVerborgen()

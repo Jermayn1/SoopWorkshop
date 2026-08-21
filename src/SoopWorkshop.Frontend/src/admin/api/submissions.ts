@@ -6,11 +6,11 @@ import { mapResult } from './catalog'
 
 type Schemas = components['schemas']
 
-// Eine Zeile der Uebersicht, mit gefuellten Pflichtfeldern.
+// Eine Zeile der Übersicht, mit gefüllten Pflichtfeldern.
 //
-// Wie ueberall zwischen schema.d.ts und der Oberflaeche: .NET gibt im
+// Wie überall zwischen schema.d.ts und der Oberfläche: .NET gibt im
 // OpenAPI-Dokument kein "required" aus, dort ist also jedes Feld optional.
-// Ohne diese Umsetzung stuende in der Tabelle an jeder Stelle ein ?? ''.
+// Ohne diese Umsetzung stünde in der Tabelle an jeder Stelle ein ?? ''.
 export type SubmissionListItem = {
   id: string
   taskItemId: string
@@ -19,8 +19,8 @@ export type SubmissionListItem = {
   submittedAt: string
   status: SubmissionStatus
   errorMessage: string
-  // Bleibt null, solange keine Auswertung vorliegt. NICHT auf 0 setzen: 0 waere
-  // eine Aussage ueber die Loesung, null sagt nur "noch nicht bewertet".
+  // Bleibt null, solange keine Auswertung vorliegt. NICHT auf 0 setzen: 0 wäre
+  // eine Aussage über die Lösung, null sagt nur "noch nicht bewertet".
   totalScore: number | null
   maxScore: number | null
 }
@@ -41,8 +41,8 @@ function toListItem(dto: Schemas['SubmissionListItemDto']): SubmissionListItem {
     submittedAt: dto.submittedAt ?? '',
     status: dto.status ?? 'Pending',
     errorMessage: dto.errorMessage ?? '',
-    // Nicht toNumber mit Rueckfall 0: hier ist "nicht da" eine eigene
-    // Aussage. Ein Rueckfall auf 0 machte aus "noch nicht bewertet" ein
+    // Nicht toNumber mit Rückfall 0: hier ist "nicht da" eine eigene
+    // Aussage. Ein Rückfall auf 0 machte aus "noch nicht bewertet" ein
     // "null Punkte erreicht".
     totalScore: dto.totalScore === undefined || dto.totalScore === null
       ? null

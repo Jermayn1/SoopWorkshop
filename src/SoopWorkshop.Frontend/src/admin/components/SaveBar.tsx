@@ -3,14 +3,14 @@ import type { SaveState } from '../saveState'
 
 type SaveBarProps = {
   state: SaveState
-  /** Ob es ueberhaupt etwas zu speichern gibt. */
+  /** Ob es überhaupt etwas zu speichern gibt. */
   dirty: boolean
   onSave: () => void
   onReset?: () => void
 }
 
 // Leiste am unteren Rand eines Formulars. Klebt beim Scrollen fest, damit der
-// Speichern-Knopf bei einem langen Formular nicht ausser Sicht geraet.
+// Speichern-Knopf bei einem langen Formular nicht außer Sicht gerät.
 export function SaveBar({ state, dirty, onSave, onReset }: SaveBarProps) {
   const saving = state.kind === 'saving'
 
@@ -50,8 +50,8 @@ export function SaveBar({ state, dirty, onSave, onReset }: SaveBarProps) {
           </button>
         )}
 
-        {/* aria-live, damit die Rueckmeldung auch vorgelesen wird — sie ist die
-            einzige Bestaetigung, dass der Klick angekommen ist. */}
+        {/* aria-live, damit die Rückmeldung auch vorgelesen wird — sie ist die
+            einzige Bestätigung, dass der Klick angekommen ist. */}
         <span role="status" aria-live="polite" className="ml-auto text-sm">
           {state.kind === 'saved' && !dirty && (
             <span className="flex items-center gap-1.5 font-medium text-emerald-900">

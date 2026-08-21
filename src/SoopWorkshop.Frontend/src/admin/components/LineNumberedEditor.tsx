@@ -11,9 +11,9 @@ type LineNumberedEditorProps = {
 const EINRUECKUNG = '  '
 
 // Monospace-Feld mit Zeilennummern. Bewusst kein Monaco und kein CodeMirror:
-// beides braeuchte ein weiteres Paket mit eigener Meinung, und was hier gebraucht
+// beides bräuchte ein weiteres Paket mit eigener Meinung, und was hier gebraucht
 // wird - Zeilennummern und eine brauchbare Tab-Taste - sind zwanzig Zeilen.
-// Syntaxhervorhebung bleibt die spaetere Ausbaustufe (§8, Phase 5).
+// Syntaxhervorhebung gibt es dafür nicht.
 export function LineNumberedEditor({
   label,
   hint,
@@ -25,7 +25,7 @@ export function LineNumberedEditor({
   const nummernRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
 
-  // Solange true, fuegt Tab ein. Escape schaltet es fuer den naechsten
+  // Solange true, fügt Tab ein. Escape schaltet es für den nächsten
   // Tastendruck ab - siehe unten.
   const [tabRueckt, setTabRueckt] = useState(true)
 
@@ -33,9 +33,9 @@ export function LineNumberedEditor({
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Escape') {
-      // Ohne diesen Ausweg ist das Feld eine Tastaturfalle: Tab rueckt ein,
+      // Ohne diesen Ausweg ist das Feld eine Tastaturfalle: Tab rückt ein,
       // also kommt man mit der Tastatur nie wieder heraus. Escape gibt den
-      // naechsten Tab frei, danach faengt das Feld ihn wieder.
+      // nächsten Tab frei, danach fängt das Feld ihn wieder.
       setTabRueckt(false)
       return
     }
@@ -46,7 +46,7 @@ export function LineNumberedEditor({
     }
 
     if (!tabRueckt) {
-      // Durchlassen: der Fokus wandert weiter. Fuer das naechste Mal wieder
+      // Durchlassen: der Fokus wandert weiter. Für das nächste Mal wieder
       // scharf schalten.
       setTabRueckt(true)
       return
@@ -60,8 +60,8 @@ export function LineNumberedEditor({
 
     onChange(neu)
 
-    // Den Cursor hinter die Einrueckung setzen. Erst nach dem Neuzeichnen,
-    // sonst ueberschreibt React die Position wieder.
+    // Den Cursor hinter die Einrückung setzen. Erst nach dem Neuzeichnen,
+    // sonst überschreibt React die Position wieder.
     requestAnimationFrame(() => {
       const ziel = selectionStart + EINRUECKUNG.length
       feld.setSelectionRange(ziel, ziel)
@@ -100,7 +100,7 @@ export function LineNumberedEditor({
           rows={rows}
           spellCheck={false}
           // Java-Quelltext wird nicht umbrochen: eine automatisch umgebrochene
-          // Zeile stimmt nicht mehr mit ihrer Nummer daneben ueberein.
+          // Zeile stimmt nicht mehr mit ihrer Nummer daneben überein.
           wrap="off"
           className="max-h-[32rem] flex-1 resize-y bg-slate-900 px-3 py-3 leading-6 text-slate-100 outline-none"
         />

@@ -16,11 +16,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
     //
     // Liegt bewusst in Infrastructure und benutzt den AppDbContext direkt statt
     // der Repositories: jedes Repository ruft sein eigenes SaveChangesAsync, ein
-    // Import ueber vierzig Aufgaben koennte also mittendrin scheitern und einen
+    // Import über vierzig Aufgaben könnte also mittendrin scheitern und einen
     // halben Bestand hinterlassen. Hier klammert eine Transaktion das Ganze -
     // die erste im Projekt.
     //
-    // Die Entscheidungen selbst trifft dieser Dienst nicht: geprueft wird im
+    // Die Entscheidungen selbst trifft dieser Dienst nicht: geprüft wird im
     // TaskBundleValidator, gerechnet im ImportPlanner. Beide sind reine
     // Funktionen in der Application-Schicht und ohne Datenbank testbar - dasselbe
     // Muster wie EvaluationScorer neben EvaluationService.
@@ -90,12 +90,12 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
             {
                 if (mode == ImportMode.Replace)
                 {
-                    // Cascade raeumt den kompletten Teilbaum ab - Aufgaben,
-                    // Testfaelle, JUnit-Dateien, Gewichte UND die Abgaben.
+                    // Cascade räumt den kompletten Teilbaum ab - Aufgaben,
+                    // Testfälle, JUnit-Dateien, Gewichte UND die Abgaben.
                     var alle = await _context.TaskCategories.ToListAsync(cancellationToken);
                     _context.TaskCategories.RemoveRange(alle);
 
-                    // Zwischenspeichern, damit die Loeschungen vor den Einfuegungen
+                    // Zwischenspeichern, damit die Löschungen vor den Einfügungen
                     // liegen: sonst kollidieren die wiederverwendeten Ids.
                     await _context.SaveChangesAsync(cancellationToken);
                 }
@@ -164,7 +164,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
             ImportMode mode,
             CancellationToken cancellationToken)
         {
-            // Beim Ersetzen ist alles gerade geloescht worden - dann immer anlegen.
+            // Beim Ersetzen ist alles gerade gelöscht worden - dann immer anlegen.
             var category = mode == ImportMode.Replace
                 ? null
                 : await _context.TaskCategories
@@ -208,7 +208,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
                 _context.TaskItems.Add(task);
             }
 
-            // Auch beim Zusammenfuehren: eine Aufgabe kann in der Datei in einer
+            // Auch beim Zusammenführen: eine Aufgabe kann in der Datei in einer
             // anderen Kategorie stehen als im Bestand.
             task.Category = category;
             task.TaskCategoryId = category.Id;
@@ -224,9 +224,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Transfer
             // die Wahrheit. Dasselbe Muster wie bei den SaveAll-Endpunkten.
             //
             // Durchgehend OHNE Id, wenn die Aufgabe schon verfolgt wird: an einem
-            // gesetzten Schluessel erkennt die Aenderungsverfolgung eine
-            // BESTEHENDE Zeile und schickt ein UPDATE auf etwas, das es nicht
-            // gibt (§9, Fund aus Phase 5.2).
+            // gesetzten Schlüssel erkennt die Änderungsverfolgung eine BESTEHENDE
+            // Zeile und schickt ein UPDATE auf etwas, das es nicht gibt. Das
+            // trifft null Zeilen und endet in einer DbUpdateConcurrencyException.
             task.Hints.Clear();
             foreach (var (content, index) in dto.Hints.Select((content, index) => (content, index)))
                 task.Hints.Add(new TaskHint { Content = content, Order = index + 1 });

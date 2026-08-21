@@ -23,11 +23,11 @@ namespace SoopWorkshop.Tests.Integration.Repositories
         private static ITaskItemRepository Repo(IServiceProvider services) =>
             services.GetRequiredService<ITaskItemRepository>();
 
-        // Der Kern dieser Etappe. Was GetByIdAsync nicht mitlaedt, sieht die
+        // Der Kern dieser Etappe. Was GetByIdAsync nicht mitlädt, sieht die
         // Auswertung als "nicht vorhanden" und bewertet entsprechend - beim
-        // Ergaenzen von CategoryWeights war das die stillste denkbare
-        // Fehlerquelle. Deshalb wird JEDE Navigation einzeln geprueft: faellt
-        // eine weg, faellt genau eine Zusicherung.
+        // Ergänzen von CategoryWeights war das die stillste denkbare
+        // Fehlerquelle. Deshalb wird JEDE Navigation einzeln geprüft: fällt
+        // eine weg, fällt genau eine Zusicherung.
         [Fact]
         public async Task GetByIdAsync_LaedtJedeNavigationMit()
         {
@@ -46,8 +46,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
                 var typ = geladen.ExpectedTypes.ShouldHaveSingleItem();
                 typ.Name.ShouldBe("Konto");
 
-                // Zwei Ebenen tief: ohne ThenInclude kaeme der Typ ohne seine
-                // Methoden, und der ContractChecker fuende die Methode nie.
+                // Zwei Ebenen tief: ohne ThenInclude käme der Typ ohne seine
+                // Methoden, und der ContractChecker fünde die Methode nie.
                 typ.Methods.ShouldHaveSingleItem().Name.ShouldBe("einzahlen");
             });
         }
@@ -59,14 +59,14 @@ namespace SoopWorkshop.Tests.Integration.Repositories
                 (await Repo(services).GetByIdAsync(Guid.NewGuid())).ShouldBeNull());
         }
 
-        // Gefragt wird die Datenbank, nicht die Aenderungsverfolgung: nach
+        // Gefragt wird die Datenbank, nicht die Änderungsverfolgung: nach
         // SaveChanges steht dort ohnehin wieder alles auf Unchanged, eine
-        // Zustandspruefung danach waere still wirkungslos. PostgreSQL fuehrt zu
+        // Zustandsprüfung danach wäre still wirkungslos. PostgreSQL führt zu
         // jeder Zeile ein xmin - die Nummer der Transaktion, die sie zuletzt
-        // geschrieben hat. Aendert sie sich, wurde die Zeile angefasst.
+        // geschrieben hat. Ändert sie sich, wurde die Zeile angefasst.
         //
-        // Das ist der Weg, den der Aufgaben-Editor geht: TaskItemService laedt
-        // ueber GetByIdAsync und reicht dieselbe Entitaet weiter.
+        // Das ist der Weg, den der Aufgaben-Editor geht: TaskItemService lädt
+        // über GetByIdAsync und reicht dieselbe Entität weiter.
         [Fact]
         public async Task UpdateAsync_AufVerfolgterAufgabe_SchreibtDieKindzeilenNichtNeu()
         {
@@ -86,8 +86,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
 
             var nachher = await ZeilenstempelAsync();
 
-            // Gegenprobe im Test selbst: haette sich gar nichts geschrieben,
-            // waere die Zusicherung unten wertlos.
+            // Gegenprobe im Test selbst: hätte sich gar nichts geschrieben,
+            // wäre die Zusicherung unten wertlos.
             nachher.Aufgabe.ShouldNotBe(vorher.Aufgabe);
 
             nachher.Testfaelle.ShouldBe(vorher.Testfaelle);
@@ -104,10 +104,10 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             List<string> aufgabe = [], testfaelle = [], junit = [], gewichte = [];
 
             // Die vier Abfragen stehen ausgeschrieben da, statt den Tabellennamen
-            // hereinzureichen: ein Tabellenname ist ein Bezeichner und laesst sich
-            // nicht als Parameter binden. Zusammengesetztes SQL waere hier zwar
+            // hereinzureichen: ein Tabellenname ist ein Bezeichner und lässt sich
+            // nicht als Parameter binden. Zusammengesetztes SQL wäre hier zwar
             // harmlos, aber EF beanstandet es zu Recht pauschal (EF1002), und eine
-            // unterdrueckte Warnung ist teurer als vier Zeilen.
+            // unterdrückte Warnung ist teurer als vier Zeilen.
             await WithDbAsync(async db =>
             {
                 aufgabe = await db.Database
@@ -127,15 +127,14 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             return (aufgabe, testfaelle, junit, gewichte);
         }
 
-        // **Ist-Verhalten**, und der eigentlich gefaehrliche Fall: bei einer
-        // LOSGELOESTEN Aufgabe faerbt Update() den ganzen mitgegebenen Graphen
-        // auf Modified, jede Kindzeile wird also neu geschrieben. Nachgemessen,
-        // weil der Kommentar im Repository ueber genau dieses Verhalten
-        // argumentiert - und die Fassung im Findings-Log es dem verfolgten Fall
-        // zuschrieb, wo es nachweislich nicht auftritt (siehe CLAUDE.md Par. 9).
+        // Der gefährliche der beiden Fälle: bei einer LOSGELÖSTEN Aufgabe färbt
+        // Update() den ganzen mitgegebenen Graphen auf Modified, jede Kindzeile
+        // wird also neu geschrieben. Bei einer bereits verfolgten Aufgabe hält
+        // EFs Graph-Traversierung dagegen an den verfolgten Knoten an und es
+        // bleibt bei einer Zeile - der Gegentest steht daneben.
         //
-        // Heute trifft das niemanden: der Editor reicht immer die verfolgte
-        // Entitaet weiter. Wer das aendert, sieht es hier.
+        // Aktuell trifft das niemanden: der Editor reicht immer die verfolgte
+        // Entität weiter. Wer das ändert, sieht die Folge hier.
         [Fact]
         public async Task UpdateAsync_AufLosgeloesterAufgabeMitKindern_SchreibtDieKindzeilenNeu()
         {
@@ -169,8 +168,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             nachher.Gewichte.ShouldNotBe(vorher.Gewichte);
         }
 
-        // Eine losgeloeste Entitaet kennt die Aenderungsverfolgung nicht - hier
-        // ist Update() noetig, sonst geht das Speichern still ins Leere.
+        // Eine losgelöste Entität kennt die Änderungsverfolgung nicht - hier
+        // ist Update() nötig, sonst geht das Speichern still ins Leere.
         [Fact]
         public async Task UpdateAsync_AufLosgeloesterAufgabe_SpeichertTrotzdem()
         {
@@ -214,7 +213,7 @@ namespace SoopWorkshop.Tests.Integration.Repositories
                 (await db.TaskExpectedTypes.CountAsync()).ShouldBe(0);
                 (await db.TaskExpectedMethods.CountAsync()).ShouldBe(0);
 
-                // Die Kategorie bleibt - die Kaskade laeuft nur nach unten.
+                // Die Kategorie bleibt - die Kaskade läuft nur nach unten.
                 (await db.TaskCategories.CountAsync()).ShouldBe(1);
             });
         }

@@ -35,7 +35,7 @@ export async function createSubmission(
   for (const file of files) form.append('files', file, file.name)
 
   // Bewusst kein Content-Type gesetzt: den muss der Browser selbst bilden,
-  // weil er die multipart-Grenze enthaelt.
+  // weil er die multipart-Grenze enthält.
   const result = await request<Schemas['SubmissionDto']>('/api/submissions', {
     method: 'POST',
     body: form,

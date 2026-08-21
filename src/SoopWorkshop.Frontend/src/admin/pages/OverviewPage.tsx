@@ -5,8 +5,8 @@ import { DIFFICULTY_CLASSES, DIFFICULTY_LABELS, MODE_LABELS } from '../../api/la
 import { iconByName } from '../icons'
 import type { Category } from '../../api/types'
 
-// Kleines Schild fuer den Sichtbarkeitszustand. Bewusst mit Symbol UND Wort:
-// eine Farbe allein ist keine Auskunft, und Gruen/Rot sind im Projekt fuer
+// Kleines Schild für den Sichtbarkeitszustand. Bewusst mit Symbol UND Wort:
+// eine Farbe allein ist keine Auskunft, und Grün/Rot sind im Projekt für
 // Bewertungen reserviert.
 function VisibilityBadge({ visible }: { visible: boolean }) {
   return visible ? (
@@ -114,8 +114,8 @@ export function OverviewPage() {
           )}
         </div>
 
-        {/* Die Zahl steht erst da, wenn sie stimmt. Waehrend des Ladens "0 von
-            0 Aufgaben" anzuzeigen waere eine Falschaussage, keine Ladeanzeige. */}
+        {/* Die Zahl steht erst da, wenn sie stimmt. Während des Ladens "0 von
+            0 Aufgaben" anzuzeigen wäre eine Falschaussage, keine Ladeanzeige. */}
         {!loading && !error && (
           <p className="mt-1 text-slate-600">
             {categories.length === 1 ? '1 Kategorie' : `${categories.length} Kategorien`},{' '}

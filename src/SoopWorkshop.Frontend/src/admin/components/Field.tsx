@@ -4,15 +4,15 @@ import { errorId, hintId } from './formStyles'
 type FieldProps = {
   id: string
   label: string
-  /** Steht immer da und erklaert das Feld — kein Ersatz fuer die Beschriftung. */
+  /** Steht immer da und erklärt das Feld — kein Ersatz für die Beschriftung. */
   hint?: string
-  /** Steht nur bei einem Verstoss da, im Wortlaut aus validation.ts. */
+  /** Steht nur bei einem Verstoß da, im Wortlaut aus validation.ts. */
   error?: string
   children: ReactNode
 }
 
 // Rahmen um ein Bedienelement: Beschriftung, Hinweis, Fehler. Die Bausteine
-// darunter (TextInput, Select, …) benutzen ihn, damit die Verknuepfung ueber
+// darunter (TextInput, Select, …) benutzen ihn, damit die Verknüpfung über
 // htmlFor und aria-describedby an genau einer Stelle stimmt.
 export function Field({ id, label, hint, error, children }: FieldProps) {
   return (

@@ -4,12 +4,12 @@ using SoopWorkshop.Shared.Enums;
 namespace SoopWorkshop.Tests.Integration
 {
     /// <summary>
-    /// Baut vollstaendige Objektbaeume fuer die Integrationstests.
+    /// Baut vollständige Objektbäume für die Integrationstests.
     /// </summary>
     /// <remarks>
     /// Bewusst "vollstaendig": ein Test, der nur die Aufgabe anlegt, kann nicht
-    /// zeigen, ob GetByIdAsync ihre Kinder mitlaedt. Die Include-Tests brauchen
-    /// eine Aufgabe, an der jede einzelne Navigation etwas haengen hat - fehlt
+    /// zeigen, ob GetByIdAsync ihre Kinder mitlädt. Die Include-Tests brauchen
+    /// eine Aufgabe, an der jede einzelne Navigation etwas hängen hat - fehlt
     /// eine, ist der Test still wirkungslos.
     /// </remarks>
     public static class PersistedDataFactory

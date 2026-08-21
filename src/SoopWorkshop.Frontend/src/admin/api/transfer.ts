@@ -6,8 +6,8 @@ type Schemas = components['schemas']
 export type TaskBundle = Schemas['TaskBundleDto']
 export type ImportMode = Schemas['ImportMode']
 
-// Der Bericht, aber mit gefuellten Feldern statt lauter optionaler. .NET setzt
-// im Vertrag kein "required", also waere hier sonst alles optional — dasselbe
+// Der Bericht, aber mit gefüllten Feldern statt lauter optionaler. .NET setzt
+// im Vertrag kein "required", also wäre hier sonst alles optional — dasselbe
 // Muster wie in api/mappers.ts.
 export type ImportReport = {
   errors: string[]
@@ -78,12 +78,12 @@ export async function runImport(
 
 // Bietet die Datei zum Speichern an.
 //
-// Der Umweg ueber fetch und einen Blob ist Absicht: ein einfacher Link auf den
-// Endpunkt wuerde bei abgelaufener Anmeldung eine weisse Seite mit 401 zeigen.
-// So laeuft der Abruf durch dieselbe Kette wie alles andere und ein Fehler
+// Der Umweg über fetch und einen Blob ist Absicht: ein einfacher Link auf den
+// Endpunkt würde bei abgelaufener Anmeldung eine weiße Seite mit 401 zeigen.
+// So läuft der Abruf durch dieselbe Kette wie alles andere und ein Fehler
 // erreicht den Nutzer als Satz.
 export function offerDownload(bundle: TaskBundle): void {
-  // Eingerueckt gespeichert: die Datei soll sich in Git lesen und diffen lassen.
+  // Eingerückt gespeichert: die Datei soll sich in Git lesen und diffen lassen.
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
 
@@ -95,6 +95,6 @@ export function offerDownload(bundle: TaskBundle): void {
   link.click()
   link.remove()
 
-  // Sonst haelt der Browser den Blob bis zum Neuladen der Seite fest.
+  // Sonst hält der Browser den Blob bis zum Neuladen der Seite fest.
   URL.revokeObjectURL(url)
 }

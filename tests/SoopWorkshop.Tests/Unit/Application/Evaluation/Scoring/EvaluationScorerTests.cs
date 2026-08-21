@@ -7,7 +7,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
 {
     public class EvaluationScorerTests
     {
-        // Kategorie mit "passed von total" bestandenen Teilpruefungen.
+        // Kategorie mit "passed von total" bestandenen Teilprüfungen.
         private static CategoryScoreInput Category(
             EvaluationCategory category,
             double weight,
@@ -34,7 +34,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         private static CategoryScoreInput Compilability(bool passed) =>
             Category(EvaluationCategory.Compilability, 20, passed ? 1 : 0, 1);
 
-        // Konsolen-Testfaelle und JUnit-Tests zahlen beide hierauf ein.
+        // Konsolen-Testfälle und JUnit-Tests zahlen beide hierauf ein.
         private static CategoryScoreInput Functionality(int passed, int total) =>
             Category(EvaluationCategory.Functionality, 65, passed, total);
 
@@ -62,7 +62,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         }
 
         // Krumme Gewichte sind der eigentliche Test der Restverteilung: drei
-        // gleiche Gewichte ergeben je 33,33 Punkte und muessen trotzdem 100 werden.
+        // gleiche Gewichte ergeben je 33,33 Punkte und müssen trotzdem 100 werden.
         [Fact]
         public void Score_GleicheGewichte_VerteiltDenRestOhneVerlust()
         {
@@ -77,8 +77,9 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
             result.Sum(category => category.Points).ShouldBe(100);
         }
 
-        // Behebt das Finding aus §9: die alte Ganzzahl-Division rechnete
-        // 65 / 3 = 21 und vergab fuer zwei bestandene Testfaelle nur 42 Punkte.
+        // Gerechnet wird in double und danach nach größtem Rest gerundet. Eine
+        // Ganzzahl-Division käme auf 65 / 3 = 21 und vergäbe für zwei bestandene
+        // Testfälle nur 42 statt 43 Punkte.
         [Fact]
         public void Score_ZweiVonDreiTestfaellen_VerliertKeinePunkteMehrDurchGanzzahlDivision()
         {
@@ -89,9 +90,10 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
             testCases.MaxPoints.ShouldBe(65);
         }
 
-        // Behebt das zweite Finding: eine Aufgabe ohne Testfaelle liefert die
-        // Kategorie gar nicht erst, ihr Gewicht verteilt sich auf die uebrigen.
-        // Frueher gab es dafuer 65 Punkte geschenkt.
+        // Keine Gratispunkte: eine Aufgabe ohne Prüfungen der Funktionalität
+        // liefert die Kategorie gar nicht erst, ihr Gewicht verteilt sich auf die
+        // übrigen. Würde die Kategorie stattdessen als "bestanden" gewertet,
+        // brächte sie 65 Punkte ein, ohne dass irgendetwas geprüft wurde.
         [Fact]
         public void Score_AufgabeOhneTestfaelle_GibtKeineGratispunkte()
         {
@@ -100,7 +102,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
             result.ShouldNotContain(category => category.Category == EvaluationCategory.Functionality);
             result.Sum(category => category.MaxPoints).ShouldBe(EvaluationScoring.TotalPoints);
 
-            // Clean Code komplett durchgefallen, nur die Kompilierbarkeit zaehlt.
+            // Clean Code komplett durchgefallen, nur die Kompilierbarkeit zählt.
             result.Sum(category => category.Points).ShouldBeLessThan(EvaluationScoring.TotalPoints);
             result.Single(category => category.Category == EvaluationCategory.CleanCode).Points.ShouldBe(0);
         }
@@ -159,7 +161,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         [Fact]
         public void Score_Kategorien_KommenInAnzeigereihenfolge()
         {
-            // Bewusst in falscher Reihenfolge uebergeben.
+            // Bewusst in falscher Reihenfolge übergeben.
             var result = EvaluationScorer.Score(
                 [Functionality(1, 1), Compilability(true), CleanCode(3)]);
 
@@ -198,7 +200,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
         }
 
         // Eine falsch konfigurierte Aufgabe darf nicht still zu einer anderen
-        // Note fuehren - lieber laut scheitern.
+        // Note führen - lieber laut scheitern.
         [Theory]
         [InlineData(0)]
         [InlineData(-5)]
@@ -219,8 +221,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Evaluation.Scoring
                 .Message.ShouldContain("keine Teilpruefung");
         }
 
-        // Egal wie die Aufgabe geschnitten ist: die Kategoriepunkte muessen genau
-        // die angezeigte Gesamtpunktzahl ergeben und duerfen sie nie ueberschreiten.
+        // Egal wie die Aufgabe geschnitten ist: die Kategoriepunkte müssen genau
+        // die angezeigte Gesamtpunktzahl ergeben und dürfen sie nie überschreiten.
         [Theory]
         [InlineData(1, 3, 1, 4)]
         [InlineData(2, 3, 3, 7)]

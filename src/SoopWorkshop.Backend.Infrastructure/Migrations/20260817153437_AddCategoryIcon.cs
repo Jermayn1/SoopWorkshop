@@ -6,7 +6,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
 {
     /// <summary>
     /// Die Kategorie bekommt ein eigenes Symbol. Bisher haben die Seitenleisten
-    /// dafuer den Namen ausgewertet - damit wechselte das Symbol beim Umbenennen,
+    /// dafür den Namen ausgewertet - damit wechselte das Symbol beim Umbenennen,
     /// und eine neue Kategorie bekam nie ein eigenes.
     /// </summary>
     public partial class AddCategoryIcon : Migration
@@ -23,10 +23,10 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                 defaultValue: "");
 
             // Bestehende Kategorien bekommen genau das Symbol, das der bisherige
-            // Namens-Switch geliefert haette. Damit sieht die Seitenleiste nach
-            // der Migration unveraendert aus, statt alles auf das Standardsymbol
-            // zurueckfallen zu lassen. Alle uebrigen bleiben leer - das ist der
-            // Rueckfall, den es vorher auch war.
+            // Namens-Switch geliefert hätte. Damit sieht die Seitenleiste nach
+            // der Migration unverändert aus, statt alles auf das Standardsymbol
+            // zurückfallen zu lassen. Alle übrigen bleiben leer - das ist der
+            // Rückfall, den es vorher auch war.
             migrationBuilder.Sql("""
                 UPDATE "TaskCategories" SET "IconName" = CASE lower("Name")
                     WHEN 'grundlagen' THEN 'Terminal'

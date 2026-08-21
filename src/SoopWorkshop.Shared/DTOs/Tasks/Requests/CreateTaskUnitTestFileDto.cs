@@ -17,7 +17,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         [Range(0, int.MaxValue, ErrorMessage = "Die Reihenfolge darf nicht negativ sein.")]
         public int Order { get; set; }
 
-        // Direkt beim Anlegen setzbar - kein zusaetzlicher Aufruf noetig, anders
+        // Direkt beim Anlegen setzbar - kein zusätzlicher Aufruf nötig, anders
         // als bei der Sichtbarkeit von Kategorie und Aufgabe.
         public bool IsVisibleToParticipant { get; set; }
     }

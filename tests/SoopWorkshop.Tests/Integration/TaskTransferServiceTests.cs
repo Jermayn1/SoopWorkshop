@@ -11,8 +11,9 @@ using SoopWorkshop.Shared.Enums;
 namespace SoopWorkshop.Tests.Integration
 {
     /// <summary>
-    /// Der Bestands-Transfer aus Etappe 5.4 - bis hierher die groesste
-    /// ungetestete Klasse im Projekt und die einzige mit einer Transaktion.
+    /// Der Bestands-Transfer: Rundlauf, idempotentes Merge, kaskadierendes
+    /// Replace und der Rollback. Er ist die einzige Stelle im Projekt mit einer
+    /// Transaktion und braucht deshalb eine echte Datenbank.
     /// </summary>
     public class TaskTransferServiceTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
@@ -82,9 +83,9 @@ namespace SoopWorkshop.Tests.Integration
                 .Methods.ShouldHaveSingleItem().ShouldBe("void einzahlen(int betrag)");
         }
 
-        // Abgaben sind Workshop-Daten, keine Konfiguration - sie gehoeren nicht in
-        // die Datei. Stuenden sie drin, truege man mit dem Aufgabenbestand die
-        // Loesungen der Teilnehmer durch die Gegend.
+        // Abgaben sind Workshop-Daten, keine Konfiguration - sie gehören nicht in
+        // die Datei. Stünden sie drin, trüge man mit dem Aufgabenbestand die
+        // Lösungen der Teilnehmer durch die Gegend.
         [Fact]
         public async Task Export_NimmtKeineAbgabenMit()
         {
@@ -99,8 +100,8 @@ namespace SoopWorkshop.Tests.Integration
 
             var bundle = await ExportiereAsync();
 
-            // Im Bundle-Format gibt es gar kein Feld dafuer - der Beleg ist, dass
-            // die Abgabe im Bestand steht und der Export sie unbeeindruckt laesst.
+            // Im Bundle-Format gibt es gar kein Feld dafür - der Beleg ist, dass
+            // die Abgabe im Bestand steht und der Export sie unbeeindruckt lässt.
             await WithDbAsync(async db => (await db.Submissions.CountAsync()).ShouldBe(1));
             bundle.Categories.ShouldHaveSingleItem().Tasks.ShouldHaveSingleItem();
         }
@@ -132,8 +133,7 @@ namespace SoopWorkshop.Tests.Integration
         // --- Merge -------------------------------------------------------------
 
         // Die GUIDs wandern mit. Ohne das legte jeder erneute Import denselben
-        // Bestand ein zweites Mal an - die Zusicherung aus CLAUDE.md Paragraph 8,
-        // Etappe 5.4.
+        // Bestand ein zweites Mal an, statt ihn zu aktualisieren.
         [Fact]
         public async Task Merge_ZweimalImportiert_VerdoppeltNichts()
         {
@@ -153,8 +153,8 @@ namespace SoopWorkshop.Tests.Integration
                 (await db.TaskCategories.CountAsync()).ShouldBe(1);
                 (await db.TaskItems.CountAsync()).ShouldBe(1);
 
-                // Auch die Kinder duerfen sich nicht haeufen: sie werden ersetzt,
-                // nicht ergaenzt.
+                // Auch die Kinder dürfen sich nicht häufen: sie werden ersetzt,
+                // nicht ergänzt.
                 (await db.TaskTests.CountAsync()).ShouldBe(1);
                 (await db.TaskUnitTestFiles.CountAsync()).ShouldBe(1);
                 (await db.TaskHints.CountAsync()).ShouldBe(1);
@@ -225,15 +225,15 @@ namespace SoopWorkshop.Tests.Integration
 
             // Beim Ersetzen geht der GESAMTE Bestand weg und die Datei kommt
             // komplett neu herein - auch die Kategorie, die in der Datei steht,
-            // wird geloescht und wieder angelegt statt aktualisiert. Der Bericht
-            // sagt das ehrlich: 2 geloescht, 1 angelegt, nicht "1 geloescht,
+            // wird gelöscht und wieder angelegt statt aktualisiert. Der Bericht
+            // sagt das ehrlich: 2 gelöscht, 1 angelegt, nicht "1 gelöscht,
             // 1 aktualisiert".
             report.CategoriesDeleted.ShouldBe(2);
             report.TasksDeleted.ShouldBe(2);
             report.CategoriesCreated.ShouldBe(1);
             report.TasksCreated.ShouldBe(1);
 
-            // Die Zahl, auf die es im Bestaetigungsdialog ankommt.
+            // Die Zahl, auf die es im Bestätigungsdialog ankommt.
             report.SubmissionsDeleted.ShouldBe(1);
             report.Warnings.ShouldContain(warnung => warnung.Contains("abgegebene"));
 
@@ -246,8 +246,8 @@ namespace SoopWorkshop.Tests.Integration
             });
         }
 
-        // Der Dialog nennt vor dem Ausfuehren die Zahl der Abgaben, die mitgehen.
-        // Saehe die Vorschau etwas anderes als der Import, waere die Bestaetigung
+        // Der Dialog nennt vor dem Ausführen die Zahl der Abgaben, die mitgehen.
+        // Sähe die Vorschau etwas anderes als der Import, wäre die Bestätigung
         // wertlos - man klickt sie im Vertrauen auf diese Zahl.
         [Fact]
         public async Task Vorschau_SagtDasselbeVoraus_WasDerImportDannTut()
@@ -299,7 +299,7 @@ namespace SoopWorkshop.Tests.Integration
             });
         }
 
-        // --- Ungueltige Datei --------------------------------------------------
+        // --- Ungültige Datei --------------------------------------------------
 
         // Der Validator ist als reine Funktion schon abgedeckt. Hier geht es nur
         // um eines: dass eine abgelehnte Datei die Datenbank nicht anfasst.
@@ -319,7 +319,7 @@ namespace SoopWorkshop.Tests.Integration
             report.IsValid.ShouldBeFalse();
             report.Errors.ShouldNotBeEmpty();
 
-            // Entscheidend: Replace haette ohne die Pruefung alles geloescht.
+            // Entscheidend: Replace hätte ohne die Prüfung alles gelöscht.
             await WithDbAsync(async db =>
             {
                 (await db.TaskCategories.CountAsync()).ShouldBe(1);
@@ -330,13 +330,13 @@ namespace SoopWorkshop.Tests.Integration
         // --- Rollback ----------------------------------------------------------
 
         // Der einzige Grund, warum die Transaktion existiert - und der Test, der
-        // mit EF InMemory gruen gewesen waere, ohne irgendetwas zu belegen.
+        // mit EF InMemory grün gewesen wäre, ohne irgendetwas zu belegen.
         //
-        // Der Fehler wird von aussen hineingeschoben: der Validator deckt sich mit
-        // den Spaltengrenzen der Datenbank, es gibt also keine gueltige Datei, die
+        // Der Fehler wird von außen hineingeschoben: der Validator deckt sich mit
+        // den Spaltengrenzen der Datenbank, es gibt also keine gültige Datei, die
         // erst beim Schreiben scheitert. Genau deshalb ein Interceptor - er trifft
-        // den Moment, auf den es ankommt: Replace hat bereits ALLES geloescht und
-        // schreibt gerade den neuen Bestand. Ohne Transaktion stuende danach eine
+        // den Moment, auf den es ankommt: Replace hat bereits ALLES gelöscht und
+        // schreibt gerade den neuen Bestand. Ohne Transaktion stünde danach eine
         // leere Datenbank da.
         [Fact]
         public async Task Import_ScheitertNachDemLoeschen_LaesstDenBestandUnveraendert()
@@ -346,8 +346,8 @@ namespace SoopWorkshop.Tests.Integration
 
             var vorher = await BestandAsync();
 
-            // Den Kontext ausdruecklich neu registrieren, statt nur einen
-            // IInterceptor in die DI zu legen: so haengt der Test nicht daran, ob
+            // Den Kontext ausdrücklich neu registrieren, statt nur einen
+            // IInterceptor in die DI zu legen: so hängt der Test nicht daran, ob
             // EF Interceptoren aus dem Anwendungscontainer einsammelt.
             using var factory = Fixture.Factory.WithWebHostBuilder(builder =>
                 builder.ConfigureTestServices(services =>
@@ -365,7 +365,7 @@ namespace SoopWorkshop.Tests.Integration
                 var service = scope.ServiceProvider.GetRequiredService<ITaskTransferService>();
                 var result = await service.ImportAsync(bundle, ImportMode.Replace, CancellationToken.None);
 
-                // Kein stiller Fehlschlag: der Aufrufer erfaehrt, dass nichts
+                // Kein stiller Fehlschlag: der Aufrufer erfährt, dass nichts
                 // geschrieben wurde.
                 result.IsSuccess.ShouldBeFalse();
                 result.ErrorMessage.ShouldContain("nichts geändert");
@@ -388,8 +388,8 @@ namespace SoopWorkshop.Tests.Integration
         }
 
         /// <summary>
-        /// Laesst das erste SaveChanges durch (die Loeschungen) und wirft beim
-        /// zweiten (den Einfuegungen).
+        /// Lässt das erste SaveChanges durch (die Löschungen) und wirft beim
+        /// zweiten (den Einfügungen).
         /// </summary>
         private sealed class FehlerBeimZweitenSpeichern : SaveChangesInterceptor
         {

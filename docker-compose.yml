@@ -7,10 +7,10 @@
 #   docker compose down -v         stoppt alles und LOESCHT die Daten
 #
 # Die Zugangsdaten stehen in .env (gitignoriert), Vorlage ist .env.example.
-# Schritt fuer Schritt: docs/server-aufsetzen.md
+# Schritt für Schritt: README.md
 #
-# In der ENTWICKLUNG laedt Compose zusaetzlich docker-compose.override.yml und
-# veroeffentlicht damit den Datenbank-Port. Auf dem Server liegt die Datei
+# In der ENTWICKLUNG lädt Compose zusätzlich docker-compose.override.yml und
+# veröffentlicht damit den Datenbank-Port. Auf dem Server liegt die Datei
 # nicht, dort bleibt die Datenbank im internen Netz.
 
 services:
@@ -30,24 +30,24 @@ services:
     # ------------------------------------------------------------------------
     # Gleicht das Passwort bei JEDEM Start an die .env an.
     #
-    # Warum das noetig ist: POSTGRES_PASSWORD wirkt nur beim ERSTEN Anlegen des
-    # Datenverzeichnisses. Wird der Wert spaeter in der .env geaendert, behaelt
+    # Warum das nötig ist: POSTGRES_PASSWORD wirkt nur beim ERSTEN Anlegen des
+    # Datenverzeichnisses. Wird der Wert später in der .env geändert, behält
     # die Datenbank ihr altes - das Backend kommt dann nicht mehr hinein und
     # meldet "28P01 password authentication failed". Der Fehler sieht aus wie
-    # ein Tippfehler, obwohl beide Seiten fuer sich stimmen.
+    # ein Tippfehler, obwohl beide Seiten für sich stimmen.
     #
-    # Bisher musste man dafuer von Hand sync-db-password.ps1 aufrufen. Jetzt
+    # Bisher musste man dafür von Hand sync-db-password.ps1 aufrufen. Jetzt
     # erledigt es der Start selbst: sobald die Datenbank bereit ist, setzt ein
     # ALTER USER das Passwort auf den Wert aus der .env. Das ist idempotent -
-    # stimmt es schon, aendert der Befehl nichts.
+    # stimmt es schon, ändert der Befehl nichts.
     #
-    # Der psql-Aufruf laeuft ueber den lokalen Socket INNERHALB des Containers,
+    # Der psql-Aufruf läuft über den lokalen Socket INNERHALB des Containers,
     # und der ist in der pg_hba.conf des Images auf "trust" gesetzt. Deshalb
     # braucht dieser Schritt das alte Passwort nicht zu kennen - genau das
-    # macht die Selbstheilung ueberhaupt moeglich.
+    # macht die Selbstheilung überhaupt möglich.
     #
     # exec am Ende ist Pflicht: postgres muss PID 1 bleiben, sonst kommen
-    # Signale (docker stop) nicht an und der Container wird hart abgeraeumt.
+    # Signale (docker stop) nicht an und der Container wird hart abgeräumt.
     # ------------------------------------------------------------------------
     command:
       - sh
@@ -80,8 +80,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
 
-      # Im Container heisst die Datenbank wie ihr Dienst, nicht 127.0.0.1 - die
-      # Aufloesung macht Docker im internen Netz.
+      # Im Container heißt die Datenbank wie ihr Dienst, nicht 127.0.0.1 - die
+      # Auflösung macht Docker im internen Netz.
       ConnectionStrings__DefaultConnection: >-
         Host=db;Port=5432;Database=${POSTGRES_DB:-soopworkshop};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
 
@@ -102,19 +102,19 @@ services:
       - intern
 
     volumes:
-      # Mit diesen Schluesseln verschluesselt ASP.NET das Anmelde-Cookie. Ohne
+      # Mit diesen Schlüsseln verschlüsselt ASP.NET das Anmelde-Cookie. Ohne
       # das Volume liegen sie im Container: ein "up -d --build" nach einer
       # Aktualisierung erzeugt neue, und die bestehende Anmeldung des Betreuers
-      # wird ungueltig - kommentarlos, mitten im Workshop.
+      # wird ungültig - kommentarlos, mitten im Workshop.
       - dataprotection:/home/app/.aspnet/DataProtection-Keys
 
     # ------------------------------------------------------------------------
-    # Hier laeuft FREMDER CODE. Jede Abgabe wird kompiliert und ausgefuehrt.
+    # Hier läuft FREMDER CODE. Jede Abgabe wird kompiliert und ausgeführt.
     #
-    # Das interne Netz ist die wirksamste einzelne Massnahme des ganzen
+    # Das interne Netz ist die wirksamste einzelne Maßnahme des ganzen
     # Aufbaus: der Container hat keine Route ins LAN und keine ins Internet.
     # Er braucht auch keine - das JUnit-JAR liegt im Image, es wird nichts
-    # nachgeladen. Ohne das koennte die Abgabe eines Teilnehmers mit einer
+    # nachgeladen. Ohne das könnte die Abgabe eines Teilnehmers mit einer
     # Zeile "new Socket(...)" das Firmennetz erreichen.
     #
     # Die Grenzen darunter sind der Unterschied zwischen einer Endlosschleife,
@@ -122,12 +122,12 @@ services:
     #
     # Was das NICHT leistet: die Abgabe erreicht weiterhin die Datenbank und
     # kann den Container belasten. Echte Isolation je Abgabe (ein eigener
-    # Container pro Auswertung) bleibt eine spaetere Ausbaustufe.
+    # Container pro Auswertung) bleibt eine spätere Ausbaustufe.
     # ------------------------------------------------------------------------
-    # Ueber die .env anpassbar, falls die VM kleiner ausfaellt als geplant.
-    # Zu klein gewaehlt wird der Container beim Kompilieren einer Abgabe
-    # abgeraeumt (im Log als OOMKilled) - dann eher die Grenze anheben als die
-    # Parallelitaet senken.
+    # Über die .env anpassbar, falls die VM kleiner ausfällt als geplant.
+    # Zu klein gewählt wird der Container beim Kompilieren einer Abgabe
+    # abgeräumt (im Log als OOMKilled) - dann eher die Grenze anheben als die
+    # Parallelität senken.
     mem_limit: ${BACKEND_MEMORY:-2g}
     cpus: ${BACKEND_CPUS:-2.0}
     pids_limit: 512
@@ -147,27 +147,27 @@ services:
     restart: unless-stopped
     depends_on:
       backend:
-        # Nicht bloss "gestartet", sondern gesund. Sonst beantwortet der Proxy
-        # in den ersten Sekunden Aufrufe mit 502, waehrend das Backend noch
+        # Nicht bloß "gestartet", sondern gesund. Sonst beantwortet der Proxy
+        # in den ersten Sekunden Aufrufe mit 502, während das Backend noch
         # migriert - und der erste Eindruck ist eine Fehlerseite.
         condition: service_healthy
     ports:
-      # Der einzige veroeffentlichte Port des ganzen Aufbaus. Nur http - die
-      # Begruendung steht in docs/betrieb.md unter "Warum kein HTTPS".
+      # Der einzige veröffentlichte Port des ganzen Aufbaus. Nur http - die
+      # Begründung steht in der README unter "Grenzen".
       #
-      # Ueber HTTP_PORT in der .env aenderbar. Gebraucht wird das, wenn Port 80
-      # schon belegt ist (unter Windows haeufig durch IIS oder eine
+      # Über HTTP_PORT in der .env änderbar. Gebraucht wird das, wenn Port 80
+      # schon belegt ist (unter Windows häufig durch IIS oder eine
       # Hyper-V-Portreservierung) oder wenn die IT einen anderen Port vorgibt.
       - "${HTTP_PORT:-80}:80"
     networks:
-      # In BEIDEN Netzen, und damit die einzige Bruecke: von aussen erreichbar
+      # In BEIDEN Netzen, und damit die einzige Brücke: von außen erreichbar
       # und zugleich der einzige Weg zum Backend.
       - intern
       - aussen
 
 networks:
   intern:
-    # Kein Weg nach draussen. Traegt die Abschottung aus dem Kommentar oben.
+    # Kein Weg nach draußen. Trägt die Abschottung aus dem Kommentar oben.
     internal: true
   aussen:
 

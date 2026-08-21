@@ -44,7 +44,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             koerper.ShouldNotBeNull();
             koerper.Error.ShouldBe("Ein unerwarteter Fehler ist aufgetreten.");
 
-            // Nichts aus dem Inneren nach aussen: weder die Meldung der Ausnahme
+            // Nichts aus dem Inneren nach außen: weder die Meldung der Ausnahme
             // noch ihr Stacktrace. Der Grund steht im Protokoll des Servers.
             var roh = await response.Content.ReadAsStringAsync();
             roh.ShouldNotContain("Geheimer Innenausbau");

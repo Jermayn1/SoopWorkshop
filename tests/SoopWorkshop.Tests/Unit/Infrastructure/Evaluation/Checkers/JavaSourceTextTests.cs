@@ -32,7 +32,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             stripped.ShouldContain("System.out.println");
         }
 
-        // Ein maskiertes Anfuehrungszeichen darf das Literal nicht vorzeitig
+        // Ein maskiertes Anführungszeichen darf das Literal nicht vorzeitig
         // beenden - sonst gilt der Rest der Zeile wieder als Code.
         [Fact]
         public void StripCommentsAndLiterals_MaskiertesAnfuehrungszeichen_BeendetDasLiteralNicht()
@@ -53,7 +53,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         }
 
         // Ein Backslash als Char-Literal ist die klassische Falle: ohne
-        // Sonderbehandlung schluckt der Parser das schliessende Anfuehrungszeichen.
+        // Sonderbehandlung schluckt der Parser das schließende Anführungszeichen.
         [Fact]
         public void StripCommentsAndLiterals_MaskierterBackslashAlsChar_BeendetDasLiteralRichtig()
         {

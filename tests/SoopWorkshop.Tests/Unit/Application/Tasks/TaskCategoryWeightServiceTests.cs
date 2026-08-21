@@ -53,7 +53,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
         }
 
         // Die abgeschafften Kategorien liest der Scorer nie. Ein Gewicht darauf
-        // waere Konfiguration, die aussieht als wuerde sie wirken, und nichts tut.
+        // wäre Konfiguration, die aussieht als würde sie wirken, und nichts tut.
         [Theory]
         [InlineData(EvaluationCategory.CharacterSet)]
         [InlineData(EvaluationCategory.NamingConventions)]
@@ -110,7 +110,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             result.ErrorMessage.ShouldContain("mehrere Gewichte");
         }
 
-        // Ein Gewicht von 0 wuerde die Kategorie aus der Normierung nehmen, ohne
+        // Ein Gewicht von 0 würde die Kategorie aus der Normierung nehmen, ohne
         // dass jemand das so gemeint hat — der Scorer wirft darauf.
         [Theory]
         [InlineData(0)]
@@ -129,7 +129,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             result.ErrorMessage.ShouldContain("größer als 0");
         }
 
-        // Leere Liste heisst "Standardgewichte aus der Konfiguration gelten wieder".
+        // Leere Liste heißt "Standardgewichte aus der Konfiguration gelten wieder".
         [Fact]
         public async Task SaveAllAsync_LeereListe_StelltStandardgewichteWiederHer()
         {

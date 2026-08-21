@@ -29,8 +29,8 @@ public class SubmissionService(
         List<(string FileName, string Content)> files,
         CancellationToken cancellationToken)
     {
-        // Ohne diese Pruefung schlaegt erst die Fremdschluesselbedingung zu und
-        // der Teilnehmer bekommt einen 500er statt einer Erklaerung.
+        // Ohne diese Prüfung schlägt erst die Fremdschlüsselbedingung zu und
+        // der Teilnehmer bekommt einen 500er statt einer Erklärung.
         if (!await _taskItemRepository.ExistsAsync(taskItemId, cancellationToken))
             return Result<SubmissionDto>.Fail("Aufgabe nicht gefunden.");
 
@@ -50,8 +50,8 @@ public class SubmissionService(
 
         await _submissionRepository.AddAsync(submission);
 
-        // Die Auswertung uebernimmt der EvaluationWorker. Bleibt eine Abgabe hier
-        // haengen, faengt das Aufraeumen beim naechsten Start sie ab.
+        // Die Auswertung übernimmt der EvaluationWorker. Bleibt eine Abgabe hier
+        // hängen, fängt das Aufräumen beim nächsten Start sie ab.
         await _evaluationQueue.EnqueueAsync(submission.Id, cancellationToken);
 
         _logger.LogInformation(
@@ -95,7 +95,7 @@ public class SubmissionService(
         });
     }
 
-    // Obergrenze fuer take. Ohne sie koennte ein Aufruf mit take=100000 die
+    // Obergrenze für take. Ohne sie könnte ein Aufruf mit take=100000 die
     // ganze Tabelle samt Includes in den Speicher ziehen - eine Seitengrenze,
     // die der Aufrufer selbst bestimmt, ist keine.
     private const int MaxSeitengroesse = 200;
@@ -134,9 +134,9 @@ public class SubmissionService(
         Id = submission.Id,
         TaskItemId = submission.TaskItemId,
 
-        // Die Navigationen kommen aus dem Include der Abfrage. Der Rueckfall
+        // Die Navigationen kommen aus dem Include der Abfrage. Der Rückfall
         // ist ein leerer String und keine Ausnahme: eine Zeile ohne Titel ist
-        // aergerlich, eine Uebersicht, die deswegen gar nicht laedt, schlimmer.
+        // ärgerlich, eine Übersicht, die deswegen gar nicht lädt, schlimmer.
         TaskTitle = submission.Task?.Title ?? string.Empty,
         CategoryName = submission.Task?.Category?.Name ?? string.Empty,
 
@@ -144,8 +144,8 @@ public class SubmissionService(
         Status = submission.Status,
         ErrorMessage = submission.ErrorMessage,
 
-        // Null statt 0, solange keine Auswertung vorliegt — 0 waere eine
-        // Aussage ueber die Loesung, null sagt nur "noch nicht bewertet".
+        // Null statt 0, solange keine Auswertung vorliegt — 0 wäre eine
+        // Aussage über die Lösung, null sagt nur "noch nicht bewertet".
         TotalScore = submission.EvaluationResult?.TotalScore,
         MaxScore = submission.EvaluationResult?.MaxScore
     };
@@ -165,7 +165,7 @@ public class SubmissionService(
         TotalScore = result.TotalScore,
         MaxScore = result.MaxScore,
         // Sortiert ausliefern: die Datenbank gibt die Zeilen sonst in beliebiger
-        // Reihenfolge zurueck und die Ergebnisseite sieht bei jedem Aufruf anders aus.
+        // Reihenfolge zurück und die Ergebnisseite sieht bei jedem Aufruf anders aus.
         CategoryResults = result.CategoryResults
             .OrderBy(c => EvaluationCategoryOrder.Of(c.Category))
             .Select(c => new CategoryResultDto

@@ -45,8 +45,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                     $"Für die Kategorie {duplicate.Key} sind mehrere Gewichte angegeben.");
 
             // Die abgeschafften Kategorien (Zeichensatz, Namenskonventionen,
-            // Testfaelle, Unit-Tests) nimmt der Scorer nie in die Hand. Ein Gewicht
-            // darauf waere Konfiguration, die aussieht als wuerde sie wirken, und
+            // Testfälle, Unit-Tests) nimmt der Scorer nie in die Hand. Ein Gewicht
+            // darauf wäre Konfiguration, die aussieht als würde sie wirken, und
             // nichts tut - deshalb hier abgelehnt statt still gespeichert.
             var retired = dto.Weights.FirstOrDefault(
                 weight => !EvaluationCategoryOrder.IsActive(weight.Category));

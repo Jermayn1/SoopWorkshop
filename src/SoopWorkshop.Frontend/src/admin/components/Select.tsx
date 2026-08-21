@@ -17,8 +17,8 @@ type SelectProps<T extends string> = {
   disabled?: boolean
 }
 
-// Ueber den Wertetyp generisch, damit onChange den Enum-Typ zurueckgibt und
-// nicht einen beliebigen string — sonst faellt ein Tippfehler in der
+// Über den Wertetyp generisch, damit onChange den Enum-Typ zurückgibt und
+// nicht einen beliebigen string — sonst fällt ein Tippfehler in der
 // Optionsliste erst zur Laufzeit auf.
 export function Select<T extends string>({
   label,

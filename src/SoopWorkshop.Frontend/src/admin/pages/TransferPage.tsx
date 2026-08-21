@@ -74,7 +74,7 @@ export function TransferPage() {
     let bundle: TaskBundle
 
     try {
-      // Clientseitig geparst: ein kaputtes JSON faellt hier mit der Meldung des
+      // Clientseitig geparst: ein kaputtes JSON fällt hier mit der Meldung des
       // Browsers auf, statt als 400 aus dem Modelbinder zu kommen.
       bundle = JSON.parse(await datei.text()) as TaskBundle
     } catch (cause) {

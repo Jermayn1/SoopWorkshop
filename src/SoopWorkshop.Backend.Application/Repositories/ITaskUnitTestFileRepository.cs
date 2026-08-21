@@ -11,8 +11,8 @@ namespace SoopWorkshop.Backend.Application.Repositories
         Task DeleteAsync(Guid id);
 
         // Ersetzt alle Dateien einer Aufgabe in einem Zug. Ein Editor mit mehreren
-        // Dateien speichert damit in einem Aufruf, statt Anlegen, Aendern und
-        // Loeschen einzeln gegeneinander abgleichen zu muessen.
+        // Dateien speichert damit in einem Aufruf, statt Anlegen, Ändern und
+        // Löschen einzeln gegeneinander abgleichen zu müssen.
         Task ReplaceForTaskItemAsync(Guid taskItemId, List<TaskUnitTestFile> files);
     }
 }

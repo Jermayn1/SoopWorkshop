@@ -48,8 +48,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
             }
         }
 
-        // Alte Testfaelle raus, neue rein, ein SaveChanges - damit die Aufgabe
-        // zwischendurch nie ohne ihre Pruefungen dasteht.
+        // Alte Testfälle raus, neue rein, ein SaveChanges - damit die Aufgabe
+        // zwischendurch nie ohne ihre Prüfungen dasteht.
         public async Task ReplaceForTaskItemAsync(Guid taskItemId, List<TaskTest> tests)
         {
             var existing = await _context.TaskTests

@@ -5,12 +5,12 @@ using SoopWorkshop.Backend.Infrastructure.Configuration;
 
 namespace SoopWorkshop.Backend.Infrastructure.Persistence
 {
-    // Wird ausschliesslich von den EF-Core-Tools benutzt (dotnet ef migrations / database update).
+    // Wird ausschließlich von den EF-Core-Tools benutzt (dotnet ef migrations / database update).
     // Liest denselben Connection-String wie Backend.API: appsettings.json, User Secrets,
-    // Umgebungsvariablen, zuletzt die .env - spaetere gewinnen.
+    // Umgebungsvariablen, zuletzt die .env - spätere gewinnen.
     public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
-        // Muss mit der UserSecretsId in SoopWorkshop.Backend.API.csproj uebereinstimmen
+        // Muss mit der UserSecretsId in SoopWorkshop.Backend.API.csproj übereinstimmen
         private const string UserSecretsId = "soopworkshop-backend-api";
 
         public AppDbContext CreateDbContext(string[] args)

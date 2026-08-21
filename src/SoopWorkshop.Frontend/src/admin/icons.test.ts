@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { falte, filterIcons, ICON_COUNT } from './icons'
 
 // filterIcons ist genau die Funktion, die der IconPickerDialog benutzt - der
-// Test prueft also den echten Weg und nicht einen Nachbau.
+// Test prüft also den echten Weg und nicht einen Nachbau.
 //
-// Zur Sache: seit der Symbol-Index mit echten Umlauten geschrieben ist, haengt
-// die gewohnte Ersatzschreibung an der Faltung. Ohne sie waere "pruefung" ins
-// Leere gelaufen, ohne dass irgendwo ein Fehler entsteht - die Suche haette
-// einfach nichts mehr gefunden. Siehe CLAUDE.md 9, Eintrag vom 2026-08-19.
+// Der Schwerpunkt liegt auf der Faltung: der Symbol-Index ist mit echten
+// Umlauten geschrieben, gesucht wird aber auch in Ersatzschreibung. Ohne die
+// Faltung liefe "pruefung" ins Leere, ohne dass irgendwo ein Fehler entsteht -
+// die Suche fände einfach nichts mehr.
 function namen(begriff: string): string[] {
   return filterIcons(begriff).flatMap((group) => group.eintraege.map((entry) => entry.name))
 }

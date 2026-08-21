@@ -17,7 +17,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
         private JavaAnalyzer CreateAnalyzer(params IEvaluationChecker[] checkers) =>
             new(checkers, Options.Create(_options), NullLogger<JavaAnalyzer>.Instance);
 
-        // Checker-Attrappe: liefert die uebergebenen Teilpruefungen zurueck.
+        // Checker-Attrappe: liefert die übergebenen Teilprüfungen zurück.
         private static IEvaluationChecker Checker(
             EvaluationCategory category,
             int order,
@@ -58,8 +58,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
             };
         }
 
-        // Clean Code entsteht aus mehreren unabhaengigen Checkern - sie muessen zu
-        // einer Kategorie mit allen Teilpruefungen zusammenfliessen.
+        // Clean Code entsteht aus mehreren unabhängigen Checkern - sie müssen zu
+        // einer Kategorie mit allen Teilprüfungen zusammenfließen.
         [Fact]
         public async Task AnalyzeAsync_MehrereCheckerEinerKategorie_ErgebenEineKategorie()
         {
@@ -112,7 +112,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
             var zuerst = Checker(EvaluationCategory.Compilability, 10);
             var danach = Checker(EvaluationCategory.Functionality, 40);
 
-            // Bewusst in falscher Reihenfolge uebergeben.
+            // Bewusst in falscher Reihenfolge übergeben.
             var analyzer = CreateAnalyzer(danach, zuerst);
 
             await analyzer.AnalyzeAsync(CreateSubmission(), CancellationToken.None);
@@ -181,7 +181,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
             result.CategoryResults.ShouldAllBe(c => c.EvaluationResultId == result.Id);
         }
 
-        // Das Arbeitsverzeichnis gehoert dem Analyzer - bleibt es liegen, laeuft
+        // Das Arbeitsverzeichnis gehört dem Analyzer - bleibt es liegen, läuft
         // die Platte auf Dauer voll.
         [Fact]
         public async Task AnalyzeAsync_RaeumtDasArbeitsverzeichnisAuf()

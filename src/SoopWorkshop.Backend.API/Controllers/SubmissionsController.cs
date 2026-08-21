@@ -37,7 +37,7 @@ namespace SoopWorkshop.Backend.API.Controllers
 
             foreach (var file in files)
             {
-                // Zeichensatz fest auf UTF-8, sonst haengt das Ergebnis von der
+                // Zeichensatz fest auf UTF-8, sonst hängt das Ergebnis von der
                 // Systemeinstellung des Servers ab — und Umlaute zerlegen sich.
                 using var reader = new StreamReader(file.OpenReadStream(), Encoding.UTF8);
                 var content = await reader.ReadToEndAsync(HttpContext.RequestAborted);
@@ -51,8 +51,8 @@ namespace SoopWorkshop.Backend.API.Controllers
                 : BadRequest(result.ErrorMessage);
         }
 
-        // Gibt den Auswertungsstand zurueck. Anders als /result unterscheidet dieser
-        // Endpunkt zwischen "laeuft noch", "fehlgeschlagen" und "nicht gefunden" —
+        // Gibt den Auswertungsstand zurück. Anders als /result unterscheidet dieser
+        // Endpunkt zwischen "läuft noch", "fehlgeschlagen" und "nicht gefunden" —
         // sonst kann das Frontend einen Fehlschlag nicht erkennen und pollt endlos.
         [HttpGet("{id:guid}/status")]
         [ProducesResponseType<SubmissionStatusDto>(StatusCodes.Status200OK)]

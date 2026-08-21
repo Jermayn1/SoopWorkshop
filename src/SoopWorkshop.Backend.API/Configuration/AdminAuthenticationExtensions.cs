@@ -17,7 +17,7 @@ namespace SoopWorkshop.Backend.API.Configuration
             var section = configuration.GetSection(AdminOptions.SectionName);
 
             // Gleiche Haltung wie beim Connection-String: lieber ein Start, der
-            // mit einem Satz abbricht, als einer, der still ohne Schutz laeuft.
+            // mit einem Satz abbricht, als einer, der still ohne Schutz läuft.
             if (string.IsNullOrWhiteSpace(section["Password"]))
             {
                 throw new InvalidOperationException(
@@ -40,30 +40,30 @@ namespace SoopWorkshop.Backend.API.Configuration
                     options.Cookie.HttpOnly = true;
 
                     // Die beiden Betriebsformen beschreiben verschiedene Lagen,
-                    // und das Cookie soll die tatsaechliche beschreiben statt
+                    // und das Cookie soll die tatsächliche beschreiben statt
                     // eine davon zu behaupten.
                     //
                     // ENTWICKLUNG: Frontend (5173) und API (5120) sind
-                    // verschiedene Origins, das Cookie ueberquert eine
+                    // verschiedene Origins, das Cookie überquert eine
                     // Origin-Grenze. Das verlangt SameSite=None, und None
                     // verlangt Secure. Browser behandeln localhost als
-                    // vertrauenswuerdigen Ursprung und nehmen Secure-Cookies
-                    // dort auch ueber http an.
+                    // vertrauenswürdigen Ursprung und nehmen Secure-Cookies
+                    // dort auch über http an.
                     //
                     // BETRIEB: hinter dem Reverse Proxy liefern Frontend und API
                     // denselben Ursprung aus, es gibt also keine Grenze mehr zu
-                    // ueberqueren - Lax genuegt und ist die engere Angabe.
+                    // überqueren - Lax genügt und ist die engere Angabe.
                     //
-                    // SameAsRequest ist KEIN Ausschalter: ueber https ist das
-                    // Cookie Secure, ueber http nicht. Es sagt die Wahrheit ueber
+                    // SameAsRequest ist KEIN Ausschalter: über https ist das
+                    // Cookie Secure, über http nicht. Es sagt die Wahrheit über
                     // die Verbindung, statt eine Zusicherung zu behaupten, die
-                    // sie nicht hergibt. Voraussetzung dafuer ist
-                    // UseForwardedHeaders in Program.cs - ohne das saehe das
+                    // sie nicht hergibt. Voraussetzung dafür ist
+                    // UseForwardedHeaders in Program.cs - ohne das sähe das
                     // Backend hinter dem Proxy immer http.
                     //
-                    // Warum ueberhaupt: der Betreuer verwaltet von einem anderen
-                    // Rechner im Netz. Mit Always waere das Cookie dort ueber
-                    // http nie zurueckgekommen, und die Anmeldung haette
+                    // Warum überhaupt: der Betreuer verwaltet von einem anderen
+                    // Rechner im Netz. Mit Always wäre das Cookie dort über
+                    // http nie zurückgekommen, und die Anmeldung hätte
                     // kommentarlos nie funktioniert.
                     if (environment.IsDevelopment())
                     {
@@ -80,10 +80,10 @@ namespace SoopWorkshop.Backend.API.Configuration
                     options.SlidingExpiration = true;
 
                     // Ohne diese beiden antwortet [Authorize] mit 302 auf eine
-                    // Anmeldeseite, die es in einer API nicht gibt. Fuer einen
+                    // Anmeldeseite, die es in einer API nicht gibt. Für einen
                     // Aufruf aus JavaScript ist die Weiterleitung eine falsche
                     // Auskunft: der Endpunkt ist nicht umgezogen, er ist nicht
-                    // erlaubt. Der fetch wuerde ihr folgen und am Ende einen
+                    // erlaubt. Der fetch würde ihr folgen und am Ende einen
                     // 404 auf /Account/Login melden.
                     options.Events.OnRedirectToLogin = context =>
                     {

@@ -14,9 +14,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   UnitTests: 'Unit-Tests',
 }
 
-// Zeigt eine Teilprüfung nach den Regeln aus CLAUDE.md §5.7:
-// Eingabe nur wenn es eine gab, Erwartet und Erhalten immer gemeinsam,
-// bestandene Prüfungen zeigen nichts.
+// Zeigt eine Teilprüfung. Die Darstellungsregeln gelten für alle Quellen
+// gleich — Checker, Konsolen-Testfälle und JUnit:
+//
+//   - Eingabe nur, wenn es eine gab.
+//   - Erwartet und Erhalten immer gemeinsam. Ein "Erwartet" ohne Gegenstück
+//     lässt den Leser raten; fehlt eine Seite, steht dort ein Gedankenstrich.
+//   - Bestandene Prüfungen zeigen nichts.
+//
+// Andere Komponenten, die Teilprüfungen anzeigen, verweisen auf diese Regeln.
 function TestCaseRow({ test, index }: { test: TestCaseResult; index: number }) {
   const hasComparison = test.expectedOutput !== '' || test.actualOutput !== ''
 
@@ -80,9 +86,9 @@ export function CategoryCard({ result, delay }: { result: CategoryResult; delay:
   const total = result.testCaseResults.length
   const hasDetails = total > 0 || result.errorTip !== ''
 
-  // Der Balken startet bei 0 und waechst erst nach dem ersten Anzeigen auf
-  // seinen Wert — sonst gaebe es nichts zu sehen, weil die Breite von Anfang
-  // an stimmen wuerde.
+  // Der Balken startet bei 0 und wächst erst nach dem ersten Anzeigen auf
+  // seinen Wert — sonst gäbe es nichts zu sehen, weil die Breite von Anfang
+  // an stimmen würde.
   const [barWidth, setBarWidth] = useState(0)
   useEffect(() => {
     const timer = window.setTimeout(() => setBarWidth(percentage), 60 + delay * 1000)

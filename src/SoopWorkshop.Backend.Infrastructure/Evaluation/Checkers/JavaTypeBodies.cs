@@ -9,20 +9,20 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
     // ContractChecker im gesamten Quelltext und meldet Treffer, die fachlich
     // keine sind.
     //
-    // Klammernzaehlen ist hier zulaessig, weil der Aufrufer den Text vorher
+    // Klammernzählen ist hier zulässig, weil der Aufrufer den Text vorher
     // durch JavaSourceText.StripCommentsAndLiterals schickt: Kommentare sowie
     // String-, Textblock- und Char-Literale sind dann weg, jede verbliebene
-    // Klammer ist echter Code. Auf rohem Quelltext waere das nicht verlaesslich -
-    // eine geschweifte Klammer in einem String wuerde mitzaehlen.
+    // Klammer ist echter Code. Auf rohem Quelltext wäre das nicht verlässlich -
+    // eine geschweifte Klammer in einem String würde mitzählen.
     public static class JavaTypeBodies
     {
-        // Findet den Rumpf zwischen der oeffnenden und der zugehoerigen
-        // schliessenden Klammer. null, wenn der Typ nicht deklariert ist.
+        // Findet den Rumpf zwischen der öffnenden und der zugehörigen
+        // schließenden Klammer. null, wenn der Typ nicht deklariert ist.
         //
-        // Bekanntes Ist-Verhalten: eine innere Klasse liegt im Rumpf der aeusseren
-        // und ihre Methoden zaehlen damit auch fuer die aeussere. Fuer den
+        // Bekanntes Ist-Verhalten: eine innere Klasse liegt im Rumpf der äußeren
+        // und ihre Methoden zählen damit auch für die äußere. Für den
         // Workshop hingenommen - innere Klassen kommen dort nicht vor, und die
-        // genaue Zugehoerigkeit prueft die JUnit-Kompilierung ohnehin exakt.
+        // genaue Zugehörigkeit prüft die JUnit-Kompilierung ohnehin exakt.
         public static string? BodyOf(string strippedCode, string typeName)
         {
             var declaration = Regex.Match(
@@ -51,11 +51,11 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             }
 
             // Unbalancierte Klammern: der Code kompiliert ohnehin nicht. Lieber
-            // den Rest zurueckgeben als so zu tun, als gaebe es den Typ nicht.
+            // den Rest zurückgeben als so zu tun, als gäbe es den Typ nicht.
             return strippedCode[(open + 1)..];
         }
 
-        // Alle deklarierten Typnamen - fuer die Meldung "erwartet Konto, gefunden
+        // Alle deklarierten Typnamen - für die Meldung "erwartet Konto, gefunden
         // Rechner, Kunde".
         public static List<string> DeclaredNames(string strippedCode) =>
             [.. Regex.Matches(strippedCode, @"\b(?:class|interface|enum|record)\s+([A-Za-z_][A-Za-z0-9_]*)")

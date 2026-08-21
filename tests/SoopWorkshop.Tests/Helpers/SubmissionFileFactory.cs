@@ -2,9 +2,9 @@ using SoopWorkshop.Backend.Domain.Entities;
 
 namespace SoopWorkshop.Tests.Helpers
 {
-    // Erzeugt SubmissionFile-Instanzen fuer die Checker-Tests.
+    // Erzeugt SubmissionFile-Instanzen für die Checker-Tests.
     // Die Navigation Submission bleibt bewusst ungesetzt, da die Checker
-    // ausschliesslich FileName und Content auswerten.
+    // ausschließlich FileName und Content auswerten.
     public static class SubmissionFileFactory
     {
         public static SubmissionFile Create(string content, string fileName = "Main.java") =>

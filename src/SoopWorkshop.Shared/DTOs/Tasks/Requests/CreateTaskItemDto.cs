@@ -20,7 +20,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         [Range(0, int.MaxValue, ErrorMessage = "Die Reihenfolge darf nicht negativ sein.")]
         public int Order { get; set; }
 
-        // Standard ConsoleOnly - passt zu den fruehen Aufgaben und laesst sich
+        // Standard ConsoleOnly - passt zu den frühen Aufgaben und lässt sich
         // ohne hinterlegte JUnit-Datei speichern.
         public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
 
@@ -29,7 +29,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         // vorgibt.
         public List<ExpectedTypeInputDto> ExpectedTypes { get; set; } = [];
 
-        // Erspart den zusaetzlichen PATCH-Aufruf nach dem Anlegen.
+        // Erspart den zusätzlichen PATCH-Aufruf nach dem Anlegen.
         public bool IsVisible { get; set; }
 
         public List<string> Hints { get; set; } = [];

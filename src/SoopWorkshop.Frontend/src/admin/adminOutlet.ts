@@ -3,8 +3,8 @@ import type { Category } from '../api/types'
 
 // Zwei Ebenen, zwei Kontexte.
 //
-// RequireAdmin haelt den Anmeldezustand, AdminLayout darunter den geladenen
-// Bestand. Beide reichen ueber den Outlet-Kontext weiter — ein geschachtelter
+// RequireAdmin hält den Anmeldezustand, AdminLayout darunter den geladenen
+// Bestand. Beide reichen über den Outlet-Kontext weiter — ein geschachtelter
 // Outlet ERSETZT den Kontext seines Elters, deshalb nimmt AdminLayout signOut
 // mit auf und gibt es weiter, statt es zu verlieren.
 
@@ -16,7 +16,7 @@ export type AdminCatalogContext = AdminSessionContext & {
   categories: Category[]
   loading: boolean
   error: string | null
-  /** Laedt den Bestand neu — nach dem Anlegen, Aendern oder Loeschen. */
+  /** Lädt den Bestand neu — nach dem Anlegen, Ändern oder Löschen. */
   reload: () => void
 }
 

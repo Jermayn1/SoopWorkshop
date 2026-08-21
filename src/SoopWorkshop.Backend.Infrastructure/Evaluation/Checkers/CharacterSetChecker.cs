@@ -8,7 +8,7 @@ using SoopWorkshop.Shared.Enums;
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
     // Prüft, ob die eingereichten Dateien Umlaute oder ß beinhalten.
-    // Teilpruefung der Sammelkategorie Clean Code.
+    // Teilprüfung der Sammelkategorie Clean Code.
     public class CharacterSetChecker : IEvaluationChecker
     {
         private static readonly Regex ForbiddenCharacters = new(@"[äöüÄÖÜß]", RegexOptions.Compiled);
@@ -17,7 +17,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
         public int Order => EvaluationCheckerOrder.CharacterSet;
 
-        // Gilt fuer jede Aufgabe - Clean Code wird immer bewertet.
+        // Gilt für jede Aufgabe - Clean Code wird immer bewertet.
         public bool IsApplicable(EvaluationContext context) => true;
 
         public Task<CheckerOutcome> CheckAsync(EvaluationContext context, CancellationToken cancellationToken)

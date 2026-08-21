@@ -14,7 +14,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Configuration
         }
 
         // Die Zusammenfassung landet im Log — das Passwort darf dort unter keinen
-        // Umstaenden auftauchen.
+        // Umständen auftauchen.
         [Fact]
         public void Describe_EnthaeltNiemalsDasPasswort()
         {

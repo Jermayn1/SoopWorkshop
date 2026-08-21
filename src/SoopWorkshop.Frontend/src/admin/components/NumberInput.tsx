@@ -33,7 +33,7 @@ export function NumberInput({
         step={1}
         onChange={(event) => {
           // Ein leeres Feld liefert "" und damit NaN. Daraus 0 zu machen ist
-          // ehrlicher als NaN durchzureichen — die Pruefung in validation.ts
+          // ehrlicher als NaN durchzureichen — die Prüfung in validation.ts
           // sieht den Wert danach ohnehin.
           const parsed = Number.parseInt(event.target.value, 10)
           onChange(Number.isNaN(parsed) ? 0 : parsed)

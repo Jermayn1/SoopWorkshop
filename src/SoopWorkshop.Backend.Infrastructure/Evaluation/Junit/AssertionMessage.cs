@@ -4,12 +4,12 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
 {
     // Zerlegt die Fehlermeldung eines fehlgeschlagenen JUnit-Tests.
     //
-    // JUnit meldet ueber opentest4j in einer festen Form:
+    // JUnit meldet über opentest4j in einer festen Form:
     //   "expected: <5> but was: <-1>"
     // und mit eigener Meldung des Admins davor:
     //   "Die Summe stimmt nicht ==> expected: <5> but was: <-1>"
     //
-    // Herausgeloest werden die beiden Werte, damit ein fehlgeschlagener
+    // Herausgelöst werden die beiden Werte, damit ein fehlgeschlagener
     // Unit-Test in der Anzeige genauso aussieht wie ein fehlgeschlagener
     // Konsolen-Testfall - "Erwartet" und "Erhalten" untereinander statt einer
     // englischen Zeile, die der Teilnehmer erst entziffern muss.
@@ -29,7 +29,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
             var match = Comparison.Match(message.Trim());
 
             // Passt die Form nicht - etwa bei einer NullPointerException oder
-            // einem assertTrue ohne Vergleich - bleibt die Meldung unveraendert.
+            // einem assertTrue ohne Vergleich - bleibt die Meldung unverändert.
             // Lieber roh als falsch zerlegt.
             if (!match.Success)
                 return new Parts(message.Trim(), string.Empty, string.Empty);

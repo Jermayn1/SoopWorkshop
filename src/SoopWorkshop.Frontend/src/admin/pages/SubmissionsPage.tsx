@@ -7,9 +7,9 @@ import type { SubmissionStatus } from '../../api/types'
 
 const SEITENGROESSE = 25
 
-// Dieselben vier Zustaende wie beim Teilnehmer, nur kompakter. "Pending" und
+// Dieselben vier Zustände wie beim Teilnehmer, nur kompakter. "Pending" und
 // "Running" bleiben getrennt: in der Warteschlange stehen ist etwas anderes
-// als geprueft werden, und beim Nachsehen waehrend des Workshops ist genau das
+// als geprüft werden, und beim Nachsehen während des Workshops ist genau das
 // der Unterschied, der interessiert.
 const STATUS_TEXT: Record<SubmissionStatus, string> = {
   Pending: 'In der Warteschlange',
@@ -18,8 +18,9 @@ const STATUS_TEXT: Record<SubmissionStatus, string> = {
   Failed: 'Fehlgeschlagen',
 }
 
-// Akzentfarben nie als Schriftfarbe auf heller Flaeche — dunkler Text auf
-// getoentem Grund mit Kante (§6.1).
+// Akzentfarben nie als Schriftfarbe auf heller Fläche — dunkler Text auf
+// getöntem Grund mit Kante. Grün oder Rot direkt auf Weiß bleibt unter den
+// 4,5:1 Kontrast, die lesbarer Fließtext braucht.
 const STATUS_STIL: Record<SubmissionStatus, string> = {
   Pending: 'bg-slate-50 text-slate-700 border-slate-200',
   Running: 'bg-amber-50 text-amber-900 border-amber-200',
@@ -53,8 +54,8 @@ function zeitpunkt(iso: string): string {
 }
 
 function Punkte({ eintrag }: { eintrag: SubmissionListItem }) {
-  // Null ist nicht 0. Ein Strich sagt "noch nicht bewertet", eine 0 wuerde
-  // behaupten, die Loesung habe nichts erreicht.
+  // Null ist nicht 0. Ein Strich sagt "noch nicht bewertet", eine 0 würde
+  // behaupten, die Lösung habe nichts erreicht.
   if (eintrag.totalScore === null) {
     return <span className="text-slate-400">—</span>
   }
@@ -95,7 +96,7 @@ export function SubmissionsPage() {
 
       if (signal?.aborted) return
 
-      // Alle Ausgaenge behandeln, nicht nur ok und "sonst". Ein nicht
+      // Alle Ausgänge behandeln, nicht nur ok und "sonst". Ein nicht
       // erreichbarer Server darf hier nicht als "keine Abgaben" erscheinen.
       if (result.kind === 'ok') {
         setSeite(result.value)
@@ -151,7 +152,7 @@ export function SubmissionsPage() {
             value={status}
             onChange={(event) => {
               setStatus(event.target.value as SubmissionStatus | '')
-              // Zurueck auf Seite 1: sonst zeigt ein Filter mit weniger
+              // Zurück auf Seite 1: sonst zeigt ein Filter mit weniger
               // Treffern eine leere Seite 3 und sieht nach "nichts da" aus.
               setSkip(0)
             }}
@@ -249,8 +250,8 @@ export function SubmissionsPage() {
                       {/*
                         Auf DIESELBE Ergebnisseite, die der Teilnehmer sieht.
                         Eine zweite, nachgebaute Anzeige liefe beim ersten Umbau
-                        auseinander — dieselbe Entscheidung wie bei der Vorschau
-                        in Etappe 5.5.
+                        auseinander, und der Unterschied fiele erst auf, wenn
+                        ein Teilnehmer etwas anderes vor sich hat.
                       */}
                       <Link
                         to={`/abgaben/${eintrag.id}`}

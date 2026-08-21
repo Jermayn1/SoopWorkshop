@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 {
-    // Setzt alle JUnit-Dateien einer Aufgabe in einem Aufruf. Gedacht fuer einen
+    // Setzt alle JUnit-Dateien einer Aufgabe in einem Aufruf. Gedacht für einen
     // Editor, in dem mehrere Dateien nebeneinander bearbeitet und zusammen
-    // gespeichert werden - was hier nicht drinsteht, wird geloescht.
+    // gespeichert werden - was hier nicht drinsteht, wird gelöscht.
     public class SaveTaskUnitTestFilesDto
     {
         [Required]

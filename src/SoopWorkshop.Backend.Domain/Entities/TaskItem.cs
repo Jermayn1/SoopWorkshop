@@ -12,8 +12,8 @@ public class TaskItem
     public int Order { get; set; }
     public bool IsVisible { get; set; }
 
-    // Womit geprueft wird. Standard ist die Konsolenpruefung, mit der die
-    // fruehen Aufgaben auskommen.
+    // Womit geprüft wird. Standard ist die Konsolenprüfung, mit der die
+    // frühen Aufgaben auskommen.
     public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ConsoleOnly;
 
     public TaskCategory Category { get; set; } = null!;
@@ -22,8 +22,8 @@ public class TaskItem
     public ICollection<TaskUnitTestFile> UnitTestFiles { get; set; } = [];
 
     // Der Vertrag zwischen Aufgabe und Abgabe: welche Klassen es geben muss und
-    // welche Methoden in welcher davon. Ohne ihn steht nur im Fliesstext der
-    // Beschreibung, wie die Klassen heissen sollen - und eine Abgabe mit
+    // welche Methoden in welcher davon. Ohne ihn steht nur im Fließtext der
+    // Beschreibung, wie die Klassen heißen sollen - und eine Abgabe mit
     // falschen Namen besteht klaglos, solange sie kompiliert.
     //
     // Leer, wenn die Aufgabe keine Namen vorgibt.

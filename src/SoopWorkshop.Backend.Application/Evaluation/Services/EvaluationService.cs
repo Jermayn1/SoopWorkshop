@@ -67,7 +67,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Services
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 // Herunterfahren ist kein Fehler der Abgabe. Der Status bleibt auf
-                // Running und wird beim naechsten Start vom Worker aufgeraeumt.
+                // Running und wird beim nächsten Start vom Worker aufgeräumt.
                 _logger.LogInformation("Auswertung von {SubmissionId} wurde abgebrochen.", submissionId);
                 throw;
             }

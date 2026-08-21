@@ -2,13 +2,13 @@ using System.Text.RegularExpressions;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
 {
-    // Uebersetzt javac-Meldungen in Saetze, die einem Teilnehmer sagen, was
+    // Übersetzt javac-Meldungen in Sätze, die einem Teilnehmer sagen, was
     // erwartet wurde.
     //
     // Der Anlass: kompiliert die hinterlegte JUnit-Datei nicht gegen die Abgabe,
     // ist das ein legitimes Nichtbestehen - aber "cannot find symbol" beantwortet
-    // nicht die Frage, wie die Methode denn heissen soll. Die Rohausgabe wird
-    // deshalb ergaenzt, nicht ersetzt.
+    // nicht die Frage, wie die Methode denn heißen soll. Die Rohausgabe wird
+    // deshalb ergänzt, nicht ersetzt.
     public static class JavaCompilerMessages
     {
         // javac schreibt den fehlenden Bezeichner in zwei Folgezeilen:
@@ -27,8 +27,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Junit
         private static readonly Regex NotPublic =
             new(@"(?<name>\S+)\s+is not public in\s+(?<owner>\S+)", RegexOptions.Compiled);
 
-        // Liefert eine verstaendliche Erklaerung oder null, wenn die Ausgabe kein
-        // bekanntes Muster enthaelt. Dann bleibt es bei der Rohausgabe - lieber
+        // Liefert eine verständliche Erklärung oder null, wenn die Ausgabe kein
+        // bekanntes Muster enthält. Dann bleibt es bei der Rohausgabe - lieber
         // roh als falsch geraten.
         public static string? Translate(string compilerOutput)
         {

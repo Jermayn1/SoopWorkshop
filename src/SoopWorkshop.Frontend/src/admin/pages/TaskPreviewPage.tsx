@@ -16,10 +16,10 @@ type LoadState =
 // Zwei Dinge machen die Vorschau ehrlich, ohne dass hier etwas nachgebaut wird:
 //
 //  1. Sie benutzt dieselbe Komponente wie die Teilnehmersicht (TaskView).
-//  2. Sie laedt ueber GET api/admin/tasks/{id}, und der liefert denselben
-//     TaskItemDto wie der oeffentliche Endpunkt — samt derselben Filterung auf
+//  2. Sie lädt über GET api/admin/tasks/{id}, und der liefert denselben
+//     TaskItemDto wie der öffentliche Endpunkt — samt derselben Filterung auf
 //     freigeschaltete JUnit-Dateien (TaskItemService.MapToDto). Eine hier
-//     nachgebaute Filterung koennte davon abweichen; diese kann es nicht.
+//     nachgebaute Filterung könnte davon abweichen; diese kann es nicht.
 export function TaskPreviewPage() {
   const { taskId = '' } = useParams()
 
@@ -47,7 +47,7 @@ export function TaskPreviewPage() {
 
   const leiste = (
     // Deutlich gekennzeichnet: wer beim Hin- und Herspringen vergisst, wo er
-    // ist, haelt sonst die Vorschau fuer die echte Teilnehmersicht.
+    // ist, hält sonst die Vorschau für die echte Teilnehmersicht.
     <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-8 py-3">
       <Eye className="w-4 h-4 shrink-0 text-amber-900" aria-hidden="true" />
       <span className="text-sm font-semibold text-amber-900">
@@ -113,7 +113,7 @@ export function TaskPreviewPage() {
         <TaskView task={state.task} />
 
         {/* Der Abgabeteil fehlt bewusst: hochgeladen wird im Probelauf, direkt
-            im Editor. Zwei Wege zum selben Ziel wuerden nur die Frage
+            im Editor. Zwei Wege zum selben Ziel würden nur die Frage
             aufwerfen, welcher der richtige ist. */}
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           Hier stünde für den Teilnehmer der Bereich zum Hochladen. Ausprobieren lässt sich die

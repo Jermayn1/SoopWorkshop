@@ -38,7 +38,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             if (error is not null)
                 return Result<TaskUnitTestFileDto>.Fail(error);
 
-            // Sonst kommt die Fremdschluesselbedingung als 500 zurueck.
+            // Sonst kommt die Fremdschlüsselbedingung als 500 zurück.
             if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
                 return Result<TaskUnitTestFileDto>.Fail("Die angegebene Aufgabe gibt es nicht.");
 
@@ -139,7 +139,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
         }
 
         // Der Dateiname landet als echte Datei im Arbeitsverzeichnis und muss in
-        // Java zum Klassennamen passen - deshalb hier pruefen und nicht erst,
+        // Java zum Klassennamen passen - deshalb hier prüfen und nicht erst,
         // wenn javac beim Teilnehmer scheitert.
         private static string? ValidateFileName(string fileName)
         {

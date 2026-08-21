@@ -9,13 +9,13 @@ type TaskViewProps = {
 
 // Die Aufgabe, wie der Teilnehmer sie liest — ohne den Abgabeteil.
 //
-// Herausgeloest aus TaskPage, damit die Vorschau im Verwaltungsbereich genau
-// dieselbe Darstellung benutzt. Eine nachgebaute Vorschau waere wertlos: sie
-// wuerde beim ersten Umbau der Teilnehmersicht auseinanderlaufen, und man
-// merkte es erst, wenn ein Teilnehmer etwas anderes sieht als angekuendigt.
+// Herausgelöst aus TaskPage, damit die Vorschau im Verwaltungsbereich genau
+// dieselbe Darstellung benutzt. Eine nachgebaute Vorschau wäre wertlos: sie
+// würde beim ersten Umbau der Teilnehmersicht auseinanderlaufen, und man
+// merkte es erst, wenn ein Teilnehmer etwas anderes sieht als angekündigt.
 //
-// Die Komponente laedt nichts. Wer sie benutzt, reicht die Aufgabe hinein -
-// die Vorschau also mit denselben Filtern, die die oeffentliche API anlegt.
+// Die Komponente lädt nichts. Wer sie benutzt, reicht die Aufgabe hinein -
+// die Vorschau also mit denselben Filtern, die die öffentliche API anlegt.
 export function TaskView({ task }: TaskViewProps) {
   const hasContract = task.expectedTypes.length > 0
 
@@ -55,7 +55,7 @@ export function TaskView({ task }: TaskViewProps) {
             Was geprüft wird
           </h2>
           {/* Je geforderte Klasse ein Block mit IHREN Methoden. Eine flache
-              Liste daneben liesse offen, welche Methode wohin gehoert — und
+              Liste daneben ließe offen, welche Methode wohin gehört — und
               genau danach wird bewertet. */}
           <dl className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100 shadow-sm">
             {task.expectedTypes.map((type) => (

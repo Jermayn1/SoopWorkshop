@@ -9,8 +9,8 @@ namespace SoopWorkshop.Backend.Application.Tasks
         //   "addiere"                                  ->  "addiere"
         //
         // Bewusst so simpel: alles vor der Klammer nehmen und davon das letzte
-        // Wort. Ein echter Parser waere hier Aufwand ohne Gegenwert, denn die
-        // genauen Parametertypen prueft ohnehin erst der Java-Compiler.
+        // Wort. Ein echter Parser wäre hier Aufwand ohne Gegenwert, denn die
+        // genauen Parametertypen prüft ohnehin erst der Java-Compiler.
         public static string ExtractMethodName(string signature)
         {
             if (string.IsNullOrWhiteSpace(signature))

@@ -2,15 +2,15 @@ namespace SoopWorkshop.Shared.Constants
 {
     public static class TaskBundleFormat
     {
-        // Version 1: Kategorien mit Symbol, Aufgaben mit Vertrag ueber mehrere
-        // Klassen, Konsolen-Testfaelle, JUnit-Dateien und Gewichte.
+        // Version 1: Kategorien mit Symbol, Aufgaben mit Vertrag über mehrere
+        // Klassen, Konsolen-Testfälle, JUnit-Dateien und Gewichte.
         //
-        // Wird nur erhoeht, wenn eine aeltere Datei nicht mehr gelesen werden
-        // kann. Ein zusaetzliches Feld allein ist kein Grund - das faellt beim
+        // Wird nur erhöht, wenn eine ältere Datei nicht mehr gelesen werden
+        // kann. Ein zusätzliches Feld allein ist kein Grund - das fällt beim
         // Einlesen einfach auf seinen Standardwert.
         public const int CurrentVersion = 1;
 
-        // Vorschlag fuer den Dateinamen beim Herunterladen.
+        // Vorschlag für den Dateinamen beim Herunterladen.
         public const string FileNamePrefix = "soop-bestand";
     }
 }

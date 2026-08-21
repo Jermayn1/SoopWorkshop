@@ -2,8 +2,8 @@
 // und die Spaltengrenzen aus den EF-Konfigurationen.
 //
 // Doppelt gepflegt, weil das Frontend nicht mehr dieselbe Assembly benutzt —
-// dasselbe Muster wie api/uploadLimits.ts. Das Frontend blockt frueh und
-// begruendet, das Backend prueft verbindlich. Wer hier etwas aendert, aendert
+// dasselbe Muster wie api/uploadLimits.ts. Das Frontend blockt früh und
+// begründet, das Backend prüft verbindlich. Wer hier etwas ändert, ändert
 // es dort mit.
 export const FIELD_LIMITS = {
   categoryName: 100,
@@ -21,7 +21,7 @@ export const FIELD_LIMITS = {
 
 export type FieldProblem = { field: string; message: string }
 
-// Die Pruefungen liefern fertige deutsche Saetze, keine Fehlercodes — genauso
+// Die Prüfungen liefern fertige deutsche Sätze, keine Fehlercodes — genauso
 // wie checkFiles in uploadLimits.ts. Der Satz steht dann direkt am Feld.
 export function checkRequired(field: string, label: string, value: string): FieldProblem | null {
   return value.trim().length === 0 ? { field, message: `${label} darf nicht leer sein.` } : null
@@ -47,8 +47,8 @@ export function checkOrder(field: string, value: number): FieldProblem | null {
 }
 
 // Regeln aus TaskUnitTestFileService.ValidateFileName. Pfadanteile sind dort
-// verboten, weil der Name spaeter zu einem Dateinamen im Arbeitsverzeichnis
-// wird — ein ".." darin waere ein Ausbruch daraus.
+// verboten, weil der Name später zu einem Dateinamen im Arbeitsverzeichnis
+// wird — ein ".." darin wäre ein Ausbruch daraus.
 export function checkJavaFileName(field: string, value: string): FieldProblem | null {
   const name = value.trim()
 
@@ -63,7 +63,7 @@ export function checkJavaFileName(field: string, value: string): FieldProblem | 
   return checkMaxLength(field, 'Der Dateiname', name, FIELD_LIMITS.unitTestFileName)
 }
 
-// Sammelt die Verstoesse einer Maske. Bewusst alle auf einmal statt nur des
+// Sammelt die Verstöße einer Maske. Bewusst alle auf einmal statt nur des
 // ersten: wer ein Formular abschickt, will nicht viermal hintereinander einen
 // neuen Fehler entdecken.
 export function collect(...problems: (FieldProblem | null)[]): FieldProblem[] {

@@ -4,17 +4,17 @@ using SoopWorkshop.Shared.Constants;
 namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
 {
     // Punktesystem v2. Reine Funktion ohne Datenbank und ohne Prozesse - genau
-    // deshalb laesst sich die Bewertung vollstaendig durchtesten.
+    // deshalb lässt sich die Bewertung vollständig durchtesten.
     //
     // Regeln:
-    //  1. Nur anwendbare Kategorien zaehlen. Ihre Gewichte werden auf die
+    //  1. Nur anwendbare Kategorien zählen. Ihre Gewichte werden auf die
     //     Gesamtpunktzahl normiert, das Gewicht weggefallener Kategorien verteilt
-    //     sich damit von selbst auf die uebrigen - keine Gratispunkte.
-    //  2. Kategoriepunkte = erreichbare Punkte x (bestandene Teilpruefungen /
-    //     Teilpruefungen gesamt), gerechnet in double.
-    //  3. Gerundet wird nach groesstem Rest, damit die Summe exakt aufgeht. Die
+    //     sich damit von selbst auf die übrigen - keine Gratispunkte.
+    //  2. Kategoriepunkte = erreichbare Punkte x (bestandene Teilprüfungen /
+    //     Teilprüfungen gesamt), gerechnet in double.
+    //  3. Gerundet wird nach größtem Rest, damit die Summe exakt aufgeht. Die
     //     alte Ganzzahl-Division hat bei 65/3 drei Punkte unterschlagen.
-    //  4. Volle Punkte gibt es nur, wenn alle Teilpruefungen bestanden sind.
+    //  4. Volle Punkte gibt es nur, wenn alle Teilprüfungen bestanden sind.
     public static class EvaluationScorer
     {
         public static IReadOnlyList<CategoryResult> Score(IReadOnlyList<CategoryScoreInput> inputs)
@@ -23,7 +23,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
                 return [];
 
             // Nach Anzeigereihenfolge sortieren, bevor gerechnet wird: das legt
-            // zugleich fest, wer bei gleichem Rest den zusaetzlichen Punkt bekommt,
+            // zugleich fest, wer bei gleichem Rest den zusätzlichen Punkt bekommt,
             // und macht das Ergebnis damit reproduzierbar.
             var ordered = inputs
                 .OrderBy(input => EvaluationCategoryOrder.Of(input.Category))
@@ -37,8 +37,8 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
             return [.. ordered.Select((input, index) => BuildCategoryResult(input, points[index], maxPoints[index]))];
         }
 
-        // Fehler in der Aufgabenkonfiguration duerfen nicht still zu einer
-        // veraenderten Note fuehren - lieber laut scheitern.
+        // Fehler in der Aufgabenkonfiguration dürfen nicht still zu einer
+        // veränderten Note führen - lieber laut scheitern.
         private static void Validate(List<CategoryScoreInput> inputs)
         {
             foreach (var input in inputs)
@@ -56,7 +56,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
         }
 
         // Erreichbare Punkte je Kategorie: Gewichte auf die Gesamtpunktzahl
-        // normieren und per groesstem Rest auf ganze Zahlen bringen.
+        // normieren und per größtem Rest auf ganze Zahlen bringen.
         private static int[] DistributeMaxPoints(List<CategoryScoreInput> inputs)
         {
             var totalWeight = inputs.Sum(input => input.Weight);
@@ -75,7 +75,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
 
             // Ganz bestanden und ganz durchgefallen stehen sofort fest. Nur die
             // teilweise bestandenen Kategorien nehmen an der Restverteilung teil -
-            // sonst koennte Runden aus "fast alles richtig" volle Punkte machen.
+            // sonst könnte Runden aus "fast alles richtig" volle Punkte machen.
             var partial = new bool[inputs.Count];
 
             for (var index = 0; index < inputs.Count; index++)
@@ -122,7 +122,7 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
         }
 
         // Verteilt so viele ganze Punkte, dass die Summe exakt das Ziel trifft:
-        // erst abrunden, dann den Rest an die groessten Nachkommaanteile.
+        // erst abrunden, dann den Rest an die größten Nachkommaanteile.
         private static int[] LargestRemainder(double[] exact, int target, Func<int, bool> canReceive)
         {
             var result = exact.Select(value => (int)Math.Floor(value)).ToArray();
@@ -154,8 +154,8 @@ namespace SoopWorkshop.Backend.Application.Evaluation.Scoring
                 ErrorTip = input.ErrorTip ?? string.Empty
             };
 
-            // Reihenfolge festhalten, in der die Checker die Teilpruefungen
-            // geliefert haben - die Datenbank gibt sie sonst beliebig zurueck.
+            // Reihenfolge festhalten, in der die Checker die Teilprüfungen
+            // geliefert haben - die Datenbank gibt sie sonst beliebig zurück.
             var order = 0;
             foreach (var result in input.Results)
             {
