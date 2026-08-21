@@ -6,51 +6,53 @@ Objektorientierte Programmierung).
 Teilnehmer laden ihre `.java`-Dateien hoch, das Tool kompiliert sie, prüft sie
 gegen hinterlegte Testfälle und JUnit-Tests und gibt ein kategorisiertes,
 nachvollziehbares Feedback zurück. Der Betreuer pflegt Aufgaben, Testfälle und
-Bewertungsgewichte über ein Web-Panel — ohne Datenbankzugriff.
+Bewertungsgewichte über ein Web-Panel, ohne Datenbankzugriff.
 
-Betrieb **workshop-intern**, nicht öffentlich erreichbar.
+Betrieb workshop-intern, nicht öffentlich erreichbar.
 
 ---
 
 ## Was es kann
 
-**Für Teilnehmer**
+### Für Teilnehmer
 
 - Aufgaben nach Kategorien, mit Beschreibung, Schwierigkeitsgrad und Tipps
 - Der geforderte Vertrag ist sichtbar: welche Klassen und Methoden erwartet
-  werden — bewertet wird nur, was auch dasteht
+  werden. Bewertet wird nur, was auch dasteht
 - Mehrere `.java`-Dateien per Auswahl oder Drag & Drop; abgelehnte Dateien
-  verschwinden nie kommentarlos, sondern nennen den Grund
+  nennen immer den Grund
 - Ergebnis nach Kategorien, mit *Eingabe*, *Erwartet* und *Erhalten* je
   Teilprüfung — Compilerausgaben und Stacktraces inklusive
 
-**Für den Betreuer**
+### Für den Betreuer
 
 - Kategorien und Aufgaben anlegen, ändern, sortieren, sichtbar schalten
 - Konsolen-Testfälle und JUnit-Dateien im Editor pflegen, aus Vorlagen oder per
   Datei-Upload
 - Bewertungsgewichte je Aufgabe, mit Live-Vorschau der Normierung auf 100
-- **Vorschau** (die Aufgabe exakt so, wie Teilnehmer sie sehen) und
-  **Probelauf** (eigene Musterlösung durch die echte Auswertung schicken)
-- **Abgaben-Übersicht** mit Status und Punktzahl
+- Vorschau (die Aufgabe exakt so, wie Teilnehmer sie sehen) und Probelauf
+  (eigene Musterlösung durch die echte Auswertung schicken)
+- Abgaben-Übersicht mit Status und Punktzahl
 - Gesamten Aufgabenbestand als eine JSON-Datei aus- und einspielen
 
-**Bewertung**
+### Bewertung
 
-Drei Kategorien — Clean Code, Kompilierbarkeit, Funktionalität —, gewichtet und
-auf 100 Punkte normiert. Keine Gratispunkte: eine Aufgabe ohne Prüfungen einer
-Kategorie verteilt deren Gewicht auf die übrigen, statt sie geschenkt zu
-vergeben. Volle Punkte gibt es nur, wenn alle Teilprüfungen bestanden sind.
+Drei Kategorien: Clean Code, Kompilierbarkeit, Funktionalität. Sie werden
+gewichtet und auf 100 Punkte normiert. Keine Gratispunkte: hat eine Aufgabe für
+eine Kategorie keine Prüfungen, verteilt sich deren Gewicht auf die übrigen.
+Volle Punkte gibt es nur, wenn alle Teilprüfungen bestanden sind.
 
 ---
 
 ## Aufsetzen
 
-**Voraussetzung ist nur Docker** (Engine mit Compose v2). .NET, Node und das
-JDK stecken in den Images — auf dem Server ist nichts weiter zu installieren.
-Auf den Teilnehmerrechnern ebenfalls nicht: ein Browser genügt.
+Voraussetzung ist nur Docker (Engine mit Compose v2). .NET, Node und das JDK
+stecken in den Images. Auf dem Server ist nichts weiter zu installieren, auf den
+Teilnehmerrechnern ebenfalls nicht: ein Browser genügt.
 
-**1 — Zugangsdaten setzen.** Vorlage kopieren:
+### 1. Zugangsdaten setzen
+
+Vorlage kopieren:
 
 ```bash
 cp .env.example .env
@@ -63,17 +65,17 @@ Darin zwei Werte setzen, beide sind Pflicht:
 | `POSTGRES_PASSWORD` | Passwort der Datenbank |
 | `Admin__Password` | schützt `/admin` und alle `api/admin/*` |
 
-Fehlt `Admin__Password`, **startet das Backend nicht** — lieber ein klarer
+Fehlt `Admin__Password`, **startet das Backend nicht**: lieber ein klarer
 Abbruch als ein stiller Start ohne Zugangsschutz. Die übrigen Werte in der
 `.env` (Zeitgrenzen, Parallelität, `HTTP_PORT`) haben brauchbare Standardwerte.
 
-**2 — Starten.**
+### 2. Starten
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
 ```
 
-Das `-f` ist kein Schmuck: ohne die Angabe zieht Compose zusätzlich
+Das `-f` ist keine Kosmetik: ohne die Angabe zieht Compose zusätzlich
 `docker-compose.override.yml` mit und veröffentlicht damit den Datenbank-Port.
 Die Override-Datei ist ausschließlich für die lokale Entwicklung gedacht.
 
@@ -87,11 +89,13 @@ Alle drei Dienste müssen `healthy` melden. Das Tool ist dann unter
 `http://<ip-des-servers>` erreichbar, die Verwaltung unter
 `http://<ip-des-servers>/admin`.
 
-**Nützlich im Betrieb:**
+Im Betrieb hilft ein Blick ins Protokoll des Backends:
 
 ```bash
 docker compose logs -f backend
 ```
+
+Der ganze Stapel hält mit einem Befehl an:
 
 ```bash
 docker compose down
@@ -101,10 +105,10 @@ docker compose down
 
 ### Ports
 
-**Im Betrieb ist genau ein Port nach außen offen.** Ein nginx liefert die Seite
-aus **und** reicht `/api` an das Backend weiter — Frontend und API haben damit
-denselben Ursprung. Backend und Datenbank liegen in einem Docker-Netz ohne
-Route nach draußen und sind von außerhalb des Servers nicht erreichbar.
+Im Betrieb ist genau ein Port nach außen offen. Ein nginx liefert die Seite aus
+und reicht `/api` an das Backend weiter; Frontend und API haben damit denselben
+Ursprung. Backend und Datenbank liegen in einem Docker-Netz ohne Route nach
+draußen und sind von außerhalb des Servers nicht erreichbar.
 
 | | Port | Erreichbar |
 |---|---|---|
@@ -112,7 +116,7 @@ Route nach draußen und sind von außerhalb des Servers nicht erreichbar.
 | Backend | `8080` | nur containerintern |
 | PostgreSQL | `5432` | nur containerintern |
 
-In der **Entwicklung** laufen Backend und Frontend außerhalb der Container:
+In der Entwicklung laufen Backend und Frontend außerhalb der Container:
 
 | | Adresse |
 |---|---|
@@ -122,16 +126,15 @@ In der **Entwicklung** laufen Backend und Frontend außerhalb der Container:
 | API-Doku (Scalar, nur Development) | `http://localhost:5120/scalar` |
 | PostgreSQL | `127.0.0.1:5432` |
 
-Der Frontend-Port steht an zwei Stellen — in `vite.config.ts` (`strictPort`)
-und im Backend unter `Cors:AllowedOrigins`. Wird er nur an einer geändert,
-blockt der Browser jede Anfrage, und der Fehler sieht nach einem kaputten
-Backend aus.
+Der Frontend-Port steht an zwei Stellen: in `vite.config.ts` (`strictPort`) und
+im Backend unter `Cors:AllowedOrigins`. Wird er nur an einer geändert, blockt
+der Browser jede Anfrage, und der Fehler sieht nach einem kaputten Backend aus.
 
 ---
 
 ## Lokal entwickeln
 
-**Voraussetzungen:** .NET 10 SDK, Node.js, Docker, JDK 21 im `PATH`
+Gebraucht werden .NET 10 SDK, Node.js, Docker und ein JDK 21 im `PATH`
 (`javac` und `java` werden je Abgabe als Prozess aufgerufen).
 
 `.env` wie oben anlegen, dann nur die Datenbank hochziehen:
@@ -140,7 +143,7 @@ Backend aus.
 docker compose up -d db
 ```
 
-Backend und Frontend laufen daneben direkt auf dem Rechner — am besten in zwei
+Backend und Frontend laufen daneben direkt auf dem Rechner, am besten in zwei
 Fenstern, damit die Protokolle lesbar bleiben:
 
 ```bash
@@ -151,8 +154,8 @@ dotnet run --project src/SoopWorkshop.Backend.API
 npm --prefix src/SoopWorkshop.Frontend run dev
 ```
 
-Migrationen anwenden — **ohne** `--startup-project`, da der Kontext zur
-Entwurfszeit über `AppDbContextFactory` gebaut wird:
+Migrationen anwenden, ohne `--startup-project`: den Kontext baut zur
+Entwurfszeit `AppDbContextFactory`.
 
 ```bash
 dotnet ef database update --project src/SoopWorkshop.Backend.Infrastructure
@@ -165,8 +168,8 @@ bei **laufendem** Backend:
 npm --prefix src/SoopWorkshop.Frontend run api:types
 ```
 
-**Das Backend hält seine DLLs.** Ein `dotnet build` bei laufendem Backend
-scheitert mit `CS2012 … used by another process` — erst stoppen, dann bauen.
+Das Backend hält seine DLLs. Ein `dotnet build` bei laufendem Backend scheitert
+mit `CS2012 … used by another process` — erst stoppen, dann bauen.
 
 ---
 
@@ -185,12 +188,12 @@ SoopWorkshop.Frontend                React 19 + Vite + TypeScript + Tailwind 4
 tests/SoopWorkshop.Tests             xUnit
 ```
 
-**Abhängigkeitsregeln:** Domain kennt kein EF Core. Application definiert
-Interfaces, Infrastructure implementiert sie. Frontend und Backend sprechen
-ausschließlich über HTTP; der Vertrag entsteht aus OpenAPI und wird als
-TypeScript erzeugt.
+Für die Abhängigkeiten gelten feste Regeln. Domain kennt kein EF Core.
+Application definiert Interfaces, Infrastructure implementiert sie. Frontend und
+Backend sprechen ausschließlich über HTTP; der Vertrag entsteht aus OpenAPI und
+wird als TypeScript erzeugt.
 
-**Ablauf einer Auswertung**
+So läuft eine Auswertung ab:
 
 ```
 Upload → SubmissionService → Warteschlange (begrenzt)
@@ -228,26 +231,29 @@ dotnet test SoopWorkshop.slnx --filter "Category!=Integration"
 
 ## Grenzen — bitte lesen, bevor du es aufsetzt
 
-**Das System ist für ein geschlossenes lokales Netz gedacht und gehört nicht ins
+Das System ist für ein geschlossenes lokales Netz gedacht und **gehört nicht ins
 Internet.**
 
-- **Fremder Code wird ausgeführt.** Jede Abgabe wird kompiliert und gestartet.
-  Der Backend-Container hat deshalb keine Route ins LAN und keine ins Internet,
-  dazu Grenzen für Speicher, CPU und Prozessanzahl sowie Zeitgrenzen je Lauf.
-  Was das **nicht** leistet: eine Abgabe erreicht weiterhin die Datenbank und
-  kann den Container belasten. Echte Isolation je Abgabe wäre eine spätere
-  Ausbaustufe. Behandle die VM als nicht vertrauenswürdig — Snapshot vorher.
-- **Ein Passwort, keine Benutzerverwaltung.** Der Workshop hat genau einen
-  Betreuer. Es gibt keine Rollen, keine Nutzerkonten, kein Zurücksetzen.
-- **Der Betrieb läuft über http, nicht https.** Das ist eine bewusste
-  Entscheidung: für einen internen Namen gibt es kein Zertifikat, dem Browser
-  von sich aus trauen, und die Alternativen wären für die Teilnehmer schlechter
-  (selbstsigniert = ganzseitige Warnung auf jedem Rechner; eigene CA =
-  Wurzelzertifikat von Hand auf jeden Rechner). Der Preis: das Admin-Passwort
-  läuft im Klartext durchs LAN. Nachrüsten ist später ein
-  Konfigurationsschritt — das Backend wertet `X-Forwarded-Proto` bereits aus.
-- **Abgaben überleben keinen Neustart mitten in der Auswertung.** Sie werden
-  danach als fehlgeschlagen markiert, mit einem Hinweis für den Teilnehmer.
+Fremder Code wird ausgeführt: jede Abgabe wird kompiliert und gestartet. Der
+Backend-Container hat deshalb keine Route ins LAN und keine ins Internet, dazu
+Grenzen für Speicher, CPU und Prozessanzahl sowie Zeitgrenzen je Lauf. Was das
+nicht leistet: eine Abgabe erreicht weiterhin die Datenbank und kann den
+Container belasten. Echte Isolation je Abgabe wäre eine spätere Ausbaustufe.
+Behandle die VM als nicht vertrauenswürdig — Snapshot vorher.
+
+Es gibt ein Passwort und keine Benutzerverwaltung. Der Workshop hat genau einen
+Betreuer, also gibt es keine Rollen, keine Nutzerkonten und kein Zurücksetzen.
+
+Der Betrieb läuft über http, nicht https. Das ist eine bewusste Entscheidung:
+für einen internen Namen gibt es kein Zertifikat, dem Browser von sich aus
+trauen, und die Alternativen wären für die Teilnehmer schlechter. Ein
+selbstsigniertes Zertifikat bringt eine ganzseitige Warnung auf jedem Rechner,
+eine eigene CA ein Wurzelzertifikat von Hand auf jeden Rechner. Der Preis: das
+Admin-Passwort läuft im Klartext durchs LAN. Nachrüsten ist später ein
+Konfigurationsschritt, das Backend wertet `X-Forwarded-Proto` bereits aus.
+
+Abgaben überleben keinen Neustart mitten in der Auswertung. Sie werden danach
+als fehlgeschlagen markiert, mit einem Hinweis für den Teilnehmer.
 
 ---
 
