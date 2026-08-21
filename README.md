@@ -8,8 +8,7 @@ gegen hinterlegte Testfälle und JUnit-Tests und gibt ein kategorisiertes,
 nachvollziehbares Feedback zurück. Der Betreuer pflegt Aufgaben, Testfälle und
 Bewertungsgewichte über ein Web-Panel — ohne Datenbankzugriff.
 
-Entstanden als Lernprojekt neben der Ausbildung zum Fachinformatiker für
-Anwendungsentwicklung. Betrieb **workshop-intern**, nicht öffentlich erreichbar.
+Betrieb **workshop-intern**, nicht öffentlich erreichbar.
 
 ---
 
@@ -45,77 +44,129 @@ vergeben. Volle Punkte gibt es nur, wenn alle Teilprüfungen bestanden sind.
 
 ---
 
-## Auf einem Server aufsetzen
+## Aufsetzen
 
-**→ [docs/server-aufsetzen.md](docs/server-aufsetzen.md)**
+**Voraussetzung ist nur Docker** (Engine mit Compose v2). .NET, Node und das
+JDK stecken in den Images — auf dem Server ist nichts weiter zu installieren.
+Auf den Teilnehmerrechnern ebenfalls nicht: ein Browser genügt.
 
-**Fünf Schritte, rund 15 Minuten** — davon zehn Wartezeit beim Bauen. Danach
-erreichen die Teilnehmer das Tool über `http://<ip-der-vm>`: **kein Zertifikat,
-kein DNS-Eintrag, und auf den Teilnehmerrechnern ist nichts einzurichten.**
-
-Kurzfassung, wenn Docker schon läuft:
+**1 — Zugangsdaten setzen.** Vorlage kopieren:
 
 ```bash
 cp .env.example .env
 ```
 
-Darin `POSTGRES_PASSWORD` und `Admin__Password` setzen, dann:
+Darin zwei Werte setzen, beide sind Pflicht:
+
+| Schlüssel | Wofür |
+|---|---|
+| `POSTGRES_PASSWORD` | Passwort der Datenbank |
+| `Admin__Password` | schützt `/admin` und alle `api/admin/*` |
+
+Fehlt `Admin__Password`, **startet das Backend nicht** — lieber ein klarer
+Abbruch als ein stiller Start ohne Zugangsschutz. Die übrigen Werte in der
+`.env` (Zeitgrenzen, Parallelität, `HTTP_PORT`) haben brauchbare Standardwerte.
+
+**2 — Starten.**
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
 ```
 
-Voraussetzung ist nur Docker. .NET, Node und das JDK stecken in den Images.
+Das `-f` ist kein Schmuck: ohne die Angabe zieht Compose zusätzlich
+`docker-compose.override.yml` mit und veröffentlicht damit den Datenbank-Port.
+Die Override-Datei ist ausschließlich für die lokale Entwicklung gedacht.
 
-Alles, was **nicht** gebraucht wird, damit es läuft — Absicherung, Firewall,
-Sicherung, ein DNS-Name statt der IP, HTTPS nachrüsten — steht getrennt in
-[docs/betrieb.md](docs/betrieb.md).
+Der erste Lauf baut beide Images und dauert einige Minuten. Danach:
+
+```bash
+docker compose ps
+```
+
+Alle drei Dienste müssen `healthy` melden. Das Tool ist dann unter
+`http://<ip-des-servers>` erreichbar, die Verwaltung unter
+`http://<ip-des-servers>/admin`.
+
+**Nützlich im Betrieb:**
+
+```bash
+docker compose logs -f backend
+```
+
+```bash
+docker compose down
+```
+
+`down` stoppt alles, die Daten bleiben im Volume. Nur `down -v` löscht sie.
+
+### Ports
+
+**Im Betrieb ist genau ein Port nach außen offen.** Ein nginx liefert die Seite
+aus **und** reicht `/api` an das Backend weiter — Frontend und API haben damit
+denselben Ursprung. Backend und Datenbank liegen in einem Docker-Netz ohne
+Route nach draußen und sind von außerhalb des Servers nicht erreichbar.
+
+| | Port | Erreichbar |
+|---|---|---|
+| Frontend + API (nginx) | `80`, über `HTTP_PORT` in der `.env` änderbar | aus dem Netz |
+| Backend | `8080` | nur containerintern |
+| PostgreSQL | `5432` | nur containerintern |
+
+In der **Entwicklung** laufen Backend und Frontend außerhalb der Container:
+
+| | Adresse |
+|---|---|
+| Frontend (Soop Judge) | `http://localhost:5173` |
+| Verwaltung | `http://localhost:5173/admin` |
+| Backend API | `http://localhost:5120`, `https://localhost:7212` |
+| API-Doku (Scalar, nur Development) | `http://localhost:5120/scalar` |
+| PostgreSQL | `127.0.0.1:5432` |
+
+Der Frontend-Port steht an zwei Stellen — in `vite.config.ts` (`strictPort`)
+und im Backend unter `Cors:AllowedOrigins`. Wird er nur an einer geändert,
+blockt der Browser jede Anfrage, und der Fehler sieht nach einem kaputten
+Backend aus.
 
 ---
 
 ## Lokal entwickeln
 
-**Voraussetzungen:** .NET 10 SDK, Node.js, Docker, JDK 21 im `PATH`.
+**Voraussetzungen:** .NET 10 SDK, Node.js, Docker, JDK 21 im `PATH`
+(`javac` und `java` werden je Abgabe als Prozess aufgerufen).
 
-Einmalig `.env.example` nach `.env` kopieren und `POSTGRES_PASSWORD` sowie
-`Admin__Password` setzen. Dann:
+`.env` wie oben anlegen, dann nur die Datenbank hochziehen:
 
 ```bash
 docker compose up -d db
 ```
 
-```bash
-.\scripts\start-dev.ps1
-```
-
-Startet Backend und Frontend in je einem eigenen Fenster.
-
-| Dienst | Adresse |
-|---|---|
-| Frontend (Soop Judge) | `http://localhost:5173` |
-| Verwaltung | `http://localhost:5173/admin` |
-| Backend API | `http://localhost:5120` |
-| API-Doku (Scalar, nur Development) | `http://localhost:5120/scalar` |
-
-Alle Prüfungen in einem Durchgang — Build, Projekt-Tests, Frontend-Build,
-Frontend-Tests, Linter:
+Backend und Frontend laufen daneben direkt auf dem Rechner — am besten in zwei
+Fenstern, damit die Protokolle lesbar bleiben:
 
 ```bash
-.\scripts\pruefe-alles.ps1
+dotnet run --project src/SoopWorkshop.Backend.API
 ```
 
-Er bricht **nicht** beim ersten Fehler ab und nennt am Ende jeden Schritt mit
-Ergebnis. `-OhneDocker` lässt die Integrationstests aus, `-MitCoverage` schreibt
-Berichte nach `artifacts/coverage/`.
+```bash
+npm --prefix src/SoopWorkshop.Frontend run dev
+```
 
-Nach jeder Änderung an Controllern oder DTOs, bei laufendem Backend:
+Migrationen anwenden — **ohne** `--startup-project`, da der Kontext zur
+Entwurfszeit über `AppDbContextFactory` gebaut wird:
+
+```bash
+dotnet ef database update --project src/SoopWorkshop.Backend.Infrastructure
+```
+
+Nach jeder Änderung an Controllern oder DTOs die TypeScript-Typen neu erzeugen,
+bei **laufendem** Backend:
 
 ```bash
 npm --prefix src/SoopWorkshop.Frontend run api:types
 ```
 
-Weitere Befehle, Konventionen und die Entwicklungshistorie stehen in
-[CLAUDE.md](CLAUDE.md).
+**Das Backend hält seine DLLs.** Ein `dotnet build` bei laufendem Backend
+scheitert mit `CS2012 … used by another process` — erst stoppen, dann bauen.
 
 ---
 
@@ -152,11 +203,6 @@ Upload → SubmissionService → Warteschlange (begrenzt)
 Externe Prozesse (`javac`, `java`, JUnit) laufen ausschließlich über
 `IProcessRunner`, nie direkt über `Process.Start`.
 
-**Im Betrieb** liefert ein nginx die Seite aus **und** reicht `/api` an das
-Backend weiter. Frontend und API haben damit denselben Ursprung: kein CORS, und
-das Anmelde-Cookie überquert keine Origin-Grenze. Backend und Datenbank liegen
-in einem Docker-Netz ohne Route nach draußen.
-
 ---
 
 ## Tests
@@ -165,16 +211,18 @@ in einem Docker-Netz ohne Route nach draußen.
 dotnet test SoopWorkshop.slnx
 ```
 
-400 Projekt-Tests, davon 98 gegen ein echtes PostgreSQL aus dem Container
-(Testcontainers), dazu 145 Frontend-Tests mit Vitest.
+```bash
+npm --prefix src/SoopWorkshop.Frontend test
+```
+
+401 Projekt-Tests, davon 98 gegen ein echtes PostgreSQL aus dem Container
+(Testcontainers), dazu 159 Frontend-Tests mit Vitest.
 
 **Die Projekt-Tests brauchen Docker.** Ohne Docker geht der schnelle Lauf:
 
 ```bash
 dotnet test SoopWorkshop.slnx --filter "Category!=Integration"
 ```
-
-Coverage wird gemessen, nicht erzwungen — es gibt bewusst keine Prozentschwelle.
 
 ---
 

@@ -428,16 +428,12 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Meine gesammelten Gedanken
-Gedanken.md
-
 # Jetbrains Rider
 .idea/
 *.sln.iml
 
-# Claude Code — launch.json gehoert ins Projekt, die Einstellungen nicht
-.claude/settings.local.json
+# Scratch-Dateien des REST-Clients aus Visual Studio und Rider
+*.http
 
-# Coverage-Berichte aus scripts/pruefe-alles.ps1 -MitCoverage
+# Coverage-Berichte
 artifacts/
-
