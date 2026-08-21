@@ -37,7 +37,7 @@ afterEach(() => {
 })
 
 // Zwischen zwei Abfragen liegen zwei Sekunden. Die Uhr muss innerhalb von act
-// laufen, sonst meldet React die Zustandsaenderung als nicht umschlossen.
+// laufen, sonst meldet React die Zustandsänderung als nicht umschlossen.
 async function warteEinIntervall() {
   await act(async () => {
     await vi.advanceTimersByTimeAsync(2000)
@@ -54,7 +54,7 @@ describe('useSubmissionPolling', () => {
 
   // Sofort fragen, nicht erst nach dem ersten Intervall. Sonst zeigte die
   // Ergebnisseite zwei Sekunden lang "In der Warteschlange", obwohl die
-  // Auswertung laengst fertig ist - beim Aufruf eines geteilten Links ist das
+  // Auswertung längst fertig ist - beim Aufruf eines geteilten Links ist das
   // der Normalfall, nicht die Ausnahme.
   it('fragt sofort und nicht erst nach zwei Sekunden', async () => {
     stand.mockResolvedValue({ kind: 'ok', value: zustand('Done') })
@@ -67,9 +67,9 @@ describe('useSubmissionPolling', () => {
     expect(stand).toHaveBeenCalledTimes(1)
   })
 
-  // Pending und Running sind verschiedene Zustaende und tragen im Frontend
+  // Pending und Running sind verschiedene Zustände und tragen im Frontend
   // verschiedene Texte: "in der Warteschlange" ist etwas anderes als "wird
-  // gerade geprueft".
+  // gerade geprüft".
   it('geht von Pending ueber Running nach Done', async () => {
     stand
       .mockResolvedValueOnce({ kind: 'ok', value: zustand('Pending') })
@@ -86,7 +86,7 @@ describe('useSubmissionPolling', () => {
     expect(result.current.phase.kind).toBe('running')
 
     // Nach dem dritten Tick meldet der Stand Done; der Hook holt danach noch
-    // das Ergebnis, also muessen die Microtasks einmal zusaetzlich leerlaufen.
+    // das Ergebnis, also müssen die Microtasks einmal zusätzlich leerlaufen.
     await warteEinIntervall()
     await act(async () => {})
 
@@ -160,7 +160,7 @@ describe('useSubmissionPolling', () => {
   })
 
   // Ohne Obergrenze dreht sich die Seite endlos, falls der Stand wider Erwarten
-  // nie einen Endzustand erreicht. 150 Versuche sind rund fuenf Minuten.
+  // nie einen Endzustand erreicht. 150 Versuche sind rund fünf Minuten.
   it('bricht nach 150 Versuchen mit einer Erklaerung ab', async () => {
     stand.mockResolvedValue({ kind: 'ok', value: zustand('Running') })
 

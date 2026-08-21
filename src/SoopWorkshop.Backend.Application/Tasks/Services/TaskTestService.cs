@@ -32,7 +32,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
 
         public async Task<Result<TaskTestDto>> CreateAsync(CreateTaskTestDto dto)
         {
-            // Sonst kommt die Fremdschluesselbedingung als 500 zurueck statt als
+            // Sonst kommt die Fremdschlüsselbedingung als 500 zurück statt als
             // Satz, der die Ursache nennt.
             if (!await _taskItemRepository.ExistsAsync(dto.TaskItemId, CancellationToken.None))
                 return Result<TaskTestDto>.Fail("Die angegebene Aufgabe gibt es nicht.");
@@ -86,7 +86,7 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
             return Result<bool>.Ok(true);
         }
 
-        // Ersetzt alle Testfaelle einer Aufgabe. Gegenstueck zu
+        // Ersetzt alle Testfälle einer Aufgabe. Gegenstück zu
         // TaskUnitTestFileService.SaveAllAsync und nach demselben Muster gebaut.
         public async Task<Result<List<TaskTestDto>>> SaveAllAsync(SaveTaskTestsDto dto)
         {
@@ -94,8 +94,8 @@ namespace SoopWorkshop.Backend.Application.Tasks.Services
                 return Result<List<TaskTestDto>>.Fail("Die angegebene Aufgabe gibt es nicht.");
 
             // Die Reihenfolge bestimmt, in welcher Folge der Teilnehmer die
-            // Teilpruefungen liest. Zwei Testfaelle auf derselben Position machen
-            // die Anzeige von der Datenbank abhaengig, statt von der Vorgabe.
+            // Teilprüfungen liest. Zwei Testfälle auf derselben Position machen
+            // die Anzeige von der Datenbank abhängig, statt von der Vorgabe.
             var duplicate = dto.Tests
                 .GroupBy(test => test.Order)
                 .FirstOrDefault(group => group.Count() > 1);

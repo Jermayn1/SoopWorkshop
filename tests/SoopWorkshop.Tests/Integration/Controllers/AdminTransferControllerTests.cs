@@ -59,7 +59,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
         }
 
         // Fehler in der Datei kommen bewusst NICHT als 400, sondern als Bericht
-        // mit Status 200: es ist kein kaputter Aufruf, sondern ein Befund ueber
+        // mit Status 200: es ist kein kaputter Aufruf, sondern ein Befund über
         // den Inhalt - und davon will der Aufrufer alle sehen, nicht den ersten
         // als Fehlermeldung.
         [Fact]
@@ -84,7 +84,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             report.IsValid.ShouldBeFalse();
             report.Errors.ShouldNotBeEmpty();
 
-            // Entscheidend: Replace haette ohne die Pruefung alles geloescht.
+            // Entscheidend: Replace hätte ohne die Prüfung alles gelöscht.
             await WithDbAsync(async db => (await db.TaskCategories.CountAsync()).ShouldBe(1));
         }
 
@@ -112,7 +112,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             var report = await response.Content.ReadFromJsonAsync<ImportReportDto>();
             report.ShouldNotBeNull();
 
-            // Die Zahl, auf die sich der Bestaetigungsdialog stuetzt.
+            // Die Zahl, auf die sich der Bestätigungsdialog stützt.
             report.SubmissionsDeleted.ShouldBe(1);
             report.Warnings.ShouldNotBeEmpty();
 

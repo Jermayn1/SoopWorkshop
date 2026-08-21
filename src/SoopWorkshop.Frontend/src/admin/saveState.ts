@@ -1,8 +1,8 @@
-// Zustaende eines Speichervorgangs. Vier, nicht zwei — wie ueberall im Projekt
-// (§6 "Zustaende statt Wahrheitswerte").
+// Zustände eines Speichervorgangs. Vier, nicht zwei: ein Wahrheitswert könnte
+// "läuft gerade" und "ist fehlgeschlagen" nicht auseinanderhalten.
 //
-// "saved" ist eigen: es ist kein Dauerzustand, sondern eine kurze Rueckmeldung.
-// Ohne ihn bleibt nach dem Speichern alles wie vorher stehen und man weiss
+// "saved" ist eigen: es ist kein Dauerzustand, sondern eine kurze Rückmeldung.
+// Ohne ihn bleibt nach dem Speichern alles wie vorher stehen und man weiß
 // nicht, ob der Klick angekommen ist.
 export type SaveState =
   | { kind: 'idle' }

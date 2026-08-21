@@ -19,7 +19,7 @@ export default function App() {
     <Routes>
       {/* Jede Ansicht hat eine eigene Adresse. Im Referenzprojekt wurde
           zwischen Aufgabe und Ergebnis nur ein useState umgeschaltet — damit
-          gab es keinen teilbaren Link, der Zurueck-Knopf des Browsers fuehrte
+          gab es keinen teilbaren Link, der Zurück-Knopf des Browsers führte
           aus der Anwendung heraus, und ein Neuladen verlor das Ergebnis. */}
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />

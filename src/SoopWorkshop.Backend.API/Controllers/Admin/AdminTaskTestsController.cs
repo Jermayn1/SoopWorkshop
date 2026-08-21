@@ -45,8 +45,8 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
                 : BadRequest(result.ErrorMessage);
         }
 
-        // Setzt alle Testfaelle der Aufgabe auf einmal. Was nicht im Body steht,
-        // wird geloescht - gedacht fuer einen Editor, der die Testfaelle einer
+        // Setzt alle Testfälle der Aufgabe auf einmal. Was nicht im Body steht,
+        // wird gelöscht - gedacht für einen Editor, der die Testfälle einer
         // Aufgabe als Block bearbeitet und zusammen speichert.
         [HttpPut]
         [ProducesResponseType<List<TaskTestDto>>(StatusCodes.Status200OK)]

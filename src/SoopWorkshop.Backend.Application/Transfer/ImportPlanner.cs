@@ -5,12 +5,12 @@ namespace SoopWorkshop.Backend.Application.Transfer
 {
     // Was der Import mit dem vorhandenen Bestand machen wird.
     //
-    // Reine Funktion wie der Validator. Die Vorschau und die Ausfuehrung rufen
+    // Reine Funktion wie der Validator. Die Vorschau und die Ausführung rufen
     // beide genau diese Rechnung auf - eine Vorschau, die etwas anderes anzeigt
-    // als danach passiert, waere schlimmer als gar keine.
+    // als danach passiert, wäre schlimmer als gar keine.
     public static class ImportPlanner
     {
-        // Was der Planer vom Bestand wissen muss. Bewusst nicht die Entitaeten
+        // Was der Planer vom Bestand wissen muss. Bewusst nicht die Entitäten
         // selbst: so bleibt die Application-Schicht frei von EF und die Rechnung
         // ohne Datenbank testbar.
         public readonly record struct ExistingCategory(Guid Id, IReadOnlyList<ExistingTask> Tasks);
@@ -33,12 +33,12 @@ namespace SoopWorkshop.Backend.Application.Transfer
             {
                 // Der gesamte Bestand geht weg, danach kommt die Datei komplett
                 // neu herein. Auch die Aufgaben, die in der Datei stehen - sie
-                // werden geloescht und wieder angelegt, nicht aktualisiert.
+                // werden gelöscht und wieder angelegt, nicht aktualisiert.
                 report.CategoriesDeleted = existing.Count;
                 report.TasksDeleted = vorhandeneAufgaben.Count;
 
-                // Das Loeschen einer Kategorie nimmt per Cascade alles mit, was
-                // darunter haengt. Die Abgaben der Teilnehmer sind der Teil, den
+                // Das Löschen einer Kategorie nimmt per Cascade alles mit, was
+                // darunter hängt. Die Abgaben der Teilnehmer sind der Teil, den
                 // niemand erwartet - deshalb steht die Zahl im Bericht.
                 report.SubmissionsDeleted = vorhandeneAufgaben.Values.Sum();
 
@@ -69,9 +69,9 @@ namespace SoopWorkshop.Backend.Application.Transfer
                 }
             }
 
-            // Beim Zusammenfuehren wird nichts geloescht. Was auf dem Server
-            // steht und nicht in der Datei, bleibt - das ist der Preis dafuer,
-            // dass ein Zusammenfuehren nie etwas kaputt macht.
+            // Beim Zusammenführen wird nichts gelöscht. Was auf dem Server
+            // steht und nicht in der Datei, bleibt - das ist der Preis dafür,
+            // dass ein Zusammenführen nie etwas kaputt macht.
             var uebrig = vorhandeneAufgaben.Count
                 - bundle.Categories.SelectMany(c => c.Tasks).Count(t => vorhandeneAufgaben.ContainsKey(t.Id));
 

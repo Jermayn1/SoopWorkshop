@@ -28,7 +28,7 @@ export function RequireAdmin() {
   }
 
   // Ein nicht erreichbares Backend ist kein fehlendes Passwort. Hier eine
-  // Anmeldemaske zu zeigen waere die irrefuehrendste Auskunft: man tippt
+  // Anmeldemaske zu zeigen wäre die irreführendste Auskunft: man tippt
   // richtig und kommt trotzdem nicht hinein.
   if (state.kind === 'unreachable') {
     return (

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace SoopWorkshop.Tests.Helpers
 {
-    // Erzeugt IFormFile-Instanzen fuer die Upload-Validierung.
+    // Erzeugt IFormFile-Instanzen für die Upload-Validierung.
     public static class FormFileFactory
     {
         public static IFormFile Create(string fileName, string content = "public class Main {}")
@@ -12,7 +12,7 @@ namespace SoopWorkshop.Tests.Helpers
             return new FormFile(new MemoryStream(bytes), 0, bytes.Length, "files", fileName);
         }
 
-        // Datei mit vorgegebener Groesse, ohne dafuer echten Inhalt zu erzeugen.
+        // Datei mit vorgegebener Größe, ohne dafür echten Inhalt zu erzeugen.
         public static IFormFile CreateWithSize(string fileName, long lengthInBytes)
         {
             var stream = new MemoryStream();

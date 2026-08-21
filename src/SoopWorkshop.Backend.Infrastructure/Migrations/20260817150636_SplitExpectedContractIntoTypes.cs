@@ -10,7 +10,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
     /// ExpectedClassName auf der Aufgabe und einer flachen Methodenliste gibt es
     /// jetzt beliebig viele geforderte Klassen mit je eigenen Methoden.
     ///
-    /// Von Hand nachgearbeitet. Das Geruest haette die Daten verloren: es loescht
+    /// Von Hand nachgearbeitet. Das Gerüst hätte die Daten verloren: es löscht
     /// ExpectedClassName und benennt TaskItemId einfach in TaskExpectedTypeId um -
     /// die bestehenden Methoden zeigten danach auf Typen, die es nicht gibt.
     /// Hier wird stattdessen umgezogen.
@@ -53,8 +53,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                 WHERE "ExpectedClassName" IS NOT NULL AND "ExpectedClassName" <> '';
                 """);
 
-            // Erst nullable anlegen, damit die vorhandenen Zeilen ueberleben und
-            // im naechsten Schritt zugeordnet werden koennen.
+            // Erst nullable anlegen, damit die vorhandenen Zeilen überleben und
+            // im nächsten Schritt zugeordnet werden können.
             migrationBuilder.AddColumn<Guid>(
                 name: "TaskExpectedTypeId",
                 table: "TaskExpectedMethods",
@@ -69,9 +69,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
                 """);
 
             // Methoden ohne Klassennamen kann das neue Modell nicht abbilden -
-            // eine Methode gehoert jetzt immer zu einer Klasse. Im Bestand gibt
+            // eine Methode gehört jetzt immer zu einer Klasse. Im Bestand gibt
             // es keine solche Zeile (nachgesehen); die Anweisung steht hier,
-            // damit die Migration auch auf einer fremden Datenbank durchlaeuft
+            // damit die Migration auch auf einer fremden Datenbank durchläuft
             // statt an der Nicht-Null-Bedingung zu scheitern.
             migrationBuilder.Sql("""
                 DELETE FROM "TaskExpectedMethods" WHERE "TaskExpectedTypeId" IS NULL;
@@ -120,9 +120,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Der Rueckweg ist zwangslaeufig verlustbehaftet: das alte Modell
-            // kennt nur eine Klasse je Aufgabe. Uebernommen wird die erste,
-            // die Methoden aller Klassen haengen danach wieder flach an der
+            // Der Rückweg ist zwangsläufig verlustbehaftet: das alte Modell
+            // kennt nur eine Klasse je Aufgabe. Übernommen wird die erste,
+            // die Methoden aller Klassen hängen danach wieder flach an der
             // Aufgabe.
             migrationBuilder.AddColumn<string>(
                 name: "ExpectedClassName",

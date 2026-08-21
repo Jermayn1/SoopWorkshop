@@ -30,9 +30,9 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             return (task.Id, submission);
         }
 
-        // Die Auswertung liest alles ueber submission.Task. Was hier fehlt, sieht
+        // Die Auswertung liest alles über submission.Task. Was hier fehlt, sieht
         // der JavaAnalyzer als "nicht vorhanden" - eine Aufgabe ohne mitgeladene
-        // UnitTestFiles wuerde im Modus UnitTestOnly nicht etwa scheitern,
+        // UnitTestFiles würde im Modus UnitTestOnly nicht etwa scheitern,
         // sondern anders bewertet. Deshalb jede Navigation einzeln.
         [Fact]
         public async Task GetByIdAsync_LaedtAbgabeUndDenGanzenAufgabenkontext()
@@ -85,9 +85,9 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             });
         }
 
-        // Der EvaluationWorker raeumt damit beim Start auf. Faengt die Abfrage
-        // die falschen Zustaende ein, setzt er entweder laufende Abgaben auf
-        // Failed oder laesst verwaiste stehen.
+        // Der EvaluationWorker räumt damit beim Start auf. Fängt die Abfrage
+        // die falschen Zustände ein, setzt er entweder laufende Abgaben auf
+        // Failed oder lässt verwaiste stehen.
         [Fact]
         public async Task GetIdsByStatusAsync_LiefertNurDieGesuchtenZustaendeAeltesteZuerst()
         {
@@ -119,10 +119,10 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             });
         }
 
-        // Laeuft ueber ExecuteUpdate, also am Kontext vorbei direkt in die
-        // Datenbank. Genau deshalb muss die Pruefung aus einem frischen Kontext
-        // kommen - der schreibende wuerde den alten Stand aus seiner
-        // Aenderungsverfolgung liefern.
+        // Läuft über ExecuteUpdate, also am Kontext vorbei direkt in die
+        // Datenbank. Genau deshalb muss die Prüfung aus einem frischen Kontext
+        // kommen - der schreibende würde den alten Stand aus seiner
+        // Änderungsverfolgung liefern.
         [Fact]
         public async Task UpdateStatusAsync_SchreibtStandUndMeldung()
         {

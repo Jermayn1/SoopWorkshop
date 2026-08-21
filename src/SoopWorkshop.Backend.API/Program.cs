@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // In der Entwicklung ist die .env im Repository-Wurzelverzeichnis die eine Wahrheit —
 // dieselbe Datei, aus der docker-compose die Datenbank aufsetzt. Sie wird zuletzt
-// hinzugefuegt und schlaegt damit auch Umgebungsvariablen, damit eine vergessene
+// hinzugefügt und schlägt damit auch Umgebungsvariablen, damit eine vergessene
 // Variable in der Shell nicht still etwas anderes bewirkt als in der Datei steht.
 if (builder.Environment.IsDevelopment())
 {
@@ -21,11 +21,11 @@ if (builder.Environment.IsDevelopment())
 
 // Add services to the container.
 
-// Enums gehen als Zeichenkette ueber die Leitung, nicht als Zahl — sonst liest ein
-// Frontend ausserhalb von .NET "difficulty": 0 und muss die Bedeutung raten.
+// Enums gehen als Zeichenkette über die Leitung, nicht als Zahl — sonst liest ein
+// Frontend außerhalb von .NET "difficulty": 0 und muss die Bedeutung raten.
 // Der Konverter steht an den Enums selbst (SoopWorkshop.Shared/Enums), nicht hier:
-// eine Registrierung ueber AddJsonOptions wirkt nur zur Laufzeit, der OpenAPI-Erzeuger
-// liest den Typ. Beides getrennt zu pflegen hiesse, zwei Wahrheiten zu haben.
+// eine Registrierung über AddJsonOptions wirkt nur zur Laufzeit, der OpenAPI-Erzeuger
+// liest den Typ. Beides getrennt zu pflegen hieße, zwei Wahrheiten zu haben.
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -35,21 +35,21 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Zugangsschutz fuer api/admin/*. Bricht den Start ab, wenn kein Passwort
+// Zugangsschutz für api/admin/*. Bricht den Start ab, wenn kein Passwort
 // gesetzt ist — siehe AdminAuthenticationExtensions.
 builder.Services.AddAdminAuthentication(builder.Configuration, builder.Environment);
 
 // Hinter dem Reverse Proxy endet TLS bei nginx; das Backend selbst spricht nur
-// http. Ohne diese Koepfe saehe es dauerhaft "http" und wuerde das Anmelde-Cookie
-// als nicht-Secure ausstellen, obwohl der Browser ueber https spricht.
+// http. Ohne diese Köpfe sähe es dauerhaft "http" und würde das Anmelde-Cookie
+// als nicht-Secure ausstellen, obwohl der Browser über https spricht.
 //
 // KnownIPNetworks und KnownProxies werden geleert, weil der Proxy ein anderer
 // Container mit wechselnder Adresse ist - die Voreinstellung vertraut nur
-// Loopback und verwirft die Koepfe still. Das ist nur vertretbar, WEIL das
-// Backend im Compose-Aufbau in einem internen Netz ohne veroeffentlichten Port
-// liegt und ausschliesslich ueber den Proxy erreichbar ist. Wird es jemals
-// direkt veroeffentlicht, muss hier ein bekanntes Netz eingetragen werden -
-// sonst kann jeder Aufrufer das Schema faelschen.
+// Loopback und verwirft die Köpfe still. Das ist nur vertretbar, WEIL das
+// Backend im Compose-Aufbau in einem internen Netz ohne veröffentlichten Port
+// liegt und ausschließlich über den Proxy erreichbar ist. Wird es jemals
+// direkt veröffentlicht, muss hier ein bekanntes Netz eingetragen werden -
+// sonst kann jeder Aufrufer das Schema fälschen.
 if (!builder.Environment.IsDevelopment())
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -61,8 +61,8 @@ if (!builder.Environment.IsDevelopment())
 }
 
 // CORS (Cross-Origin Resource Sharing), erlaubt es dem Frontend Requests an die API zu senden.
-// Die erlaubten Origins stehen in der Konfiguration, damit sie im Betrieb ueber
-// Umgebungsvariablen gesetzt werden koennen.
+// Die erlaubten Origins stehen in der Konfiguration, damit sie im Betrieb über
+// Umgebungsvariablen gesetzt werden können.
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
@@ -82,8 +82,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Welche Werte wirklich gelten, gehoert in die erste Logzeile und nicht in den
-// Stacktrace einer fehlgeschlagenen Abfrage. Das Passwort bleibt aussen vor.
+// Welche Werte wirklich gelten, gehört in die erste Logzeile und nicht in den
+// Stacktrace einer fehlgeschlagenen Abfrage. Das Passwort bleibt außen vor.
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("SoopWorkshop.Start");
 var evaluationOptions = app.Services.GetRequiredService<IOptions<EvaluationOptions>>().Value;
 
@@ -113,8 +113,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 
     // Nur in der Entwicklung, wo das https-Startprofil auf 7212 horcht. Im
-    // Container horcht das Backend ausschliesslich auf http, die Umleitung
-    // macht dort der Reverse Proxy — eine Umleitung hier wuerde ins Leere
+    // Container horcht das Backend ausschließlich auf http, die Umleitung
+    // macht dort der Reverse Proxy — eine Umleitung hier würde ins Leere
     // zeigen, weil das Backend keinen https-Port kennt.
     app.UseHttpsRedirection();
 }
@@ -123,21 +123,21 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 // Reihenfolge ist Pflicht: erst feststellen, wer da ist, dann entscheiden, ob
-// er darf. Umgedreht liest UseAuthorization eine noch leere Identitaet und
+// er darf. Umgedreht liest UseAuthorization eine noch leere Identität und
 // weist jeden Aufruf ab, auch den angemeldeten.
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Bewusst ohne Anmeldung: der Healthcheck laeuft im Compose-Aufbau als
+// Bewusst ohne Anmeldung: der Healthcheck läuft im Compose-Aufbau als
 // Container-Befehl und hat kein Cookie. Er gibt nur "Healthy" oder "Unhealthy"
-// zurueck, keine Innenansicht.
+// zurück, keine Innenansicht.
 app.MapHealthChecks("/health");
 
 app.Run();
 
-// Nur fuer die Integrationstests. Top-Level-Statements erzeugen zwar eine
+// Nur für die Integrationstests. Top-Level-Statements erzeugen zwar eine
 // Program-Klasse, aber eine interne - WebApplicationFactory<Program> braucht
-// sie oeffentlich. Zur Laufzeit aendert das nichts.
+// sie öffentlich. Zur Laufzeit ändert das nichts.
 public partial class Program;

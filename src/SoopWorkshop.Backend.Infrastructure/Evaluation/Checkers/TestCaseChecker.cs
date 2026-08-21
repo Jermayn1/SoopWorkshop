@@ -20,16 +20,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _options = options.Value;
         }
 
-        // Konsolen-Testfaelle und JUnit-Tests beantworten dieselbe Frage - tut das
+        // Konsolen-Testfälle und JUnit-Tests beantworten dieselbe Frage - tut das
         // Programm, was die Aufgabe verlangt. Sie zahlen deshalb auf dieselbe
-        // Kategorie ein und unterscheiden sich nur im Aufwand fuer den Admin.
+        // Kategorie ein und unterscheiden sich nur im Aufwand für den Admin.
         public EvaluationCategory Category => EvaluationCategory.Functionality;
 
         public int Order => EvaluationCheckerOrder.TestCases;
 
-        // Ohne hinterlegte Testfaelle gibt es nichts zu pruefen. Nutzt die Aufgabe
-        // zusaetzlich JUnit, traegt der JUnitChecker die Kategorie; sonst faellt sie
-        // aus der Wertung und ihr Gewicht verteilt sich auf die uebrigen. Frueher
+        // Ohne hinterlegte Testfälle gibt es nichts zu prüfen. Nutzt die Aufgabe
+        // zusätzlich JUnit, trägt der JUnitChecker die Kategorie; sonst fällt sie
+        // aus der Wertung und ihr Gewicht verteilt sich auf die übrigen. Früher
         // gab es hier stattdessen die volle Punktzahl geschenkt.
         public bool IsApplicable(EvaluationContext context) =>
             context.Task.EvaluationMode is EvaluationMode.ConsoleOnly or EvaluationMode.Both
@@ -40,8 +40,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             var tests = context.Task.Tests.OrderBy(test => test.Order).ToList();
             var compilation = context.Compilation;
 
-            // Kompiliert die Abgabe nicht, gelten alle Testfaelle als nicht
-            // bestanden. Die Kategorie faellt bewusst nicht weg - sonst wuerde
+            // Kompiliert die Abgabe nicht, gelten alle Testfälle als nicht
+            // bestanden. Die Kategorie fällt bewusst nicht weg - sonst würde
             // ihr Gewicht umverteilt und kaputter Code besser bewertet.
             if (compilation is null || !compilation.Success || compilation.MainClassName is null)
             {
@@ -75,7 +75,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     ExpectedOutput = test.ExpectedOutput,
 
                     // Erst vergleichen, dann beschriften: gibt das Programm gar
-                    // nichts aus, stuende in der Anzeige sonst nur "Erwartet" und
+                    // nichts aus, stünde in der Anzeige sonst nur "Erwartet" und
                     // darunter nichts - der Teilnehmer sieht dann nicht, ob die
                     // Ausgabe fehlte oder die Anzeige kaputt ist.
                     ActualOutput = string.IsNullOrWhiteSpace(actualOutput)
@@ -91,7 +91,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 : CheckerOutcome.WithTip(EvaluationMessages.ComparisonHint, [.. results]);
         }
 
-        // Entfernt führende und abschließende Leerzeichen und vereinheitlicht Zeilenumbrueche,
+        // Entfernt führende und abschließende Leerzeichen und vereinheitlicht Zeilenumbrüche,
         // damit kleine Formatierungsunterschiede nicht zu Fehlern führen.
         private static string NormalizeOutput(string output) =>
             output.Replace("\r\n", "\n").Trim();
@@ -106,7 +106,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     "java",
                     // Ohne diese beiden Angaben schreibt die JVM unter Windows in der
                     // Codepage des Systems (Cp1252) — Umlaute in der Programmausgabe
-                    // kaemen dann zerlegt beim Teilnehmer an.
+                    // kämen dann zerlegt beim Teilnehmer an.
                     ["-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", compilation.MainClassName!],
                     compilation.WorkingDirectory,
                     input,

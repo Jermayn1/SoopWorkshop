@@ -12,11 +12,11 @@ type SubmissionFormProps = {
   submitLabel?: string
 }
 
-// Dateien waehlen, pruefen, absenden.
+// Dateien wählen, prüfen, absenden.
 //
-// Herausgeloest aus TaskPage, damit der Probelauf im Verwaltungsbereich
+// Herausgelöst aus TaskPage, damit der Probelauf im Verwaltungsbereich
 // dieselbe Auswahl samt Grenzen und Ablehnungen benutzt statt einer zweiten,
-// die irgendwann anders prueft.
+// die irgendwann anders prüft.
 export function SubmissionForm({
   taskItemId,
   onSubmitted,

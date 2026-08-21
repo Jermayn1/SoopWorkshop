@@ -50,17 +50,17 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Repositories
         public async Task UpdateAsync(TaskItem item)
         {
             // Kommt die Aufgabe aus GetByIdAsync, ist sie schon verfolgt - dann
-            // erledigt die Aenderungsverfolgung alles, auch das Anlegen neuer und
-            // das Loeschen entfernter Kindzeilen.
+            // erledigt die Änderungsverfolgung alles, auch das Anlegen neuer und
+            // das Löschen entfernter Kindzeilen.
             //
-            // Update() waere dann nicht falsch, aber verschwenderisch: es setzt
+            // Update() wäre dann nicht falsch, aber verschwenderisch: es setzt
             // die Aufgabenzeile auf Modified, und EF schreibt daraufhin alle ihre
-            // Spalten statt nur der geaenderten.
+            // Spalten statt nur der geänderten.
             //
-            // Nur bei einer LOSGELOESTEN Aufgabe faerbt Update() den ganzen
+            // Nur bei einer LOSGELOESTEN Aufgabe färbt Update() den ganzen
             // mitgegebenen Graphen und schreibt jede Kindzeile neu - da ist der
-            // Aufruf aber noetig, sonst geht das Speichern still ins Leere. Beide
-            // Faelle sind in TaskItemRepositoryTests nachgemessen.
+            // Aufruf aber nötig, sonst geht das Speichern still ins Leere. Beide
+            // Fälle sind in TaskItemRepositoryTests nachgemessen.
             if (_context.Entry(item).State == EntityState.Detached)
                 _context.TaskItems.Update(item);
 

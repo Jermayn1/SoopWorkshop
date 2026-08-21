@@ -22,16 +22,16 @@ function javaDatei(name: string, size = 100): File {
   return file
 }
 
-// Der Datei-Input traegt className="hidden" und ist damit ueber keine Rolle
-// erreichbar - der sichtbare Knopf loest ihn aus. Fuer den Test wird er direkt
-// befuellt.
+// Der Datei-Input trägt className="hidden" und ist damit über keine Rolle
+// erreichbar - der sichtbare Knopf löst ihn aus. Für den Test wird er direkt
+// befüllt.
 function dateiEingabe(container: HTMLElement) {
   const input = container.querySelector<HTMLInputElement>('input[type="file"]')
   if (!input) throw new Error('Kein Datei-Eingabefeld gefunden.')
   return input
 }
 
-// Der Ablagebereich haengt am Elternelement des Eingabefelds.
+// Der Ablagebereich hängt am Elternelement des Eingabefelds.
 function fallenlassen(container: HTMLElement, ...dateien: File[]) {
   const bereich = dateiEingabe(container).parentElement
   if (!bereich) throw new Error('Kein Ablagebereich gefunden.')
@@ -59,10 +59,10 @@ describe('SubmissionForm', () => {
   })
 
   // Eine verworfene Datei darf nicht kommentarlos verschwinden. Im
-  // Referenzprojekt kam hier ein alert() mit einem Satz fuer alle Faelle.
+  // Referenzprojekt kam hier ein alert() mit einem Satz für alle Fälle.
   //
-  // Geprueft wird ueber Drag & Drop, und das ist kein Umweg: der Datei-Dialog
-  // traegt accept=".java" und laesst eine .txt gar nicht erst durch. Beim
+  // Geprüft wird über Drag & Drop, und das ist kein Umweg: der Datei-Dialog
+  // trägt accept=".java" und lässt eine .txt gar nicht erst durch. Beim
   // Fallenlassen greift accept nicht - das ist der Weg, auf dem eine falsche
   // Datei wirklich ankommt, und damit der Weg, den checkFiles absichern muss.
   it('nennt bei einer verworfenen Datei den Grund', () => {
@@ -109,9 +109,9 @@ describe('SubmissionForm', () => {
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith('abgabe-1'))
   })
 
-  // Die API antwortet mit fertigen deutschen Saetzen als Klartext. Sie werden
-  // im Wortlaut angezeigt und nicht durch eine eigene Meldung ersetzt - genau
-  // das verspricht CLAUDE.md, und genau daran ist Phase 5 einmal gescheitert.
+  // Die API antwortet auf Ablehnungen mit fertigen deutschen Sätzen als
+  // Klartext. Sie werden im Wortlaut angezeigt und nicht durch eine eigene
+  // Meldung ersetzt - nur der Server kennt den genauen Grund.
   it('zeigt die Ablehnung des Servers im Wortlaut', async () => {
     const user = userEvent.setup()
     absenden.mockResolvedValue({
@@ -155,7 +155,7 @@ describe('SubmissionForm', () => {
   })
 
   // Der Probelauf im Panel benutzt dieselbe Komponente, nur mit anderer
-  // Beschriftung - eine zweite Auswahl wuerde beim ersten Umbau auseinanderlaufen.
+  // Beschriftung - eine zweite Auswahl würde beim ersten Umbau auseinanderlaufen.
   it('uebernimmt eine abweichende Beschriftung', () => {
     render(
       <SubmissionForm taskItemId="a1" onSubmitted={vi.fn()} submitLabel="Probelauf starten" />,

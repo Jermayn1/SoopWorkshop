@@ -2,11 +2,11 @@ using SoopWorkshop.Shared.Constants;
 
 namespace SoopWorkshop.Backend.API.Validation
 {
-    // Serverseitige Pruefung der hochgeladenen Dateien. Das Frontend blockt zwar
-    // frueher, verbindlich ist aber nur, was hier geprueft wird.
+    // Serverseitige Prüfung der hochgeladenen Dateien. Das Frontend blockt zwar
+    // früher, verbindlich ist aber nur, was hier geprüft wird.
     public static class SubmissionUploadValidator
     {
-        // Leere Liste bedeutet: gueltig.
+        // Leere Liste bedeutet: gültig.
         public static List<string> Validate(IReadOnlyList<IFormFile> files)
         {
             var errors = new List<string>();
@@ -49,8 +49,8 @@ namespace SoopWorkshop.Backend.API.Validation
                     errors.Add($"„{fileName}“ ist größer als {maxKilobytes} KB.");
                 }
 
-                // Zwei Dateien mit gleichem Namen wuerden sich im Arbeitsverzeichnis
-                // gegenseitig ueberschreiben — ohne dass es jemand merkt.
+                // Zwei Dateien mit gleichem Namen würden sich im Arbeitsverzeichnis
+                // gegenseitig überschreiben — ohne dass es jemand merkt.
                 if (!seenFileNames.Add(fileName))
                 {
                     errors.Add($"„{fileName}“ wurde mehrfach hochgeladen.");
@@ -67,7 +67,7 @@ namespace SoopWorkshop.Backend.API.Validation
             if (string.IsNullOrWhiteSpace(fileName))
                 return false;
 
-            // Beide Trenner ausdruecklich, denn unter Linux gilt '\' als gueltiges
+            // Beide Trenner ausdrücklich, denn unter Linux gilt '\' als gültiges
             // Zeichen und rutschte sonst durch.
             if (fileName.Contains('/') || fileName.Contains('\\'))
                 return false;

@@ -13,7 +13,7 @@ namespace SoopWorkshop.Backend.Application.Transfer.Interfaces
     {
         Task<Result<TaskBundleDto>> ExportAsync(CancellationToken cancellationToken);
 
-        // Rechnet durch, was passieren wuerde, ohne etwas zu schreiben.
+        // Rechnet durch, was passieren würde, ohne etwas zu schreiben.
         Task<Result<ImportReportDto>> PreviewAsync(
             TaskBundleDto bundle,
             ImportMode mode,

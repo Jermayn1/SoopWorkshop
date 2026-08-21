@@ -1,6 +1,6 @@
 namespace SoopWorkshop.Shared.DTOs.Tasks
 {
-    // Eine geforderte Klasse samt den Methoden, die in ihr stehen muessen.
+    // Eine geforderte Klasse samt den Methoden, die in ihr stehen müssen.
     public class TaskExpectedTypeDto
     {
         public Guid Id { get; set; }
@@ -9,7 +9,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks
 
         public int Order { get; set; }
 
-        // Vollstaendige Signaturen zur Anzeige, z. B.
+        // Vollständige Signaturen zur Anzeige, z. B.
         // "public void einzahlen(double betrag)".
         public List<string> Methods { get; set; } = [];
     }

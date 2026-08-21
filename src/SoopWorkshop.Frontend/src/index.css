@@ -1,22 +1,22 @@
 @import 'tailwindcss';
 
 /* Schriften kommen als npm-Paket und werden mitgebaut — kein CDN.
-   Der Workshop laeuft unter Umstaenden ohne Internet. */
+   Der Workshop läuft unter Umständen ohne Internet. */
 @import '@fontsource-variable/plus-jakarta-sans';
 @import '@fontsource-variable/jetbrains-mono';
 
 /* Setzt die prose-Klassen um, mit denen die Aufgabenbeschreibung (Markdown)
-   gesetzt wird. Sie standen seit Phase 4 in TaskPage, ohne dass das Plugin
-   eingebunden war - Tailwind kennt "prose" nicht von sich aus, die Klassen
-   waren also still wirkungslos. In Tailwind 4 wird ein Plugin hier geladen
+   gesetzt wird. Ohne diese Zeile kennt Tailwind "prose" nicht und die ganze
+   Klassenkette ist still wirkungslos - eine unbekannte Utility-Klasse erzeugt
+   keinen Fehler, sie tut nichts. In Tailwind 4 wird ein Plugin hier geladen
    und nicht mehr in einer tailwind.config.js. */
 @plugin '@tailwindcss/typography';
 
 /* Keine eigene Farbpalette. Die Komponenten benutzen Tailwinds Standardfarben
    (slate, indigo, emerald, rose, amber) genau so wie im Referenzprojekt —
-   der Feinschliff an Farben und Abstaenden passiert von Hand.
+   der Feinschliff an Farben und Abständen passiert von Hand.
 
-   Hier steht nur, was das Geruest braucht. */
+   Hier steht nur, was das Gerüst braucht. */
 @theme {
   --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace;
@@ -140,9 +140,9 @@
   animation: wackeln 2.5s ease-in-out infinite;
 }
 
-/* Ein- und Ausklappen ohne feste Hoehe: Das Raster faehrt die Zeile von 1fr
-   auf 0fr, das Kind muss dafuer min-height 0 haben. Zuverlaessiger als eine
-   Hoehenanimation in JavaScript und ohne gemessene Werte. */
+/* Ein- und Ausklappen ohne feste Höhe: Das Raster fährt die Zeile von 1fr
+   auf 0fr, das Kind muss dafür min-height 0 haben. Zuverlässiger als eine
+   Höhenanimation in JavaScript und ohne gemessene Werte. */
 @utility klapp {
   display: grid;
   grid-template-rows: 1fr;

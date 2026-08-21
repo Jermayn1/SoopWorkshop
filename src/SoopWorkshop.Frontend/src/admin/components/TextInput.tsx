@@ -33,8 +33,8 @@ export function TextInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        // Absichtlich KEIN maxLength am Element: der Browser wuerde die Eingabe
-        // dann kommentarlos abschneiden. Die Grenze prueft validation.ts und
+        // Absichtlich KEIN maxLength am Element: der Browser würde die Eingabe
+        // dann kommentarlos abschneiden. Die Grenze prüft validation.ts und
         // sagt, was zu viel ist.
         aria-describedby={describedBy(id, hint !== undefined, error !== undefined)}
         aria-invalid={error !== undefined}

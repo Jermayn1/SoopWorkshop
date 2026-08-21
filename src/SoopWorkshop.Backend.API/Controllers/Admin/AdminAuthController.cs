@@ -25,7 +25,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
             _logger = logger;
         }
 
-        // Prueft das Passwort und setzt bei Erfolg das Anmelde-Cookie.
+        // Prüft das Passwort und setzt bei Erfolg das Anmelde-Cookie.
         [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -35,7 +35,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
             if (!IsCorrectPassword(dto.Password))
             {
                 // Ohne Protokollierung bliebe ein Durchprobieren unsichtbar.
-                // Das Passwort selbst gehoert dabei nicht ins Log.
+                // Das Passwort selbst gehört dabei nicht ins Log.
                 _logger.LogWarning("Fehlgeschlagene Anmeldung im Admin-Bereich.");
                 return Unauthorized("Das Passwort stimmt nicht.");
             }
@@ -54,8 +54,8 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
         }
 
         // Bewusst ohne [Authorize]: Abmelden soll auch dann 204 liefern, wenn
-        // das Cookie bereits abgelaufen ist. Ein 401 an dieser Stelle wuerde
-        // dem Frontend einen Fehler melden fuer etwas, das schon erledigt ist.
+        // das Cookie bereits abgelaufen ist. Ein 401 an dieser Stelle würde
+        // dem Frontend einen Fehler melden für etwas, das schon erledigt ist.
         [HttpPost("logout")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -76,12 +76,12 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
             Ok(new AdminSessionDto { IsAuthenticated = true });
 
         // Vergleich in konstanter Zeit statt mit ==. Ein Zeichenkettenvergleich
-        // bricht beim ersten Unterschied ab; aus den Laufzeitunterschieden laesst
+        // bricht beim ersten Unterschied ab; aus den Laufzeitunterschieden lässt
         // sich ein Passwort zeichenweise erraten.
         //
-        // Die Laenge verraet FixedTimeEquals weiterhin (ungleich lange Eingaben
-        // sind sofort false). Fuer ein workshop-internes Passwort ist das
-        // vertretbar - es waere sonst ein Hashvergleich noetig.
+        // Die Länge verrät FixedTimeEquals weiterhin (ungleich lange Eingaben
+        // sind sofort false). Für ein workshop-internes Passwort ist das
+        // vertretbar - es wäre sonst ein Hashvergleich nötig.
         private bool IsCorrectPassword(string candidate) =>
             CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(candidate),

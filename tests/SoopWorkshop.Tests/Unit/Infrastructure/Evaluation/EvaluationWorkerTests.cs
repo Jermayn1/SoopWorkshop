@@ -66,8 +66,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation
                 Arg.Any<CancellationToken>());
         }
 
-        // Eine Exception aus ExecuteAsync faehrt sonst den kompletten Host herunter
-        // (BackgroundServiceExceptionBehavior.StopHost) — die API wuerde bei einer
+        // Eine Exception aus ExecuteAsync fährt sonst den kompletten Host herunter
+        // (BackgroundServiceExceptionBehavior.StopHost) — die API würde bei einer
         // nicht erreichbaren Datenbank gar nicht erst starten.
         [Fact]
         public async Task ExecuteAsync_AufraeumenSchlaegtFehl_BeendetDenHostNicht()

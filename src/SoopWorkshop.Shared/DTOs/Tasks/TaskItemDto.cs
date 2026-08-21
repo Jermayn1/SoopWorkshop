@@ -14,15 +14,15 @@ namespace SoopWorkshop.Shared.DTOs.Tasks
         public EvaluationMode EvaluationMode { get; set; }
 
         // Der Vertrag: welche Klassen es geben muss und welche Methoden in
-        // welcher davon. Wird geprueft und dem Teilnehmer angezeigt.
+        // welcher davon. Wird geprüft und dem Teilnehmer angezeigt.
         //
         // Leer, wenn die Aufgabe keine Namen vorgibt.
         public List<TaskExpectedTypeDto> ExpectedTypes { get; set; } = [];
 
         public List<TaskHintDto> Hints { get; set; } = [];
 
-        // Nur die Dateien, die fuer Teilnehmer freigeschaltet sind. Im
-        // Admin-Bereich kommen sie ueber den eigenen Endpunkt vollstaendig.
+        // Nur die Dateien, die für Teilnehmer freigeschaltet sind. Im
+        // Admin-Bereich kommen sie über den eigenen Endpunkt vollständig.
         public List<TaskUnitTestFileDto> VisibleUnitTestFiles { get; set; } = [];
     }
 }

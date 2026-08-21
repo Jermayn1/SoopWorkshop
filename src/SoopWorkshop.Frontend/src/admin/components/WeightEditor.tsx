@@ -10,8 +10,8 @@ export function WeightEditor({ values, onChange }: WeightEditorProps) {
   const ordered = WEIGHTED_CATEGORIES.map((entry) => values[entry.category])
   const withAll = distributePoints(ordered)
 
-  // Faellt Funktionalitaet weg — etwa weil eine Aufgabe gar keine Pruefung der
-  // Funktionalitaet hat —, verteilt sich ihr Gewicht auf die uebrigen. Aus
+  // Fällt Funktionalität weg — etwa weil eine Aufgabe gar keine Prüfung der
+  // Funktionalität hat —, verteilt sich ihr Gewicht auf die übrigen. Aus
   // 15/20/65 wird dann 43/57. Genau das versteht ohne Anzeige niemand.
   const withoutFunctionality = distributePoints(ordered.slice(0, 2))
 

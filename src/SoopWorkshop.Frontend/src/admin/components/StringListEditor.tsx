@@ -14,9 +14,9 @@ type StringListEditorProps = {
   addLabel: string
 }
 
-// Liste von Zeichenketten mit Reihenfolge. Benutzt fuer die erwarteten
-// Methodensignaturen und fuer die Tipps — beide sind fachlich dasselbe:
-// eine geordnete Liste von Saetzen, bei der die Position zaehlt.
+// Liste von Zeichenketten mit Reihenfolge. Benutzt für die erwarteten
+// Methodensignaturen und für die Tipps — beide sind fachlich dasselbe:
+// eine geordnete Liste von Sätzen, bei der die Position zählt.
 export function StringListEditor({
   label,
   hint,
@@ -48,8 +48,8 @@ export function StringListEditor({
 
       <ul className="mt-2 space-y-2">
         {values.map((value, index) => (
-          // Der Index als Schluessel ist hier richtig: die Eintraege haben keine
-          // eigene Identitaet, ihre Position IST ihre Bedeutung.
+          // Der Index als Schlüssel ist hier richtig: die Einträge haben keine
+          // eigene Identität, ihre Position IST ihre Bedeutung.
           <li key={index} className="flex items-start gap-2">
             <OrderButtons
               label={`${itemNoun} ${index + 1}`}

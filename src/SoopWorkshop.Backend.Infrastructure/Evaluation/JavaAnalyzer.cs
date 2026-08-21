@@ -9,9 +9,9 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 {
-    // Fuehrt die registrierten Checker aus und laesst den EvaluationScorer daraus
-    // die Punkte berechnen. Eine neue Pruefung wird nur noch in der DI angemeldet -
-    // hier ist dafuer keine Aenderung mehr noetig.
+    // Führt die registrierten Checker aus und lässt den EvaluationScorer daraus
+    // die Punkte berechnen. Eine neue Prüfung wird nur noch in der DI angemeldet -
+    // hier ist dafür keine Änderung mehr nötig.
     public class JavaAnalyzer : IJavaAnalyzer
     {
         private readonly IReadOnlyList<IEvaluationChecker> _checkers;
@@ -24,7 +24,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             ILogger<JavaAnalyzer> logger)
         {
             // Einmal sortieren statt bei jeder Abgabe: die Reihenfolge ist
-            // verbindlich, weil spaetere Checker das Kompilierergebnis brauchen.
+            // verbindlich, weil spätere Checker das Kompilierergebnis brauchen.
             _checkers = [.. checkers.OrderBy(checker => checker.Order)];
             _options = options.Value;
             _logger = logger;
@@ -32,8 +32,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 
         public async Task<EvaluationResult> AnalyzeAsync(Submission submission, CancellationToken cancellationToken)
         {
-            // Das Arbeitsverzeichnis gehoert dem Analyzer, damit das finally unten es
-            // auch dann loescht, wenn ein Checker eine Exception wirft.
+            // Das Arbeitsverzeichnis gehört dem Analyzer, damit das finally unten es
+            // auch dann löscht, wenn ein Checker eine Exception wirft.
             var workingDirectory = Path.Combine(Path.GetTempPath(), "soopworkshop", Guid.NewGuid().ToString());
             Directory.CreateDirectory(workingDirectory);
 
@@ -72,9 +72,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             }
         }
 
-        // Sammelt die Teilpruefungen der anwendbaren Checker je Kategorie ein.
-        // Mehrere Checker duerfen auf dieselbe Kategorie einzahlen - Clean Code
-        // besteht genau so aus Zeichensatz- und Namenspruefung.
+        // Sammelt die Teilprüfungen der anwendbaren Checker je Kategorie ein.
+        // Mehrere Checker dürfen auf dieselbe Kategorie einzahlen - Clean Code
+        // besteht genau so aus Zeichensatz- und Namensprüfung.
         private async Task<List<CategoryScoreInput>> RunCheckersAsync(
             EvaluationContext context,
             CancellationToken cancellationToken)
@@ -122,7 +122,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
                 errorTips[entry.Key].Count == 0 ? null : string.Join(" ", errorTips[entry.Key])))];
         }
 
-        // Aufgabenspezifisches Gewicht schlaegt den Standard aus der Konfiguration.
+        // Aufgabenspezifisches Gewicht schlägt den Standard aus der Konfiguration.
         private double ResolveWeight(TaskItem task, EvaluationCategory category)
         {
             var taskWeight = task.CategoryWeights.FirstOrDefault(weight => weight.Category == category);
@@ -150,7 +150,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
                 // Aufräumfehler sollen die Auswertung nicht fehlschlagen lassen — stumm
-                // bleiben duerfen sie trotzdem nicht, sonst laeuft die Platte unbemerkt voll.
+                // bleiben dürfen sie trotzdem nicht, sonst läuft die Platte unbemerkt voll.
                 _logger.LogWarning(exception, "Arbeitsverzeichnis {WorkingDirectory} konnte nicht geloescht werden.", workingDirectory);
             }
         }

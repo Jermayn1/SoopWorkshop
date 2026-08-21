@@ -10,8 +10,8 @@ namespace SoopWorkshop.Backend.Application.Repositories
         Task UpdateAsync(TaskTest test);
         Task DeleteAsync(Guid id);
 
-        // Ersetzt alle Testfaelle einer Aufgabe in einem Zug, wie es
-        // ITaskUnitTestFileRepository fuer die JUnit-Dateien tut.
+        // Ersetzt alle Testfälle einer Aufgabe in einem Zug, wie es
+        // ITaskUnitTestFileRepository für die JUnit-Dateien tut.
         Task ReplaceForTaskItemAsync(Guid taskItemId, List<TaskTest> tests);
     }
 }

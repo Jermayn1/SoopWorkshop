@@ -23,10 +23,11 @@ namespace SoopWorkshop.Tests.Integration
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            // Pflicht, und zwar aus einem konkreten Grund: in Development laedt
+            // Pflicht, und zwar aus einem konkreten Grund: in Development lädt
             // Program.cs die .env des Repositorys als LETZTE Konfigurationsquelle
-            // (bewusst so, siehe CLAUDE.md Paragraph 3). Sie wuerde die Werte hier
-            // ueberschreiben, und die Tests liefen gegen die Entwicklungsdatenbank.
+            // und schlägt damit absichtlich auch Umgebungsvariablen. Sie würde
+            // die Werte hier überschreiben, und die Tests liefen gegen die
+            // Entwicklungsdatenbank.
             builder.UseEnvironment("Testing");
 
             // UseSetting statt ConfigureAppConfiguration: beide Werte werden
@@ -42,8 +43,8 @@ namespace SoopWorkshop.Tests.Integration
             {
                 // Der EvaluationWorker setzt beim Start verwaiste Pending- und
                 // Running-Abgaben auf Failed. In einem Test, der genau so eine
-                // Abgabe angelegt hat, aendert er damit die Datenlage unter der
-                // Hand. Ausserdem braeuchte er ein JDK.
+                // Abgabe angelegt hat, ändert er damit die Datenlage unter der
+                // Hand. Außerdem bräuchte er ein JDK.
                 var worker = services.SingleOrDefault(d =>
                     d.ServiceType == typeof(IHostedService) &&
                     d.ImplementationType == typeof(EvaluationWorker));
@@ -51,14 +52,14 @@ namespace SoopWorkshop.Tests.Integration
                 if (worker is not null)
                     services.Remove(worker);
 
-                // Mit dem Worker faellt auch der einzige Leser der Warteschlange
+                // Mit dem Worker fällt auch der einzige Leser der Warteschlange
                 // weg. Die echte EvaluationQueue ist ein begrenzter Channel
-                // (QueueCapacity, Standard 100) mit FullMode.Wait und haengt als
+                // (QueueCapacity, Standard 100) mit FullMode.Wait und hängt als
                 // Singleton an dieser Factory, die einmal je Testlauf gebaut wird -
-                // Respawn setzt die Datenbank zurueck, diesen Channel nicht.
+                // Respawn setzt die Datenbank zurück, diesen Channel nicht.
                 // Legten die Tests insgesamt mehr als 100 Abgaben an, wartete
-                // CreateAsync bei der naechsten unbegrenzt auf einen Leser, den es
-                // nicht gibt: der Testlauf haengt ohne Fehlermeldung.
+                // CreateAsync bei der nächsten unbegrenzt auf einen Leser, den es
+                // nicht gibt: der Testlauf hängt ohne Fehlermeldung.
                 services.RemoveAll<IEvaluationQueue>();
                 services.AddSingleton<IEvaluationQueue>(new MitschreibendeWarteschlange());
             });
@@ -68,7 +69,7 @@ namespace SoopWorkshop.Tests.Integration
         /// Nimmt jede Abgabe an und merkt sie sich, statt sie zu stapeln.
         /// </summary>
         /// <remarks>
-        /// Nebenbei wird das Einreihen damit ueberhaupt erst pruefbar: vorher
+        /// Nebenbei wird das Einreihen damit überhaupt erst prüfbar: vorher
         /// belegte nur der Status Pending in der Datenbank, dass die Abgabe
         /// angekommen ist - ob sie je in der Warteschlange landete, sah niemand.
         /// </remarks>

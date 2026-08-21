@@ -29,7 +29,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Order = order
             };
 
-        // Kontext mit kompilierter Abgabe und den uebergebenen Testfaellen.
+        // Kontext mit kompilierter Abgabe und den übergebenen Testfällen.
         private static EvaluationContext Context(CompilationResult compilation, params TaskTest[] tests) =>
             EvaluationContextFactory.For(
                 task: EvaluationContextFactory.TaskWithTests(tests),
@@ -49,7 +49,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldBeNull();
         }
 
-        // Zeilenumbrueche und umgebende Leerzeichen sollen keinen Unterschied machen.
+        // Zeilenumbrüche und umgebende Leerzeichen sollen keinen Unterschied machen.
         [Theory]
         [InlineData("Hallo\r\nSoop", "Hallo\nSoop")]
         [InlineData("  Hallo Soop  ", "Hallo Soop")]
@@ -63,8 +63,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Frueher lieferte eine Zeitueberschreitung eine leere Ausgabe — der Teilnehmer
-        // sah nur einen roten Testfall ohne Erklaerung.
+        // Früher lieferte eine Zeitüberschreitung eine leere Ausgabe — der Teilnehmer
+        // sah nur einen roten Testfall ohne Erklärung.
         [Fact]
         public async Task CheckAsync_ProgrammLaeuftZuLange_ErklaertDieZeitueberschreitung()
         {
@@ -100,8 +100,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldHaveSingleItem().ActualOutput.ShouldContain("NullPointerException");
         }
 
-        // Gibt das Programm etwas aus, zaehlt allein die Standardausgabe — sonst
-        // wuerde eine Warnung auf stderr jeden Vergleich zerstoeren.
+        // Gibt das Programm etwas aus, zählt allein die Standardausgabe — sonst
+        // würde eine Warnung auf stderr jeden Vergleich zerstören.
         [Fact]
         public async Task CheckAsync_ProgrammSchreibtAufBeideStroeme_VergleichtNurDieStandardausgabe()
         {
@@ -112,8 +112,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Die Kategorie faellt bei einem Kompilierfehler bewusst nicht weg: sonst
-        // wuerde ihr Gewicht umverteilt und kaputter Code besser bewertet.
+        // Die Kategorie fällt bei einem Kompilierfehler bewusst nicht weg: sonst
+        // würde ihr Gewicht umverteilt und kaputter Code besser bewertet.
         [Fact]
         public async Task CheckAsync_KompilierungFehlgeschlagen_MarkiertAlleTestfaelleAlsNichtBestanden()
         {
@@ -158,8 +158,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Arg.Any<CancellationToken>());
         }
 
-        // Ohne diese Angaben schreibt die JVM unter Windows in Cp1252, waehrend der
-        // ProcessRunner UTF-8 erwartet — Umlaute kaemen zerlegt beim Teilnehmer an.
+        // Ohne diese Angaben schreibt die JVM unter Windows in Cp1252, während der
+        // ProcessRunner UTF-8 erwartet — Umlaute kämen zerlegt beim Teilnehmer an.
         [Fact]
         public async Task CheckAsync_StartetJavaMitUtf8Ausgabe()
         {
@@ -173,9 +173,10 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Arg.Any<CancellationToken>());
         }
 
-        // Loest das Finding aus §9 ab: frueher gab es hier die volle Punktzahl
-        // geschenkt. Jetzt faellt die Kategorie aus der Wertung, ihr Gewicht
-        // verteilt sich auf die uebrigen — nachgewiesen in EvaluationScorerTests.
+        // Ohne Testfälle ist der Checker nicht anwendbar. Die Kategorie fällt
+        // damit aus der Wertung und ihr Gewicht verteilt sich auf die übrigen -
+        // statt die volle Punktzahl zu verschenken. Nachgewiesen in
+        // EvaluationScorerTests.
         [Fact]
         public void IsApplicable_KeineTestfaelle_IstNichtAnwendbar()
         {
@@ -192,8 +193,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             CreateChecker().IsApplicable(context).ShouldBeTrue();
         }
 
-        // Ersetzt den frueheren Test zur Ganzzahl-Division: der Checker zaehlt nur
-        // noch bestandene Teilpruefungen, die Punkte rechnet der EvaluationScorer.
+        // Ersetzt den früheren Test zur Ganzzahl-Division: der Checker zählt nur
+        // noch bestandene Teilprüfungen, die Punkte rechnet der EvaluationScorer.
         [Fact]
         public async Task CheckAsync_ZweiVonDreiBestanden_MeldetZweiBestandeneTeilpruefungen()
         {

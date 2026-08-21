@@ -16,7 +16,7 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 
         public bool IsVisible { get; set; }
 
-        // Leer lassen fuer "kein eigenes Symbol".
+        // Leer lassen für "kein eigenes Symbol".
         [MaxLength(50, ErrorMessage = "Der Symbolname darf maximal 50 Zeichen lang sein.")]
         public string IconName { get; set; } = string.Empty;
     }

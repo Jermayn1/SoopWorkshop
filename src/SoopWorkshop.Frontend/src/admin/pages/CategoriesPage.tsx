@@ -27,8 +27,8 @@ export function CategoriesPage() {
   const [pendingDelete, setPendingDelete] = useState<Category | null>(null)
   const [pendingIcon, setPendingIcon] = useState<Category | null>(null)
 
-  // Jeder schreibende Aufruf laeuft hierdurch: einmal sperren, Meldung des
-  // Servers im Wortlaut uebernehmen, danach neu laden. Ohne das gemeinsame
+  // Jeder schreibende Aufruf läuft hierdurch: einmal sperren, Meldung des
+  // Servers im Wortlaut übernehmen, danach neu laden. Ohne das gemeinsame
   // Neuladen zeigt die Seitenleiste noch den alten Stand.
   const run = async (action: () => Promise<{ kind: string; message?: string }>) => {
     setBusy(true)
@@ -58,7 +58,7 @@ export function CategoriesPage() {
       return
     }
 
-    // Ans Ende einsortieren. Verschieben geht danach ueber die Pfeile — eine
+    // Ans Ende einsortieren. Verschieben geht danach über die Pfeile — eine
     // Ordnungszahl beim Anlegen einzutippen ist eine Frage, auf die niemand
     // eine sinnvolle Antwort hat.
     const nextOrder = categories.reduce((max, c) => Math.max(max, c.order), 0) + 1
@@ -83,7 +83,7 @@ export function CategoriesPage() {
     if (ok) setEditingId(null)
   }
 
-  // Tauscht die Ordnungszahlen der beiden Nachbarn. Zwei Aufrufe, dafuer ohne
+  // Tauscht die Ordnungszahlen der beiden Nachbarn. Zwei Aufrufe, dafür ohne
   // Umnummerieren der ganzen Liste.
   const move = async (index: number, direction: -1 | 1) => {
     const current = categories[index]
@@ -337,8 +337,8 @@ export function CategoriesPage() {
       {pendingDelete && (
         <ConfirmDialog
           title={`„${pendingDelete.name}“ löschen?`}
-          // Der Umfang gehoert in den Dialog, nicht in eine Fussnote: das
-          // Loeschen nimmt per Cascade den ganzen Teilbaum mit, inklusive der
+          // Der Umfang gehört in den Dialog, nicht in eine Fußnote: das
+          // Löschen nimmt per Cascade den ganzen Teilbaum mit, inklusive der
           // Abgaben der Teilnehmer und deren Auswertungen.
           message={
             pendingDelete.tasks.length === 0

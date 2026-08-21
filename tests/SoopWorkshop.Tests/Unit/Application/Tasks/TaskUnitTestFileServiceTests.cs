@@ -36,7 +36,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
         // --- Dateiname ---------------------------------------------------------
 
         // Der Name landet als echte Datei im Arbeitsverzeichnis und muss in Java
-        // zum Klassennamen passen. Faellt das erst bei javac auf, sieht es fuer
+        // zum Klassennamen passen. Fällt das erst bei javac auf, sieht es für
         // den Teilnehmer nach einem Fehler in seiner Abgabe aus.
         [Fact]
         public async Task CreateAsync_KeineJavaDatei_LehntAbUndNenntDenNamen()
@@ -91,8 +91,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             result.IsSuccess.ShouldBeTrue();
         }
 
-        // Der Name wird vor dem Laden geprueft. Ein ungueltiger Name darf die
-        // Datenbank gar nicht erst beschaeftigen.
+        // Der Name wird vor dem Laden geprüft. Ein ungültiger Name darf die
+        // Datenbank gar nicht erst beschäftigen.
         [Fact]
         public async Task UpdateAsync_KeineJavaDatei_LaedtNichtsUndSpeichertNichts()
         {
@@ -108,7 +108,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             await _repository.DidNotReceive().UpdateAsync(Arg.Any<TaskUnitTestFile>());
         }
 
-        // --- Fremdschluessel ---------------------------------------------------
+        // --- Fremdschlüssel ---------------------------------------------------
 
         [Fact]
         public async Task CreateAsync_AufgabeExistiertNicht_LiefertFehlerStattFremdschluesselverletzung()
@@ -144,7 +144,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Any<Guid>(), Arg.Any<List<TaskUnitTestFile>>());
         }
 
-        // --- Anlegen und Aendern -----------------------------------------------
+        // --- Anlegen und Ändern -----------------------------------------------
 
         [Fact]
         public async Task CreateAsync_GueltigeDatei_LegtSieAnUndGibtSieZurueck()
@@ -251,7 +251,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Is<List<TaskUnitTestFile>>(files => files.Count == 2));
         }
 
-        // Eine leere Liste ist eine gueltige Angabe: sie loescht alle Dateien.
+        // Eine leere Liste ist eine gültige Angabe: sie löscht alle Dateien.
         // Das braucht der Editor, wenn der Modus auf ConsoleOnly wechselt.
         [Fact]
         public async Task SaveAllAsync_LeereListe_LoeschtAlleDateien()
@@ -272,8 +272,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Is<List<TaskUnitTestFile>>(files => files.Count == 0));
         }
 
-        // Beide Dateien landen im selben Arbeitsverzeichnis - die eine wuerde die
-        // andere ueberschreiben. Gross- und Kleinschreibung zaehlt dabei nicht,
+        // Beide Dateien landen im selben Arbeitsverzeichnis - die eine würde die
+        // andere überschreiben. Groß- und Kleinschreibung zählt dabei nicht,
         // weil das Dateisystem unter Windows sie auch nicht unterscheidet.
         [Fact]
         public async Task SaveAllAsync_DoppelterDateiname_LehntAbUnabhaengigVonDerSchreibweise()
@@ -309,9 +309,10 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Any<Guid>(), Arg.Any<List<TaskUnitTestFile>>());
         }
 
-        // **Ist-Verhalten**, bewusst festgehalten: anders als TaskTestService
-        // lehnt SaveAllAsync doppelte Order-Werte nicht ab. Die Anzeigereihenfolge
-        // haengt dann von der Datenbank ab. Siehe CLAUDE.md Paragraph 9.
+        // Festgehaltenes Ist-Verhalten: anders als TaskTestService lehnt
+        // SaveAllAsync doppelte Order-Werte nicht ab. Die Anzeigereihenfolge hängt
+        // dann von der Datenbank ab. Die beiden Schwesterservices weichen hier
+        // also voneinander ab - wer das angleicht, muss diesen Test umdrehen.
         [Fact]
         public async Task SaveAllAsync_DoppelteReihenfolge_WirdBislangNichtBeanstandet()
         {

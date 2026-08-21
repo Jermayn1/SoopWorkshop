@@ -1,8 +1,8 @@
 // Spiegelt SoopWorkshop.Shared/Constants/SubmissionUploadLimits.cs.
 //
 // Doppelt gepflegt, weil das Frontend nicht mehr dieselbe Assembly benutzt.
-// Das Frontend blockt frueh und begruendet, das Backend prueft verbindlich —
-// wer hier etwas aendert, aendert es dort mit.
+// Das Frontend blockt früh und begründet, das Backend prüft verbindlich —
+// wer hier etwas ändert, ändert es dort mit.
 export const UPLOAD_LIMITS = {
   allowedExtension: '.java',
   maxFileCount: 10,
@@ -16,12 +16,12 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
 }
 
-// Prueft eine Auswahl gegen die Grenzen und liefert die Dateien, die
-// uebernommen werden, samt Begruendung fuer jede verworfene.
+// Prüft eine Auswahl gegen die Grenzen und liefert die Dateien, die
+// übernommen werden, samt Begründung für jede verworfene.
 //
 // Eine verworfene Datei darf nicht kommentarlos verschwinden — im
-// Referenzprojekt kam an dieser Stelle ein alert() mit einem Satz fuer alle
-// Faelle, und mehrere Dateien waren gar nicht vorgesehen.
+// Referenzprojekt kam an dieser Stelle ein alert() mit einem Satz für alle
+// Fälle, und mehrere Dateien waren gar nicht vorgesehen.
 export function checkFiles(
   existing: File[],
   incoming: File[],
@@ -35,12 +35,12 @@ export function checkFiles(
       continue
     }
 
-    // Gross- und Kleinschreibung zaehlt hier NICHT, weil sie es im Backend
+    // Groß- und Kleinschreibung zählt hier NICHT, weil sie es im Backend
     // nicht tut (SubmissionUploadValidator vergleicht mit OrdinalIgnoreCase).
-    // Vorher liess der Browser 'A.java' neben 'a.java' durch, und erst der
-    // Server lehnte ab - der Teilnehmer bekam eine Ablehnung fuer etwas, das
-    // die Oberflaeche eben noch angenommen hatte. Bei Namensgleichheit
-    // ueberschreibt javac ausserdem die eine Klasse mit der anderen.
+    // Vorher ließ der Browser 'A.java' neben 'a.java' durch, und erst der
+    // Server lehnte ab - der Teilnehmer bekam eine Ablehnung für etwas, das
+    // die Oberfläche eben noch angenommen hatte. Bei Namensgleichheit
+    // überschreibt javac außerdem die eine Klasse mit der anderen.
     if (accepted.some((f) => f.name.toLowerCase() === file.name.toLowerCase())) {
       rejections.push(`„${file.name}“ ist bereits ausgewählt.`)
       continue
@@ -55,10 +55,10 @@ export function checkFiles(
       // Wortgleich mit SubmissionUploadValidator.cs — der Teilnehmer soll
       // denselben Satz lesen, egal ob der Browser oder der Server ablehnt.
       //
-      // Hier stand vorher die tatsaechliche Groesse neben der erlaubten. Das
-      // klang praeziser, war aber bei knappen Ueberschreitungen falsch: 1 MB
+      // Hier stand vorher die tatsächliche Größe neben der erlaubten. Das
+      // klang präziser, war aber bei knappen Überschreitungen falsch: 1 MB
       // plus 10 Bytes rundet auf "1,0 MB", die Grenze ebenso — herauskam
-      // "ist 1,0 MB gross - erlaubt sind 1,0 MB je Datei". Der Test prueft mit
+      // "ist 1,0 MB groß — erlaubt sind 1,0 MB je Datei". Der Test prüft mit
       // 2 MB und hat das nie gesehen.
       rejections.push(
         `„${file.name}“ ist größer als ${UPLOAD_LIMITS.maxFileSizeBytes / 1024} KB.`,

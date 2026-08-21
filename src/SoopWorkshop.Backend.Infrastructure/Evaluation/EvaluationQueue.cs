@@ -7,7 +7,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 {
     // Begrenzte Warteschlange der ausstehenden Auswertungen.
     // Begrenzt, weil eine unbegrenzte Warteschlange bei einem Ansturm nur den
-    // Speicher fuellt, ohne dass irgendjemand frueher ein Ergebnis bekaeme.
+    // Speicher füllt, ohne dass irgendjemand früher ein Ergebnis bekäme.
     public class EvaluationQueue : IEvaluationQueue
     {
         private readonly Channel<Guid> _channel;

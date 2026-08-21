@@ -18,13 +18,13 @@ type Schemas = components['schemas']
 
 // Setzt die erzeugten Vertragstypen in die sauberen Typen aus types.ts um.
 //
-// Alles hier ist reine Uebersetzung ohne Fachlogik. Die Standardwerte sind
-// bewusst harmlos: das Backend fuellt jedes dieser Felder, der Vertrag sagt
+// Alles hier ist reine Übersetzung ohne Fachlogik. Die Standardwerte sind
+// bewusst harmlos: das Backend füllt jedes dieser Felder, der Vertrag sagt
 // nur nicht, dass es das tut (kein "required" in der Ausgabe von .NET).
 
 // ASP.NET gibt int32 im Vertrag als "integer | string" an, weil es beim
 // Binden auch Zahlen als Zeichenkette annimmt. In Antworten kommt immer eine
-// Zahl — hier trotzdem beide Faelle behandeln, statt es zu glauben.
+// Zahl — hier trotzdem beide Fälle behandeln, statt es zu glauben.
 export function toNumber(value: number | string | undefined, fallback = 0): number {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
@@ -70,7 +70,7 @@ export function toTaskCategoryWeight(
     id: dto.id ?? '',
     taskItemId: dto.taskItemId ?? '',
     category: dto.category ?? 'CleanCode',
-    // Gewichte sind Kommazahlen, nicht ganzzahlig — toNumber wuerde die
+    // Gewichte sind Kommazahlen, nicht ganzzahlig — toNumber würde die
     // Nachkommastellen abschneiden.
     weight: typeof dto.weight === 'number' ? dto.weight : 0,
   }

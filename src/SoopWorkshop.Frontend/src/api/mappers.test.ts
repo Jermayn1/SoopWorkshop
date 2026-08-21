@@ -10,7 +10,7 @@ import {
 describe('Zahlen aus dem Vertrag', () => {
   // .NET gibt int32 im OpenAPI-Dokument als "integer | string" an, weil ASP.NET
   // beim Binden auch Zahlen als Zeichenkette annimmt. Der Mapper behandelt
-  // beide Faelle, statt es zu glauben.
+  // beide Fälle, statt es zu glauben.
   it.each([
     [7, 7],
     ['7', 7],
@@ -28,12 +28,12 @@ describe('Zahlen aus dem Vertrag', () => {
 
   // Gewichte sind Kommazahlen. Gingen sie durch dieselbe Umsetzung wie die
   // ganzzahligen Felder, schnitte parseInt die Nachkommastellen ab - aus 33,75
-  // wuerde 33, und die Normierung ergaebe stillschweigend etwas anderes.
+  // würde 33, und die Normierung ergäbe stillschweigend etwas anderes.
   it('behaelt beim Gewicht die Nachkommastellen', () => {
     expect(toTaskCategoryWeight({ weight: 33.75 }).weight).toBe(33.75)
   })
 
-  // Ohne diesen Ersatzwert stuende auf der Ergebnisseite "80 von 0".
+  // Ohne diesen Ersatzwert stünde auf der Ergebnisseite "80 von 0".
   it('nimmt fuer die erreichbare Punktzahl ersatzweise 100', () => {
     expect(toEvaluationResult({ totalScore: 80 }).maxScore).toBe(100)
   })
@@ -41,7 +41,7 @@ describe('Zahlen aus dem Vertrag', () => {
 
 describe('Standardwerte', () => {
   // Der Vertrag kennt kein "required", also ist dort jedes Feld optional. Ohne
-  // diese Schicht stuende in jeder Komponente ein ?? ''.
+  // diese Schicht stünde in jeder Komponente ein ?? ''.
   it('macht aus einem leeren Vertragsobjekt einen vollstaendigen Typ', () => {
     const task = toTask({})
 
@@ -67,7 +67,7 @@ describe('Standardwerte', () => {
 
 describe('Sortierung', () => {
   // Die API liefert bereits sortiert. Das Frontend sortiert trotzdem selbst:
-  // Sortieren ist billig, eine wechselnde Reihenfolge verwirrt (§5.8).
+  // Sortieren ist billig, eine wechselnde Reihenfolge verwirrt.
   it('sortiert Tipps, erwartete Typen und JUnit-Dateien nach Order', () => {
     const task = toTask({
       hints: [

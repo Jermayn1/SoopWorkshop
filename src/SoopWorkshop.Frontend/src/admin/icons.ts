@@ -25,7 +25,7 @@ import {
 // Auswahl der Symbole, die eine Kategorie tragen kann.
 //
 // Bewusst kuratiert und nicht "alles was lucide hat": die Bibliothek bringt
-// rund 1500 Symbole mit, und ein Sammelimport zoege sie alle ins Bundle. Was
+// rund 1500 Symbole mit, und ein Sammelimport zöge sie alle ins Bundle. Was
 // hier steht, ist nach Themen des Workshops ausgesucht.
 //
 // Die "suche"-Wörter sind deutsch, weil danach gesucht wird — der englische
@@ -39,11 +39,11 @@ export type IconEntry = {
 // Faltet Umlaute auf ihre Ersatzschreibung und macht klein. Damit findet
 // sowohl "prüfung" als auch "pruefung" dasselbe Symbol.
 //
-// Noetig, seit der Index oben mit echten Umlauten geschrieben ist: ein reiner
-// Austausch der Schreibweise haette "pruefung" ins Leere laufen lassen, ohne
-// dass irgendwo ein Fehler entsteht - die Suche haette einfach nichts mehr
-// gefunden. Gehoert hierher und nicht in den Dialog, weil sie zum Index
-// gehoert, nicht zur Darstellung.
+// Nötig, seit der Index oben mit echten Umlauten geschrieben ist: ein reiner
+// Austausch der Schreibweise hätte "pruefung" ins Leere laufen lassen, ohne
+// dass irgendwo ein Fehler entsteht - die Suche hätte einfach nichts mehr
+// gefunden. Gehört hierher und nicht in den Dialog, weil sie zum Index
+// gehört, nicht zur Darstellung.
 export function falte(text: string): string {
   return text
     .toLowerCase()
@@ -53,13 +53,13 @@ export function falte(text: string): string {
     .replace(/ß/g, 'ss')
 }
 
-// Gesucht wird ueber den englischen Namen UND die deutschen Stichwoerter -
+// Gesucht wird über den englischen Namen UND die deutschen Stichwörter -
 // wer "schleife" tippt, soll Repeat finden, ohne das Wort zu kennen.
 // Ein leerer Begriff liefert den vollen Bestand.
 //
 // Steht hier statt im Dialog, damit die Suche ohne Anmeldung und ohne
-// gerendertes <dialog> pruefbar ist - ein Test, der den Filter nachbaut,
-// wuerde nur sich selbst bestaetigen.
+// gerendertes <dialog> prüfbar ist - ein Test, der den Filter nachbaut,
+// würde nur sich selbst bestätigen.
 export function filterIcons(begriff: string): IconGroup[] {
   const gesucht = falte(begriff.trim())
   if (gesucht.length === 0) return ICON_GROUPS
@@ -266,7 +266,7 @@ export const DEFAULT_ICON = BookOpen
 
 // Liefert das Symbol zum Namen. Unbekannte Namen und ein leeres Feld ergeben
 // das Standardsymbol — ein fehlendes Icon darf die Seitenleiste nicht zerlegen,
-// und ein Name aus einer aelteren Sammlung soll sie ebenso wenig stoeren.
+// und ein Name aus einer älteren Sammlung soll sie ebenso wenig stören.
 export function iconByName(name: string | null | undefined): LucideIcon {
   if (!name) return DEFAULT_ICON
   return BY_NAME.get(name) ?? DEFAULT_ICON

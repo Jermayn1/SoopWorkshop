@@ -23,7 +23,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             _workingDirectory = Path.Combine(Path.GetTempPath(), "soopworkshop-tests", Guid.NewGuid().ToString());
             Directory.CreateDirectory(_workingDirectory);
 
-            // Der Checker prueft nur, ob die Datei existiert - der Inhalt ist ihm
+            // Der Checker prüft nur, ob die Datei existiert - der Inhalt ist ihm
             // egal, weil der Prozessaufruf gemockt ist.
             _jarPath = Path.Combine(_workingDirectory, "junit.jar");
             File.WriteAllText(_jarPath, "kein echtes JAR");
@@ -78,7 +78,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 .Returns(result);
 
         // Der echte Launcher schreibt den Report als Datei - deshalb legt die
-        // Attrappe ihn genauso ab, sonst prueft der Test am Verfahren vorbei.
+        // Attrappe ihn genauso ab, sonst prüft der Test am Verfahren vorbei.
         private void JavaWritesReport(string reportXml, ProcessResult? result = null) =>
             _processRunner.RunAsync(Arg.Is<ProcessRequest>(r => r.FileName == "java"), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
@@ -131,7 +131,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         }
 
         // Ein falsch gesetzter Modus darf nicht still zu einer milderen Bewertung
-        // fuehren - hier ist lautes Scheitern richtig.
+        // führen - hier ist lautes Scheitern richtig.
         [Fact]
         public async Task CheckAsync_ModusVerlangtUnitTestsAberKeineDatei_Wirft()
         {
@@ -155,7 +155,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             exception.Message.ShouldContain("gibtesnicht.jar");
         }
 
-        // Die Kategorie faellt bewusst nicht weg, sonst wuerde ihr Gewicht
+        // Die Kategorie fällt bewusst nicht weg, sonst würde ihr Gewicht
         // umverteilt und kaputter Code besser bewertet.
         [Fact]
         public async Task CheckAsync_AbgabeKompiliertNicht_MeldetNichtBestandenOhneProzess()
@@ -185,7 +185,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldBeNull();
         }
 
-        // Ein fehlgeschlagener Unit-Test muss dieselben Felder fuellen wie ein
+        // Ein fehlgeschlagener Unit-Test muss dieselben Felder füllen wie ein
         // fehlgeschlagener Konsolen-Testfall - sonst zeigt die Ergebnisseite bei
         // ihm gar keinen Grund an.
         [Fact]
@@ -202,8 +202,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
-        // Ohne Vergleich gehoert die ganze Meldung unter "Erhalten" - im
-        // Anzeigenamen waere ein Stacktrace-Fetzen unlesbar.
+        // Ohne Vergleich gehört die ganze Meldung unter "Erhalten" - im
+        // Anzeigenamen wäre ein Stacktrace-Fetzen unlesbar.
         [Fact]
         public async Task CheckAsync_FehlerOhneVergleich_ZeigtDieMeldungAlsErhalten()
         {
@@ -227,8 +227,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             failed.ExpectedOutput.ShouldBeEmpty();
         }
 
-        // Eine eigene Meldung des Admins ergaenzt den Anzeigenamen, statt die
-        // Werte zu verdraengen.
+        // Eine eigene Meldung des Admins ergänzt den Anzeigenamen, statt die
+        // Werte zu verdrängen.
         [Fact]
         public async Task CheckAsync_EigeneMeldung_ErgaenztDenAnzeigenamen()
         {
@@ -253,7 +253,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         }
 
         // Der Kern des Teilnehmer-Feedbacks: "cannot find symbol" beantwortet die
-        // Frage nicht, wie die Methode heissen soll.
+        // Frage nicht, wie die Methode heißen soll.
         [Fact]
         public async Task CheckAsync_TestdateiKompiliertNicht_ErklaertDieErwarteteSignatur()
         {
@@ -297,7 +297,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNull().ShouldContain("30 Sekunden");
         }
 
-        // Ohne diese Angaben schreibt die JVM unter Windows in Cp1252, waehrend
+        // Ohne diese Angaben schreibt die JVM unter Windows in Cp1252, während
         // der ProcessRunner UTF-8 erwartet.
         [Fact]
         public async Task CheckAsync_StartetDenLauncherMitUtf8UndExpliziterKlassenauswahl()
@@ -318,8 +318,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 Arg.Any<CancellationToken>());
         }
 
-        // Path.PathSeparator statt ';' - unter Linux trennt ':', und in Phase 7
-        // laeuft das im Container.
+        // Path.PathSeparator statt ';' - unter Linux trennt ':', und im Betrieb
+        // läuft die Auswertung in einem Linux-Container.
         [Fact]
         public async Task CheckAsync_KompiliertMitJarImClasspathUndPlattformTrenner()
         {

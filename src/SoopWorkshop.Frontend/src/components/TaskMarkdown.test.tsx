@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { TaskMarkdown } from './TaskMarkdown'
 
-// jsdom laedt kein Tailwind - berechnete Stile sagen hier nichts. Geprueft
+// jsdom lädt kein Tailwind - berechnete Stile sagen hier nichts. Geprüft
 // wird die Struktur, auf der die Regeln aufsetzen: Inline-Code bekommt eine
-// Pille, ein Codeblock nicht, und die Unterscheidung geht ueber <pre>.
+// Pille, ein Codeblock nicht, und die Unterscheidung geht über <pre>.
 describe('TaskMarkdown', () => {
   const pyramide = ['Beispiel:', '', '```', '  *', ' ***', '*****', '```'].join('\n')
 
@@ -18,7 +18,7 @@ describe('TaskMarkdown', () => {
   it('gibt den Codeblock zeichengetreu wieder', () => {
     const { container } = render(<TaskMarkdown>{pyramide}</TaskMarkdown>)
 
-    // Die fuehrenden Leerzeichen sind die ganze Zentrierung. Geht eines davon
+    // Die führenden Leerzeichen sind die ganze Zentrierung. Geht eines davon
     // verloren, steht die Pyramide schief, ohne dass irgendwo ein Fehler
     // entsteht.
     expect(container.querySelector('pre > code')?.textContent).toBe('  *\n ***\n*****\n')

@@ -87,8 +87,8 @@ export function TaskEditorPage() {
   const [isVisible, setIsVisible] = useState(false)
   const [unitTestFiles, setUnitTestFiles] = useState<UnitTestFileDraft[]>([])
 
-  // Vergleichsstand zum Erkennen von Aenderungen. Als Zeichenkette, weil hier
-  // nur "gleich oder nicht" zaehlt und die Formen flach sind.
+  // Vergleichsstand zum Erkennen von Änderungen. Als Zeichenkette, weil hier
+  // nur "gleich oder nicht" zählt und die Formen flach sind.
   const [baseline, setBaseline] = useState('')
 
   const [save, setSave] = useState<SaveState>({ kind: 'idle' })
@@ -190,8 +190,8 @@ export function TaskEditorPage() {
   const patch = (values: Partial<TaskDraft>) =>
     setDraft((current) => (current ? { ...current, ...values } : current))
 
-  // Spiegelt DescribeMissingTestData aus dem Backend. Vorab geprueft, damit der
-  // Schalter erklaert statt abzuweisen — lehnt der Server trotzdem ab, steht
+  // Spiegelt DescribeMissingTestData aus dem Backend. Vorab geprüft, damit der
+  // Schalter erklärt statt abzuweisen — lehnt der Server trotzdem ab, steht
   // sein Satz darunter.
   const missingTestData = (): string | null => {
     if (!draft) return null
@@ -219,8 +219,8 @@ export function TaskEditorPage() {
     ).map((problem) => problem.message)
 
     // Klassen ohne Namen sind kein Fehler — der Editor legt eine leere Zeile an,
-    // wenn man "Klasse hinzufuegen" drueckt, und sie faellt beim Senden heraus.
-    // Zu lange Namen dagegen wuerden erst der Server ablehnen.
+    // wenn man "Klasse hinzufügen" drückt, und sie fällt beim Senden heraus.
+    // Zu lange Namen dagegen würden erst der Server ablehnen.
     draft.expectedTypes.forEach((type, index) => {
       const problem = checkMaxLength(
         'expectedType',
@@ -230,7 +230,7 @@ export function TaskEditorPage() {
       )
       if (problem) found.push(problem.message)
 
-      // Eine Methode ohne Klasse kann nicht geprueft werden — sie haette keinen
+      // Eine Methode ohne Klasse kann nicht geprüft werden — sie hätte keinen
       // Rumpf, in dem gesucht wird.
       if (type.name.trim().length === 0 && type.methods.some((m) => m.trim().length > 0))
         found.push(
@@ -263,8 +263,8 @@ export function TaskEditorPage() {
         found.push(`JUnit-Datei ${index + 1}: Der Inhalt darf nicht leer sein.`)
     })
 
-    // Gleicher Name zweimal: im Arbeitsverzeichnis wuerde die eine Datei die
-    // andere ueberschreiben. Der Server lehnt das ohnehin ab.
+    // Gleicher Name zweimal: im Arbeitsverzeichnis würde die eine Datei die
+    // andere überschreiben. Der Server lehnt das ohnehin ab.
     const namen = unitTestFiles.map((file) => file.fileName.trim().toLowerCase())
     const doppelt = namen.find((name, index) => name.length > 0 && namen.indexOf(name) !== index)
     if (doppelt)
@@ -285,12 +285,12 @@ export function TaskEditorPage() {
 
     setSave({ kind: 'saving' })
 
-    // Nacheinander und mit benanntem Schritt. Es gibt keine Transaktion ueber
+    // Nacheinander und mit benanntem Schritt. Es gibt keine Transaktion über
     // die drei Endpunkte — scheitert einer, muss die Meldung sagen, welcher,
     // statt pauschal "Speichern fehlgeschlagen" zu behaupten.
     const steps: { name: string; run: () => Promise<{ kind: string; message?: string }> }[] = [
       {
-        // Leere Klassen- und Signaturzeilen raeumt updateTask selbst weg.
+        // Leere Klassen- und Signaturzeilen räumt updateTask selbst weg.
         name: 'Die Grunddaten',
         run: () => updateTask(taskId, draft, isVisible),
       },

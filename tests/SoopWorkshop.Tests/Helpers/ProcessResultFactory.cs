@@ -2,7 +2,7 @@ using SoopWorkshop.Backend.Application.Evaluation.Models;
 
 namespace SoopWorkshop.Tests.Helpers
 {
-    // Kurzformen fuer die vier Ausgaenge eines Prozessaufrufs.
+    // Kurzformen für die vier Ausgänge eines Prozessaufrufs.
     public static class ProcessResultFactory
     {
         public static ProcessResult Success(string standardOutput = "", string standardError = "") =>

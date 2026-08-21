@@ -34,7 +34,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Processes
             result.ExecutableNotFound.ShouldBeFalse();
         }
 
-        // Gegenprobe zum behobenen Deadlock: frueher wurde nur einer der beiden Stroeme
+        // Gegenprobe zum behobenen Deadlock: früher wurde nur einer der beiden Ströme
         // gelesen, wodurch der Kindprozess beim Volllaufen des anderen Puffers stehenblieb.
         [Fact]
         public async Task RunAsync_ProgrammSchreibtVielAufBeideStroeme_LiefertBeideVollstaendig()
@@ -104,7 +104,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Processes
             result.StandardOutput.ShouldContain("gelesen:SoopWorkshop");
         }
 
-        // Ein Abbruch von aussen (Herunterfahren) ist keine Zeitueberschreitung der
+        // Ein Abbruch von außen (Herunterfahren) ist keine Zeitüberschreitung der
         // Abgabe und muss als solcher nach oben durchschlagen.
         [Fact]
         public async Task RunAsync_AufruferBrichtAb_WirftOperationCanceledException()

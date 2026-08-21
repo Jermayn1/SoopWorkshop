@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public string Description { get; set; } = string.Empty;
 
-        // Womit geprueft wurde. Leer, wenn die Pruefung keine Eingabe hatte.
+        // Womit geprüft wurde. Leer, wenn die Prüfung keine Eingabe hatte.
         public string Input { get; set; } = string.Empty;
 
         public string ExpectedOutput { get; set; } = string.Empty;

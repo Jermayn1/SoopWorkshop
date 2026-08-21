@@ -4,7 +4,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
 {
     public class JavaCompilerMessagesTests
     {
-        // Wortlaut wie ihn javac 21 tatsaechlich ausgibt - abgenommen aus einem
+        // Wortlaut wie ihn javac 21 tatsächlich ausgibt - abgenommen aus einem
         // echten Lauf gegen eine Abgabe mit falsch benannter Methode.
         private const string FehlendeMethode = """
             RechnerTest.java:47: error: cannot find symbol
@@ -40,7 +40,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
             explanation.ShouldContain("zaehler");
         }
 
-        // Richtung nicht verdrehen: "A cannot be converted to B" heisst, dass B
+        // Richtung nicht verdrehen: "A cannot be converted to B" heißt, dass B
         // erwartet wurde und A geliefert kam.
         [Fact]
         public void Translate_FalscherTyp_NenntErwartetUndGeliefert()

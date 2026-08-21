@@ -10,7 +10,7 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
     // enthalten - das sind Workshop-Daten, keine Konfiguration.
     public class TaskBundleDto
     {
-        // Ganzzahl und keine Zeichenkette: ein spaeteres Format soll erkannt
+        // Ganzzahl und keine Zeichenkette: ein späteres Format soll erkannt
         // werden, statt still falsch gelesen zu werden.
         public int FormatVersion { get; set; } = TaskBundleFormat.CurrentVersion;
 
@@ -48,7 +48,7 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
         public List<string> Hints { get; set; } = [];
 
         // Die Kinder tragen keine eigene Id: sie werden beim Import als Block
-        // ersetzt, eine Identitaet braeuchten sie nur zum Abgleichen.
+        // ersetzt, eine Identität bräuchten sie nur zum Abgleichen.
         public List<TaskBundleExpectedTypeDto> ExpectedTypes { get; set; } = [];
         public List<TaskBundleTestDto> Tests { get; set; } = [];
         public List<TaskBundleUnitTestFileDto> UnitTestFiles { get; set; } = [];
@@ -59,7 +59,7 @@ namespace SoopWorkshop.Shared.DTOs.Transfer
     {
         public string Name { get; set; } = string.Empty;
 
-        // Vollstaendige Signaturen; der geprüfte Name wird daraus abgeleitet.
+        // Vollständige Signaturen; der geprüfte Name wird daraus abgeleitet.
         public List<string> Methods { get; set; } = [];
     }
 

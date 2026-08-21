@@ -3,10 +3,10 @@ using System.Net;
 namespace SoopWorkshop.Tests.Integration.Controllers
 {
     /// <summary>
-    /// Frontend (5173) und API (5120) sind verschiedene Ursprünge. Stimmt hier
-    /// etwas nicht, blockt der Browser jede Anfrage - und der Fehler sieht nach
-    /// einem kaputten Backend aus, obwohl beide Seiten fuer sich laufen.
-    /// In Phase 0 waren die Schemata schon einmal vertauscht.
+    /// Frontend (5173) und API (5120) sind in der Entwicklung verschiedene
+    /// Ursprünge. Stimmt hier etwas nicht - ein vertauschtes Schema genügt -,
+    /// blockt der Browser jede Anfrage, und der Fehler sieht nach einem kaputten
+    /// Backend aus, obwohl beide Seiten für sich laufen.
     /// </summary>
     public class CorsTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
@@ -37,9 +37,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 .ShouldBe("true");
         }
 
-        // Der Gegentest ist der eigentliche Beleg: waere die Regel auf
-        // AllowAnyOrigin gestellt, bestuende der Test oben genauso - nur waere
-        // die API dann fuer jede fremde Seite offen.
+        // Der Gegentest ist der eigentliche Beleg: wäre die Regel auf
+        // AllowAnyOrigin gestellt, bestünde der Test oben genauso - nur wäre
+        // die API dann für jede fremde Seite offen.
         [Fact]
         public async Task Vorabanfrage_VonFremdemUrsprung_BekommtKeineFreigabe()
         {

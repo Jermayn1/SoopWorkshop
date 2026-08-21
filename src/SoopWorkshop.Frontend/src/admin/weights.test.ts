@@ -7,8 +7,10 @@ describe('distributePoints', () => {
     expect(distributePoints([15, 20, 65])).toEqual([15, 20, 65])
   })
 
-  // Faellt eine Kategorie aus der Wertung, verteilt sich ihr Gewicht auf die
-  // uebrigen - aus 15/20 wird 43/57. Genau diese Zahl steht in CLAUDE.md §5.5.
+  // Fällt eine Kategorie aus der Wertung, verteilt sich ihr Gewicht auf die
+  // übrigen - aus 15/20 wird 43/57. Das Backend rechnet in EvaluationScorer
+  // identisch; weichen die beiden ab, zeigt die Vorschau eine andere Verteilung
+  // als die Auswertung später vergibt.
   it('verteilt das Gewicht einer weggefallenen Kategorie', () => {
     expect(distributePoints([15, 20])).toEqual([43, 57])
   })
@@ -25,8 +27,8 @@ describe('distributePoints', () => {
     expect(punkte.reduce((a, b) => a + b, 0)).toBe(100)
   })
 
-  // Bei gleichem Nachkommaanteil entscheidet die Position - sonst haenge das
-  // Ergebnis an der Sortierstabilitaet der Laufzeitumgebung.
+  // Bei gleichem Nachkommaanteil entscheidet die Position - sonst hänge das
+  // Ergebnis an der Sortierstabilität der Laufzeitumgebung.
   it('bevorzugt bei Gleichstand den frueheren Eintrag', () => {
     expect(distributePoints([1, 1, 1])).toEqual([34, 33, 33])
   })
@@ -37,8 +39,8 @@ describe('distributePoints', () => {
     expect(punkte.reduce((a, b) => a + b, 0)).toBe(100)
   })
 
-  // Ein Gewicht von 0 lehnt das Backend ab; hier faellt die Rechnung nur
-  // stillschweigend auf lauter Nullen zurueck, statt durch null zu teilen.
+  // Ein Gewicht von 0 lehnt das Backend ab; hier fällt die Rechnung nur
+  // stillschweigend auf lauter Nullen zurück, statt durch null zu teilen.
   it('liefert bei Gesamtgewicht 0 lauter Nullen', () => {
     expect(distributePoints([0, 0, 0])).toEqual([0, 0, 0])
   })
@@ -47,9 +49,9 @@ describe('distributePoints', () => {
     expect(distributePoints([])).toEqual([])
   })
 
-  // Nachgemessen statt vermutet: die Restverteilung greift ueber
+  // Nachgemessen statt vermutet: die Restverteilung greift über
   // candidates[step % candidates.length] auf die Kandidaten zu. Das sieht nach
-  // einer Doppelvergabe aus, sobald der Rest groesser waere als die Zahl der
+  // einer Doppelvergabe aus, sobald der Rest größer wäre als die Zahl der
   // Kandidaten - kann aber nicht eintreten: jeder Eintrag verliert beim
   // Abrunden weniger als 1, der Rest ist also stets kleiner als die Anzahl.
   // Der Modulo ist Absicherung, kein Fehler. Das Backend rechnet in
@@ -60,7 +62,7 @@ describe('distributePoints', () => {
 
     expect(punkte.reduce((a, b) => a + b, 0)).toBe(100)
 
-    // Kein Eintrag darf mehr als einen Punkt ueber dem Abrunden liegen.
+    // Kein Eintrag darf mehr als einen Punkt über dem Abrunden liegen.
     const exakt = 100 / 7
     for (const wert of punkte) {
       expect(wert).toBeLessThanOrEqual(Math.floor(exakt) + 1)
@@ -79,7 +81,8 @@ describe('toWeightValues', () => {
     expect(werte).toEqual({ CleanCode: 15, Compilability: 20, Functionality: 80 })
   })
 
-  // Die Altlast-Werte des Enums (§5.6) duerfen nicht in die Maske durchsickern.
+  // Die nicht mehr bewerteten Enum-Werte dürfen nicht in die Maske durchsickern:
+  // ein Gewicht darauf würde nie gelesen und vom Backend abgelehnt.
   it('ignoriert nicht mehr bewertete Kategorien', () => {
     const werte = toWeightValues([
       { category: 'CharacterSet', weight: 99 },

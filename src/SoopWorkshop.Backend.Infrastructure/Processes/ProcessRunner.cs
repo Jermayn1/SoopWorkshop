@@ -7,8 +7,8 @@ using SoopWorkshop.Backend.Application.Evaluation.Models;
 
 namespace SoopWorkshop.Backend.Infrastructure.Processes
 {
-    // Fuehrt externe Prozesse aus und liefert Exitcode, beide Ausgabestroeme und
-    // die Sonderfaelle Zeitueberschreitung und "Programm nicht gefunden" zurueck.
+    // Führt externe Prozesse aus und liefert Exitcode, beide Ausgabeströme und
+    // die Sonderfälle Zeitüberschreitung und "Programm nicht gefunden" zurück.
     public class ProcessRunner : IProcessRunner
     {
         private readonly ILogger<ProcessRunner> _logger;
@@ -30,7 +30,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 // Ab JDK 18 ist UTF-8 der Standardzeichensatz der JVM. Ohne diese
-                // Angabe wuerde .NET unter Windows mit der Konsolen-Codepage dekodieren
+                // Angabe würde .NET unter Windows mit der Konsolen-Codepage dekodieren
                 // und Umlaute in der Programmausgabe zerlegen.
                 StandardOutputEncoding = Encoding.UTF8,
                 StandardErrorEncoding = Encoding.UTF8
@@ -53,7 +53,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
                 return new ProcessResult(-1, string.Empty, string.Empty, TimedOut: false, ExecutableNotFound: true);
             }
 
-            // Beide Stroeme sofort und gleichzeitig leeren. Wird nur einer gelesen,
+            // Beide Ströme sofort und gleichzeitig leeren. Wird nur einer gelesen,
             // blockiert der Kindprozess, sobald der Puffer des anderen voll ist.
             var standardOutputTask = process.StandardOutput.ReadToEndAsync();
             var standardErrorTask = process.StandardError.ReadToEndAsync();
@@ -75,7 +75,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
                 var partialError = await ReadRemainingAsync(standardErrorTask);
 
                 // Bricht der Aufrufer ab (z. B. beim Herunterfahren), ist das keine
-                // Zeitueberschreitung der Abgabe und wird nach oben durchgereicht.
+                // Zeitüberschreitung der Abgabe und wird nach oben durchgereicht.
                 cancellationToken.ThrowIfCancellationRequested();
 
                 _logger.LogWarning(
@@ -94,7 +94,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
                 ExecutableNotFound: false);
         }
 
-        // Schreibt die Eingabe und schliesst stdin, damit ein wartendes Programm weiterlaeuft.
+        // Schreibt die Eingabe und schließt stdin, damit ein wartendes Programm weiterläuft.
         private async Task WriteStandardInputAsync(Process process, string? input, CancellationToken cancellationToken)
         {
             try
@@ -109,7 +109,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
             catch (IOException exception)
             {
                 // Ein Programm, das seine Eingabe nie liest und vorher endet, ist ein
-                // gueltiger Fall — die Auswertung darf daran nicht scheitern.
+                // gültiger Fall — die Auswertung darf daran nicht scheitern.
                 _logger.LogDebug(exception, "Eingabe konnte nicht vollstaendig geschrieben werden.");
             }
             catch (OperationCanceledException)
@@ -118,7 +118,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
             }
         }
 
-        // Nach dem Beenden schliessen sich die Pipes, die Lesevorgaenge laufen dann aus.
+        // Nach dem Beenden schließen sich die Pipes, die Lesevorgänge laufen dann aus.
         private async Task<string> ReadRemainingAsync(Task<string> readTask)
         {
             try
@@ -143,7 +143,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Processes
             }
             catch (Exception exception) when (exception is InvalidOperationException or Win32Exception)
             {
-                // Der Prozess hat sich zwischen Pruefung und Kill selbst beendet.
+                // Der Prozess hat sich zwischen Prüfung und Kill selbst beendet.
                 _logger.LogDebug(exception, "'{FileName}' liess sich nicht beenden.", fileName);
             }
         }

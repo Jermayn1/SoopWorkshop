@@ -9,7 +9,7 @@ namespace SoopWorkshop.Backend.Domain.Entities
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;
 
-        // Nur bei Status Failed gefuellt: der Grund in einer Form, die dem Teilnehmer
+        // Nur bei Status Failed gefüllt: der Grund in einer Form, die dem Teilnehmer
         // weiterhilft. Technische Details bleiben im Log.
         public string ErrorMessage { get; set; } = string.Empty;
 

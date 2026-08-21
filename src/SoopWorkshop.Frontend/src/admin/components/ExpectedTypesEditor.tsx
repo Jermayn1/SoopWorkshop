@@ -11,10 +11,10 @@ type ExpectedTypesEditorProps = {
 
 // Der Vertrag als Baum: geforderte Klassen, und in jeder ihre Methoden.
 //
-// Vorher war das ein einzelnes Feld fuer den Klassennamen und daneben eine
-// flache Liste von Signaturen. Fuer die OOP-Aufgaben am Ende des Workshops
-// reicht das nicht: dort haengen mehrere Klassen voneinander ab, und die
-// Bewertung soll wissen, dass 'einzahlen' zu 'Konto' gehoert.
+// Vorher war das ein einzelnes Feld für den Klassennamen und daneben eine
+// flache Liste von Signaturen. Für die OOP-Aufgaben am Ende des Workshops
+// reicht das nicht: dort hängen mehrere Klassen voneinander ab, und die
+// Bewertung soll wissen, dass 'einzahlen' zu 'Konto' gehört.
 export function ExpectedTypesEditor({ types, onChange }: ExpectedTypesEditorProps) {
   const replace = (index: number, patch: Partial<ExpectedTypeDraft>) =>
     onChange(types.map((type, i) => (i === index ? { ...type, ...patch } : type)))

@@ -12,14 +12,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
     /// </summary>
     /// <remarks>
     /// Ein IHostedService und bewusst kein BackgroundService: die Arbeit steht in
-    /// StartAsync und haelt damit den Start auf, bis das Schema steht. Ein
-    /// BackgroundService gaebe die Ausfuehrung beim ersten await zurueck - der
-    /// EvaluationWorker griffe dann auf eine womoeglich noch nicht migrierte
+    /// StartAsync und hält damit den Start auf, bis das Schema steht. Ein
+    /// BackgroundService gäbe die Ausführung beim ersten await zurück - der
+    /// EvaluationWorker griffe dann auf eine womöglich noch nicht migrierte
     /// Datenbank zu. Aus demselben Grund wird dieser Dienst VOR ihm registriert.
     ///
     /// Ein Fehlschlag bricht den Start ab, und das ist Absicht: ohne Schema
     /// beantwortet die API jede Anfrage mit einem 500er, ein weiterlaufender
-    /// Server taeuschte also Betriebsbereitschaft nur vor. Zusammen mit
+    /// Server täuschte also Betriebsbereitschaft nur vor. Zusammen mit
     /// "restart: unless-stopped" im Compose-Aufbau versucht der Container es von
     /// selbst erneut.
     /// </remarks>
@@ -54,8 +54,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
 
             // Die Schleife endet auf genau zwei Wegen: mit return nach einem
             // erfolgreichen Lauf, oder mit der Ausnahme des LETZTEN Versuchs,
-            // die der Filter unten nicht mehr faengt. Hinter der Schleife steht
-            // deshalb bewusst nichts mehr - eine Zeile dort waere unerreichbar.
+            // die der Filter unten nicht mehr fängt. Hinter der Schleife steht
+            // deshalb bewusst nichts mehr - eine Zeile dort wäre unerreichbar.
             for (var versuch = 1; versuch <= versuche; versuch++)
             {
                 try
@@ -64,14 +64,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence
                     return;
                 }
                 // Der Filter ist der Kern: beim letzten Versuch greift er nicht,
-                // die Ausnahme verlaesst StartAsync und bricht den Start ab.
+                // die Ausnahme verlässt StartAsync und bricht den Start ab.
                 // Ohne Schema beantwortet die API jede Anfrage mit einem 500er -
-                // ein weiterlaufender Server taeuschte Betriebsbereitschaft vor.
+                // ein weiterlaufender Server täuschte Betriebsbereitschaft vor.
                 catch (Exception ex) when (versuch < versuche)
                 {
                     // Nicht still: der erste Versuch scheitert im Container-Verbund
-                    // regelmaessig, und wer die Meldung nie sieht, sucht beim
-                    // naechsten echten Fehler an der falschen Stelle.
+                    // regelmäßig, und wer die Meldung nie sieht, sucht beim
+                    // nächsten echten Fehler an der falschen Stelle.
                     _logger.LogWarning(
                         ex,
                         "Die Datenbank war beim Versuch {Versuch} von {Versuche} nicht bereit. " +

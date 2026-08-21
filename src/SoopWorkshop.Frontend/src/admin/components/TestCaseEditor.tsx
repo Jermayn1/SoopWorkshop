@@ -52,8 +52,8 @@ export function TestCaseEditor({ tests, onChange }: TestCaseEditorProps) {
             <div className="space-y-3">
               <TextInput
                 label="Beschreibung"
-                // §5.7: eine Aussage ueber die Abgabe, nicht ueber das Ergebnis.
-                // Das Haekchen sagt spaeter, ob sie stimmt.
+                // Eine Aussage über die Abgabe, nicht über das Ergebnis des
+                // Laufs. Ob sie zutrifft, sagt später das Häkchen daneben.
                 hint="Was das Programm können muss — z. B. „Das Programm addiert zwei positive Zahlen“."
                 value={test.description}
                 onChange={(value) => replace(index, { description: value })}

@@ -4,7 +4,7 @@ using SoopWorkshop.Backend.Domain.Entities;
 namespace SoopWorkshop.Tests.Helpers
 {
     // Baut den EvaluationContext, den jeder Checker erwartet. Ohne den Helfer
-    // wiederholt sich in jedem Checker-Test dasselbe Geruest aus Abgabe, Aufgabe
+    // wiederholt sich in jedem Checker-Test dasselbe Gerüst aus Abgabe, Aufgabe
     // und Arbeitsverzeichnis.
     public static class EvaluationContextFactory
     {

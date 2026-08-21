@@ -6,7 +6,8 @@ using SoopWorkshop.Shared.Enums;
 namespace SoopWorkshop.Tests.Integration.Controllers
 {
     /// <summary>
-    /// Die Abgaben-Uebersicht aus Etappe 7.4.
+    /// Die Abgaben-Übersicht: Seitenweise Ausgabe, Filter und die Sortierung,
+    /// auf die sich das Blättern verlässt.
     /// </summary>
     public class AdminSubmissionsControllerTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
@@ -32,9 +33,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                     var abgabe = PersistedDataFactory.Abgabe(taskItemId, status);
 
                     // Auseinandergezogene Zeitpunkte, damit die Sortierung
-                    // ueberhaupt etwas zu sortieren hat. Mit identischen
+                    // überhaupt etwas zu sortieren hat. Mit identischen
                     // Zeitstempeln entschiede die Datenbank, und der Test
-                    // pruefte nur noch Zufall.
+                    // prüfte nur noch Zufall.
                     abgabe.SubmittedAt = DateTime.UtcNow.AddMinutes(-i);
                     db.Submissions.Add(abgabe);
                 }
@@ -51,7 +52,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         }
 
-        // Eine leere Uebersicht ist kein Fehlschlag. Wuerde sie einer sein,
+        // Eine leere Übersicht ist kein Fehlschlag. Würde sie einer sein,
         // zeigte das Panel am ersten Workshop-Tag eine Fehlermeldung.
         [Fact]
         public async Task OhneAbgaben_LiefertEineLeereSeite()
@@ -77,15 +78,15 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             var zeile = seite!.Items.ShouldHaveSingleItem();
 
             // Genau das, was ohne die Includes im Repository still leer bliebe -
-            // die Uebersicht saehe funktionsfaehig aus und naennte nur nichts.
+            // die Übersicht sähe funktionsfähig aus und nennte nur nichts.
             zeile.TaskTitle.ShouldBe("Bankkonto");
             zeile.CategoryName.ShouldBe("OOP");
             zeile.TaskItemId.ShouldBe(taskId);
             zeile.Status.ShouldBe(SubmissionStatus.Pending);
         }
 
-        // Null und 0 sind nicht dasselbe: 0 waere eine Aussage ueber die
-        // Loesung, null sagt nur "noch nicht bewertet".
+        // Null und 0 sind nicht dasselbe: 0 wäre eine Aussage über die
+        // Lösung, null sagt nur "noch nicht bewertet".
         [Fact]
         public async Task OhneAuswertung_BleibtDiePunktzahlLeer()
         {
@@ -137,9 +138,9 @@ namespace SoopWorkshop.Tests.Integration.Controllers
                 .ShouldBeInOrder(SortDirection.Descending);
         }
 
-        // Der Test, der die Gesamtzahl von der Seitengroesse trennt. Wuerde
-        // Total die Seite zaehlen statt die Menge, stuende im Panel dauerhaft
-        // "1 von 1" und niemand kaeme je auf Seite 2.
+        // Der Test, der die Gesamtzahl von der Seitengröße trennt. Würde
+        // Total die Seite zählen statt die Menge, stünde im Panel dauerhaft
+        // "1 von 1" und niemand käme je auf Seite 2.
         [Fact]
         public async Task Blaettert_UndTotalZaehltDieGanzeMenge()
         {
@@ -159,7 +160,7 @@ namespace SoopWorkshop.Tests.Integration.Controllers
             zweiteSeite!.Items.Count.ShouldBe(3);
             zweiteSeite.Total.ShouldBe(7);
 
-            // Keine Zeile doppelt: sonst waere die Sortierung nicht stabil.
+            // Keine Zeile doppelt: sonst wäre die Sortierung nicht stabil.
             ersteSeite.Items.Select(i => i.Id)
                 .Intersect(zweiteSeite.Items.Select(i => i.Id))
                 .ShouldBeEmpty();

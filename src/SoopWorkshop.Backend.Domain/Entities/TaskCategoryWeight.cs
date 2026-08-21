@@ -2,7 +2,7 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Domain.Entities
 {
-    // Ueberschreibt fuer eine einzelne Aufgabe das Standardgewicht einer
+    // Überschreibt für eine einzelne Aufgabe das Standardgewicht einer
     // Bewertungskategorie. Fehlt der Eintrag, gilt der Wert aus der Konfiguration.
     public class TaskCategoryWeight
     {

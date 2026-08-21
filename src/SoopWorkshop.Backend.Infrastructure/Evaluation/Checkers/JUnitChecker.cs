@@ -9,7 +9,7 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 {
-    // Kompiliert die hinterlegten JUnit-Dateien gegen die Abgabe, fuehrt sie ueber
+    // Kompiliert die hinterlegten JUnit-Dateien gegen die Abgabe, führt sie über
     // den JUnit-Console-Launcher aus und liest das Ergebnis aus dem XML-Report.
     public class JUnitChecker : IEvaluationChecker
     {
@@ -29,8 +29,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             _logger = logger;
         }
 
-        // Dieselbe Kategorie wie die Konsolen-Testfaelle: beide pruefen, ob das
-        // Programm die Aufgabe erfuellt, nur auf unterschiedlichem Weg.
+        // Dieselbe Kategorie wie die Konsolen-Testfälle: beide prüfen, ob das
+        // Programm die Aufgabe erfüllt, nur auf unterschiedlichem Weg.
         public EvaluationCategory Category => EvaluationCategory.Functionality;
 
         public int Order => EvaluationCheckerOrder.UnitTests;
@@ -56,8 +56,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     $"Das JUnit-JAR wurde unter '{jarPath}' nicht gefunden. " +
                     "Erwartet wird es unter Evaluation:JUnitJarPath.");
 
-            // Kompiliert die Abgabe nicht, gibt es nichts auszufuehren. Die
-            // Kategorie faellt trotzdem nicht weg, sonst wuerde ihr Gewicht
+            // Kompiliert die Abgabe nicht, gibt es nichts auszuführen. Die
+            // Kategorie fällt trotzdem nicht weg, sonst würde ihr Gewicht
             // umverteilt und kaputter Code besser bewertet.
             if (context.Compilation is null || !context.Compilation.Success)
             {
@@ -107,8 +107,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 "-J-Dstdout.encoding=UTF-8",
                 "-J-Dstderr.encoding=UTF-8",
 
-                // Path.PathSeparator statt ';' — unter Linux trennt ':', und in
-                // Phase 7 laeuft das hier im Container.
+                // Path.PathSeparator statt ';' — unter Linux trennt ':', und im
+                // Betrieb läuft das hier in einem Linux-Container.
                 "-cp", $"{jarPath}{Path.PathSeparator}."
             };
 
@@ -152,7 +152,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
 
             _logger.LogInformation("JUnit-Testdatei kompiliert nicht gegen die Abgabe: {Output}", rawOutput);
 
-            // Rohausgabe anhaengen statt ersetzen: die Zeilennummer darin ist oft
+            // Rohausgabe anhängen statt ersetzen: die Zeilennummer darin ist oft
             // der schnellste Weg zur Ursache.
             return CheckerOutcome.WithTip(
                 tip,
@@ -182,8 +182,8 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 "--details=none"
             };
 
-            // Klassen ausdruecklich auswaehlen statt den Classpath zu durchsuchen:
-            // in Java heisst die Datei wie die Klasse darin, das ist eindeutig.
+            // Klassen ausdrücklich auswählen statt den Classpath zu durchsuchen:
+            // in Java heißt die Datei wie die Klasse darin, das ist eindeutig.
             foreach (var file in testFiles)
             {
                 arguments.Add("--select-class");
@@ -211,7 +211,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                     Failed("Die Unit-Tests konnten ausgeführt werden", string.Empty));
             }
 
-            // Ein Rueckgabewert ungleich 0 heisst hier nur "Tests sind
+            // Ein Rückgabewert ungleich 0 heißt hier nur "Tests sind
             // fehlgeschlagen" — die Wahrheit steht im Report.
             var testCases = JUnitReportReader.Read(reportsDirectory);
 
@@ -225,15 +225,15 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
                 : CheckerOutcome.WithTip(EvaluationMessages.ComparisonHint, results);
         }
 
-        // Zwei Faelle, die sauber auseinandergehalten werden muessen:
+        // Zwei Fälle, die sauber auseinandergehalten werden müssen:
         //
-        //  - Die Meldung liess sich zerlegen ("expected: <5> but was: <-1>").
-        //    Dann fuellen die beiden Werte Erwartet und Erhalten, und was davor
-        //    stand, war eine eigene Meldung des Admins - die ergaenzt den
+        //  - Die Meldung ließ sich zerlegen ("expected: <5> but was: <-1>").
+        //    Dann füllen die beiden Werte Erwartet und Erhalten, und was davor
+        //    stand, war eine eigene Meldung des Admins - die ergänzt den
         //    Anzeigenamen, statt ihn zu ersetzen.
-        //  - Sie liess sich nicht zerlegen (NullPointerException, assertTrue).
-        //    Dann gehoert die ganze Meldung unter "Erhalten"; im Anzeigenamen
-        //    waere ein Stacktrace-Fetzen unlesbar.
+        //  - Sie ließ sich nicht zerlegen (NullPointerException, assertTrue).
+        //    Dann gehört die ganze Meldung unter "Erhalten"; im Anzeigenamen
+        //    wäre ein Stacktrace-Fetzen unlesbar.
         private static TestCaseResult ToTestCaseResult(JUnitTestCase testCase)
         {
             var wasSplit = testCase.Expected.Length > 0 || testCase.Actual.Length > 0;
@@ -250,9 +250,9 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation.Checkers
             };
         }
 
-        // Kein Report trotz gelaufenem Prozess. Der haeufigste Grund ist ein
+        // Kein Report trotz gelaufenem Prozess. Der häufigste Grund ist ein
         // System.exit(...) in der Abgabe: das beendet die JVM des Testlaufs und
-        // reisst alle uebrigen Testmethoden mit.
+        // reißt alle übrigen Testmethoden mit.
         private CheckerOutcome DescribeMissingReport(ProcessResult process)
         {
             _logger.LogWarning(

@@ -30,8 +30,8 @@ export function HintPanel({ hints }: { hints: Hint[] }) {
         />
       </button>
 
-      {/* Eingeklappt bleibt der Bereich im Baum, faehrt aber ueber das Raster
-          auf 0fr. "inert" haelt die Tipps solange aus der Tab-Reihenfolge. */}
+      {/* Eingeklappt bleibt der Bereich im Baum, fährt aber über das Raster
+          auf 0fr. "inert" hält die Tipps solange aus der Tab-Reihenfolge. */}
       <div id="tipps" className={`klapp ${isOpen ? '' : 'klapp-zu'}`} inert={!isOpen}>
         <div className="klapp-inhalt">
           <div className="px-5 pb-5 border-t border-slate-100 pt-4">

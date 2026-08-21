@@ -9,14 +9,14 @@
 
         // Name des Symbols in der Seitenleiste, z. B. "Layers".
         //
-        // Frueher haben die Seitenleisten dafuer den Kategorienamen ausgewertet
+        // Früher haben die Seitenleisten dafür den Kategorienamen ausgewertet
         // ("oop" -> Layers, sonst BookOpen). Damit wechselte das Symbol beim
         // Umbenennen, und eine neue Kategorie bekam nie ein eigenes. Welche
-        // Namen es gibt, weiss das Frontend (src/admin/icons.ts) - hier steht
-        // nur der Name; ein unbekannter faellt dort auf das Standardsymbol
-        // zurueck.
+        // Namen es gibt, weiß das Frontend (src/admin/icons.ts) - hier steht
+        // nur der Name; ein unbekannter fällt dort auf das Standardsymbol
+        // zurück.
         //
-        // Leer heisst "kein eigenes Symbol".
+        // Leer heißt "kein eigenes Symbol".
         public string IconName { get; set; } = string.Empty;
 
         public ICollection<TaskItem> Tasks { get; set; } = [];

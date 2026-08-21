@@ -1,7 +1,7 @@
 namespace SoopWorkshop.Backend.Application.Evaluation.Models
 {
     // Ergebnis des Kompiliervorgangs. Der CompilabilityChecker legt es im
-    // EvaluationContext ab, alle spaeteren Checker lesen es von dort.
+    // EvaluationContext ab, alle späteren Checker lesen es von dort.
     public class CompilationResult
     {
         public bool Success { get; set; }

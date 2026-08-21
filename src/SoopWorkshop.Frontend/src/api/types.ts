@@ -3,12 +3,12 @@ import type { components } from './schema'
 // Die erzeugten Typen aus schema.d.ts sind der Vertrag — aber ein unbequemer:
 // .NET setzt kein "required", also ist dort jedes Feld optional, und jedes int
 // kommt als "number | string" heraus, weil ASP.NET beim Binden auch Zahlen als
-// Zeichenkette annimmt. Wuerde die Oberflaeche direkt damit arbeiten, stuende
+// Zeichenkette annimmt. Würde die Oberfläche direkt damit arbeiten, stünde
 // in jeder Komponente ein "?? ''".
 //
 // Deshalb hier einmal saubere Typen und daneben (mappers.ts) die Umsetzung.
 // Der Vertrag bleibt die Quelle: verschwindet ein Feld im Backend, bricht die
-// Umsetzung beim Uebersetzen — genau die Absicherung, die wir wollten.
+// Umsetzung beim Übersetzen — genau dafür gibt es sie.
 
 type Schemas = components['schemas']
 
@@ -29,15 +29,15 @@ export type UnitTestFile = {
   content: string
   order: number
   /**
-   * Ob der Teilnehmer die Datei sehen darf. Auf dem oeffentlichen Weg ist das
+   * Ob der Teilnehmer die Datei sehen darf. Auf dem öffentlichen Weg ist das
    * immer true — die API liefert dort nur freigeschaltete Dateien aus. Erst in
    * der Verwaltung kommen auch die verborgenen mit.
    */
   isVisibleToParticipant: boolean
 }
 
-// Konsolen-Testfall. Kommt ausschliesslich ueber die Admin-Endpunkte; die
-// oeffentliche Aufgabe enthaelt ihn bewusst nicht, sonst stuende die Loesung
+// Konsolen-Testfall. Kommt ausschließlich über die Admin-Endpunkte; die
+// öffentliche Aufgabe enthält ihn bewusst nicht, sonst stünde die Lösung
 // in der Aufgabenstellung.
 export type TaskTest = {
   id: string
@@ -57,13 +57,13 @@ export type TaskCategoryWeight = {
   weight: number
 }
 
-// Eine geforderte Klasse samt der Methoden, die IN IHR stehen muessen. Die
-// Zuordnung ist der Punkt: "einzahlen" gehoert zu 'Konto' und nicht irgendwohin.
+// Eine geforderte Klasse samt der Methoden, die IN IHR stehen müssen. Die
+// Zuordnung ist der Punkt: "einzahlen" gehört zu 'Konto' und nicht irgendwohin.
 export type ExpectedType = {
   id: string
   name: string
   order: number
-  /** Vollstaendige Signaturen zur Anzeige. */
+  /** Vollständige Signaturen zur Anzeige. */
   methods: string[]
 }
 
@@ -74,7 +74,7 @@ export type Task = {
   description: string
   difficulty: Difficulty
   order: number
-  /** Ob die Aufgabe fuer Teilnehmer freigeschaltet ist. */
+  /** Ob die Aufgabe für Teilnehmer freigeschaltet ist. */
   isVisible: boolean
   evaluationMode: EvaluationMode
   /**
@@ -91,10 +91,10 @@ export type Category = {
   id: string
   name: string
   order: number
-  /** Ob die Kategorie fuer Teilnehmer freigeschaltet ist. */
+  /** Ob die Kategorie für Teilnehmer freigeschaltet ist. */
   isVisible: boolean
   /**
-   * Name des Symbols in der Seitenleiste, z. B. "Layers". Leer heisst "kein
+   * Name des Symbols in der Seitenleiste, z. B. "Layers". Leer heißt "kein
    * eigenes"; welche Namen es gibt, steht in admin/icons.ts.
    */
   iconName: string
@@ -143,6 +143,6 @@ export type SubmissionState = {
   taskItemId: string
   status: SubmissionStatus
   submittedAt: string
-  /** Nur bei Status "Failed" gefuellt. */
+  /** Nur bei Status "Failed" gefüllt. */
   errorMessage: string
 }

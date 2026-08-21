@@ -7,7 +7,7 @@ import { fetchAdminCategories } from '../api/catalog'
 import { useAdminSessionContext, type AdminCatalogContext } from '../adminOutlet'
 import type { Category } from '../../api/types'
 
-// Rahmen des Verwaltungsbereichs. Laedt den Bestand einmal und reicht ihn nach
+// Rahmen des Verwaltungsbereichs. Lädt den Bestand einmal und reicht ihn nach
 // unten weiter — die Seitenleiste und die Seiten darunter zeigen dieselben
 // Daten, also soll auch nur einmal geladen werden.
 export function AdminLayout() {

@@ -7,10 +7,10 @@ using SoopWorkshop.Shared.DTOs.Tasks;
 namespace SoopWorkshop.Tests.Integration
 {
     /// <summary>
-    /// Belegt, dass das Fundament aus Etappe 6.1 traegt: Container, Migrationen,
-    /// Anwendung im Speicher und das Aufraeumen zwischen den Tests. Faellt hier
-    /// etwas, ist jeder andere Integrationstest wertlos - deshalb steht es
-    /// getrennt und nicht als Vorbedingung irgendwo mit drin.
+    /// Belegt, dass das Fundament der Integrationstests trägt: Container,
+    /// Migrationen, Anwendung im Speicher und das Aufräumen zwischen den Tests.
+    /// Fällt hier etwas, ist jeder andere Integrationstest wertlos - deshalb
+    /// steht es getrennt und nicht als Vorbedingung irgendwo mit drin.
     /// </summary>
     public class FoundationTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
     {
@@ -35,9 +35,9 @@ namespace SoopWorkshop.Tests.Integration
                 await db.SaveChangesAsync();
             });
 
-            // Bewusst ein zweiter Kontext: der erste haette die Kategorie noch in
-            // der Aenderungsverfolgung und wuerde sie auch dann liefern, wenn
-            // nichts in der Datenbank gelandet waere.
+            // Bewusst ein zweiter Kontext: der erste hätte die Kategorie noch in
+            // der Änderungsverfolgung und würde sie auch dann liefern, wenn
+            // nichts in der Datenbank gelandet wäre.
             await WithDbAsync(async db =>
             {
                 var gespeichert = await db.TaskCategories.SingleOrDefaultAsync(c => c.Id == id);
@@ -46,10 +46,10 @@ namespace SoopWorkshop.Tests.Integration
             });
         }
 
-        // Diese beiden Tests gehoeren zusammen: sie legen dieselbe Kategorie an
-        // und wuerden sich am eindeutigen Schluessel stossen, wenn Respawn
-        // zwischen ihnen nicht aufraeumte. Faellt einer davon, ist jeder spaetere
-        // Test von seiner Ausfuehrungsreihenfolge abhaengig.
+        // Diese beiden Tests gehören zusammen: sie legen dieselbe Kategorie an
+        // und würden sich am eindeutigen Schlüssel stoßen, wenn Respawn
+        // zwischen ihnen nicht aufräumte. Fällt einer davon, ist jeder spätere
+        // Test von seiner Ausführungsreihenfolge abhängig.
         [Fact]
         public Task Aufraeumen_LaeuftVorJedemTest_ErsterDurchgang() => LegeStandardkategorieAn();
 

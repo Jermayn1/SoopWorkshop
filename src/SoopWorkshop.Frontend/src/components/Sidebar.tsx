@@ -82,7 +82,7 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
           categories.map((category) => {
             const isOpen = !collapsed.has(category.id)
             const regionId = `kategorie-${category.id}`
-            // Das Symbol steht an der Kategorie. Frueher wurde es aus ihrem
+            // Das Symbol steht an der Kategorie. Früher wurde es aus ihrem
             // Namen erraten - beim Umbenennen wechselte es damit stillschweigend.
             const Icon = iconByName(category.iconName)
 
@@ -106,9 +106,9 @@ export function Sidebar({ categories, loading, error, onRetry }: SidebarProps) {
                   </span>
                 </button>
 
-                {/* Der Bereich bleibt im Baum und wird ueber das Raster von 1fr
-                    auf 0fr gefahren — das braucht keine gemessene Hoehe.
-                    "inert" nimmt den eingeklappten Bereich zusaetzlich aus der
+                {/* Der Bereich bleibt im Baum und wird über das Raster von 1fr
+                    auf 0fr gefahren — das braucht keine gemessene Höhe.
+                    "inert" nimmt den eingeklappten Bereich zusätzlich aus der
                     Tab- und der Vorlesereihenfolge heraus; ohne das blieben die
                     Links darin antabbar, also eine unsichtbare Tastaturfalle. */}
                 <div

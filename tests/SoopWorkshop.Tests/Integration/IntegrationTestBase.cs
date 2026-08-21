@@ -8,7 +8,7 @@ using SoopWorkshop.Shared.DTOs.Auth.Requests;
 namespace SoopWorkshop.Tests.Integration
 {
     /// <summary>
-    /// Basis fuer alle Tests gegen echte Datenbank und echte HTTP-Pipeline.
+    /// Basis für alle Tests gegen echte Datenbank und echte HTTP-Pipeline.
     /// Vor jedem Test ist die Datenbank leer.
     /// </summary>
     [Collection(PostgresCollection.Name)]
@@ -29,15 +29,16 @@ namespace SoopWorkshop.Tests.Integration
         ///
         /// Weiterleitungen werden NICHT verfolgt. Ein [Authorize] ohne Anmeldung
         /// muss 401 liefern und nicht 302 auf eine Anmeldeseite, die es in einer
-        /// API nicht gibt - folgte der Client der Weiterleitung, saehe der Test am
-        /// Ende einen 404 und die eigentliche Aussage waere weg.
+        /// API nicht gibt - folgte der Client der Weiterleitung, sähe der Test am
+        /// Ende einen 404 und die eigentliche Aussage wäre weg.
         ///
         /// Die Basisadresse ist https, obwohl der TestServer gar kein TLS spricht.
         /// Das Anmelde-Cookie ist Secure, und der CookieContainer von .NET schickt
-        /// ein Secure-Cookie ueber http grundsaetzlich nicht zurueck - auch nicht
-        /// an localhost. Genau darueber ist Phase 5 zweimal gestolpert (CLAUDE.md
-        /// Paragraph 9). Ueber https verhaelt sich der Client wie ein Browser auf
-        /// einem vertrauenswuerdigen Ursprung.
+        /// ein Secure-Cookie über http grundsätzlich nicht zurück - auch nicht an
+        /// localhost. Über http liefe deshalb jeder angemeldete Aufruf in einen
+        /// 401, der wie ein kaputter Zugangsschutz aussieht und keiner ist. Über
+        /// https verhält sich der Client wie ein Browser auf einem
+        /// vertrauenswürdigen Ursprung.
         /// </remarks>
         protected HttpClient CreateClient() =>
             Fixture.Factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -60,7 +61,7 @@ namespace SoopWorkshop.Tests.Integration
         }
 
         /// <summary>
-        /// Fuehrt etwas in einem eigenen DI-Scope aus - mit denselben
+        /// Führt etwas in einem eigenen DI-Scope aus - mit denselben
         /// Registrierungen, die die Anwendung benutzt.
         /// </summary>
         protected async Task WithScopeAsync(Func<IServiceProvider, Task> action)
@@ -74,9 +75,9 @@ namespace SoopWorkshop.Tests.Integration
         /// direkt mit dem DbContext.
         /// </summary>
         /// <remarks>
-        /// Je Aufruf ein frischer Kontext, und das ist Absicht: wer zum Pruefen
+        /// Je Aufruf ein frischer Kontext, und das ist Absicht: wer zum Prüfen
         /// denselben Kontext benutzt, mit dem er geschrieben hat, bekommt die
-        /// Antwort aus der Aenderungsverfolgung statt aus der Datenbank. Genau so
+        /// Antwort aus der Änderungsverfolgung statt aus der Datenbank. Genau so
         /// entgeht einem, dass gar nichts gespeichert wurde.
         /// </remarks>
         protected async Task WithDbAsync(Func<AppDbContext, Task> action)

@@ -9,9 +9,9 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.Infrastructure.Evaluation
 {
-    // Arbeitet die Warteschlange ab. Ersetzt das frueherer Fire-and-Forget per
+    // Arbeitet die Warteschlange ab. Ersetzt das früherer Fire-and-Forget per
     // Task.Run: die Anzahl gleichzeitiger Auswertungen ist begrenzt, und ein
-    // Neustart laesst keine Abgabe mehr fuer immer auf "Running" stehen.
+    // Neustart lässt keine Abgabe mehr für immer auf "Running" stehen.
     public class EvaluationWorker : BackgroundService
     {
         private const string RestartMessage =
@@ -72,14 +72,14 @@ namespace SoopWorkshop.Backend.Infrastructure.Evaluation
             }
         }
 
-        // Abgaben aus einem frueheren Prozesslauf kann niemand mehr auswerten.
-        // Ohne dieses Aufraeumen wartet das Frontend endlos auf ein Ergebnis.
+        // Abgaben aus einem früheren Prozesslauf kann niemand mehr auswerten.
+        // Ohne dieses Aufräumen wartet das Frontend endlos auf ein Ergebnis.
         //
-        // Faengt bewusst alles ab: eine Exception aus ExecuteAsync fuehrt sonst dazu,
-        // dass .NET den kompletten Host herunterfaehrt (BackgroundServiceExceptionBehavior
-        // StopHost). Eine nicht erreichbare Datenbank wuerde dann verhindern, dass die
-        // API ueberhaupt startet — das Aufraeumen ist diesen Preis nicht wert. Bleiben
-        // die verwaisten Abgaben liegen, holt der naechste Start es nach.
+        // Fängt bewusst alles ab: eine Exception aus ExecuteAsync führt sonst dazu,
+        // dass .NET den kompletten Host herunterfährt (BackgroundServiceExceptionBehavior
+        // StopHost). Eine nicht erreichbare Datenbank würde dann verhindern, dass die
+        // API überhaupt startet — das Aufräumen ist diesen Preis nicht wert. Bleiben
+        // die verwaisten Abgaben liegen, holt der nächste Start es nach.
         private async Task FailOrphanedSubmissionsAsync(CancellationToken cancellationToken)
         {
             try

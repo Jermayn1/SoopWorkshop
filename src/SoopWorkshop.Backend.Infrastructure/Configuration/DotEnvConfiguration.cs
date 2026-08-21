@@ -9,16 +9,16 @@ namespace SoopWorkshop.Backend.Infrastructure.Configuration
     // Absicht: in der Entwicklung gibt es genau eine Datei, in der die Zugangsdaten
     // und die Stellschrauben der Auswertung stehen — dieselbe, aus der auch
     // docker-compose liest. Deshalb wird die Quelle bewusst ganz oben auf den
-    // Stapel gelegt und schlaegt damit auch Umgebungsvariablen. Eine vergessene
+    // Stapel gelegt und schlägt damit auch Umgebungsvariablen. Eine vergessene
     // Variable in der Shell kann so nicht mehr still etwas anderes bewirken,
     // als in der Datei steht.
     //
-    // Ausserhalb von Development wird sie nicht geladen: im Betrieb kommen die
-    // Werte aus echten Umgebungsvariablen (Phase 7).
+    // Außerhalb von Development wird sie nicht geladen: im Betrieb kommen die
+    // Werte aus echten Umgebungsvariablen.
     public static class DotEnvConfiguration
     {
-        // Wie viele Ebenen aufwaerts nach der .env gesucht wird. Die API startet
-        // in src/SoopWorkshop.Backend.API, die Datei liegt zwei Ebenen darueber.
+        // Wie viele Ebenen aufwärts nach der .env gesucht wird. Die API startet
+        // in src/SoopWorkshop.Backend.API, die Datei liegt zwei Ebenen darüber.
         private const int MaxSearchDepth = 6;
 
         public static IConfigurationBuilder AddDotEnv(this IConfigurationBuilder builder, string startDirectory)
@@ -49,7 +49,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Configuration
             return null;
         }
 
-        // Erwartet KEY=VALUE je Zeile. Leerzeilen und Zeilen mit # werden uebergangen.
+        // Erwartet KEY=VALUE je Zeile. Leerzeilen und Zeilen mit # werden übergangen.
         // Doppelte Unterstriche werden wie bei Umgebungsvariablen zum Doppelpunkt,
         // damit Evaluation__MaxConcurrency auf Evaluation:MaxConcurrency zeigt.
         public static Dictionary<string, string?> Parse(IEnumerable<string> lines)
@@ -78,7 +78,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Configuration
 
         // Baut den Connection-String aus den POSTGRES_-Werten, damit das Passwort
         // nur an einer Stelle steht — derselben, aus der docker-compose die
-        // Datenbank aufsetzt. Ein ausdruecklich gesetzter Connection-String
+        // Datenbank aufsetzt. Ein ausdrücklich gesetzter Connection-String
         // gewinnt weiterhin.
         private static void AddDerivedConnectionString(Dictionary<string, string?> values)
         {
@@ -91,13 +91,13 @@ namespace SoopWorkshop.Backend.Infrastructure.Configuration
             if (string.IsNullOrWhiteSpace(password))
                 return;
 
-            // 127.0.0.1 und nicht localhost: unter Windows loest localhost zuerst
+            // 127.0.0.1 und nicht localhost: unter Windows löst localhost zuerst
             // auf ::1 auf, wo Dockers WSL-Relay horcht, ohne zum Container
             // durchzureichen. Der Fehler kommt als "28P01 password authentication
-            // failed" zurueck und sieht damit wie ein falsches Passwort aus.
-            // Ueber den Builder statt per Zeichenkette zusammengesetzt: ein Passwort
-            // mit Semikolon oder Anfuehrungszeichen wuerde den Connection-String
-            // sonst zerlegen, und der Fehler saehe wie ein falsches Passwort aus.
+            // failed" zurück und sieht damit wie ein falsches Passwort aus.
+            // Über den Builder statt per Zeichenkette zusammengesetzt: ein Passwort
+            // mit Semikolon oder Anführungszeichen würde den Connection-String
+            // sonst zerlegen, und der Fehler sähe wie ein falsches Passwort aus.
             var builder = new NpgsqlConnectionStringBuilder
             {
                 Host = GetValue(values, "POSTGRES_HOST") ?? "127.0.0.1",

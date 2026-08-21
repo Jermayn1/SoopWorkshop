@@ -86,10 +86,11 @@ type ResultViewProps = {
 
 // Die Auswertung, wie der Teilnehmer sie liest.
 //
-// Herausgeloest aus ResultPage, damit der Probelauf im Verwaltungsbereich
-// dieselbe Darstellung benutzt — inklusive der Regeln aus §5.7. Eine zweite,
-// nachgebaute Anzeige wuerde frueher oder spaeter etwas anderes zeigen als das,
-// was der Teilnehmer sieht, und genau das soll der Probelauf ja verhindern.
+// Eigene Komponente statt Teil von ResultPage, damit der Probelauf im
+// Verwaltungsbereich dieselbe Darstellung benutzt — inklusive der Regeln für
+// eine Teilprüfung, die in CategoryCard stehen. Eine zweite, nachgebaute
+// Anzeige würde früher oder später etwas anderes zeigen als das, was der
+// Teilnehmer sieht, und genau das soll der Probelauf ja verhindern.
 export function ResultView({ result }: ResultViewProps) {
   const categories = [...result.categoryResults].sort(
     (a, b) => orderOf(a.category) - orderOf(b.category),

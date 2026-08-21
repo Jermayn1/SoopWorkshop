@@ -33,7 +33,7 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
             SubmissionUploadValidator.Validate(files).ShouldNotBeEmpty();
         }
 
-        // Grosskleinschreibung der Endung soll niemanden aufhalten.
+        // Groß-/Kleinschreibung der Endung soll niemanden aufhalten.
         [Fact]
         public void Validate_EndungInGrossbuchstaben_WirdAkzeptiert()
         {
@@ -84,7 +84,7 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
             SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("höchstens");
         }
 
-        // Gleichnamige Dateien wuerden sich im Arbeitsverzeichnis still ueberschreiben.
+        // Gleichnamige Dateien würden sich im Arbeitsverzeichnis still überschreiben.
         [Fact]
         public void Validate_ZweiDateienMitGleichemNamen_WirdAbgelehnt()
         {
@@ -93,13 +93,13 @@ namespace SoopWorkshop.Tests.Unit.API.Validation
             SubmissionUploadValidator.Validate(files).ShouldHaveSingleItem().ShouldContain("mehrfach");
         }
 
-        // Der Vergleich laeuft ueber OrdinalIgnoreCase, weil das Dateisystem
-        // unter Windows es genauso haelt.
+        // Der Vergleich läuft über OrdinalIgnoreCase, weil das Dateisystem unter
+        // Windows es genauso hält und javac bei gleichem Namen die eine Klasse
+        // mit der anderen überschreibt.
         //
-        // **Hier weicht das Frontend ab**: checkFiles in uploadLimits.ts
-        // vergleicht bitgenau und laesst beide durch. Der Teilnehmer waehlt sie
-        // also ohne Warnung aus und faengt sich die Ablehnung erst vom Server.
-        // Nachgemessen in uploadLimits.test.ts; siehe CLAUDE.md Paragraph 9.
+        // checkFiles in uploadLimits.ts vergleicht genauso - beide Seiten müssen
+        // hier übereinstimmen, sonst lehnt der Server etwas ab, das die
+        // Oberfläche gerade noch durchgelassen hat.
         [Fact]
         public void Validate_GleicherNameInAndererSchreibweise_WirdEbenfallsAbgelehnt()
         {

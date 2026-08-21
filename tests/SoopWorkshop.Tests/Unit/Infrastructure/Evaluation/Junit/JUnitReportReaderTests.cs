@@ -23,7 +23,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
         private void WriteReport(string fileName, string content) =>
             File.WriteAllText(Path.Combine(_directory, fileName), content);
 
-        // Aufbau wie ihn der Console-Launcher tatsaechlich schreibt, inklusive
+        // Aufbau wie ihn der Console-Launcher tatsächlich schreibt, inklusive
         // der display-name-Zeile in system-out.
         private const string BestandenUndDurchgefallen = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -84,7 +84,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
             failed.Message.ShouldBeEmpty();
         }
 
-        // Was sich nicht zerlegen laesst, bleibt vollstaendig erhalten.
+        // Was sich nicht zerlegen lässt, bleibt vollständig erhalten.
         [Fact]
         public void Read_FehlerOhneVergleich_BehaeltDieMeldung()
         {
@@ -116,7 +116,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
                 .DisplayName.ShouldBe("RechnerTest.rechnet()");
         }
 
-        // Uebersprungen heisst nicht bestanden: die geforderte Leistung wurde
+        // Übersprungen heißt nicht bestanden: die geforderte Leistung wurde
         // nicht gezeigt.
         [Fact]
         public void Read_UebersprungenerTest_GiltAlsNichtBestanden()
@@ -162,8 +162,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Junit
             JUnitReportReader.Read(_directory).Count.ShouldBe(2);
         }
 
-        // Wird die JVM mitten im Lauf beendet, bleibt eine unvollstaendige Datei
-        // liegen. Sie darf den Leser nicht umbringen - der Aufrufer erklaert die
+        // Wird die JVM mitten im Lauf beendet, bleibt eine unvollständige Datei
+        // liegen. Sie darf den Leser nicht umbringen - der Aufrufer erklärt die
         // fehlenden Ergebnisse dann selbst.
         [Fact]
         public void Read_AbgeschnittenerReport_LiefertLeereListeStattZuWerfen()

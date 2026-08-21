@@ -4,15 +4,15 @@ type BrandMarkProps = {
   size?: number
 }
 
-// Das Zeichen der Anwendung. Bewusst die einzige blaue Flaeche im Produkt:
-// es kennzeichnet die Marke, waehrend Bernstein die Bedienung fuehrt und
-// Gruen und Rot ausschliesslich Bewertungen tragen.
+// Das Zeichen der Anwendung. Bewusst die einzige blaue Fläche im Produkt:
+// es kennzeichnet die Marke, während Bernstein die Bedienung führt und
+// Grün und Rot ausschließlich Bewertungen tragen.
 //
 // Dieselbe Form liegt als public/favicon.svg noch einmal als Datei — der
 // Browser kann ein Favicon nicht aus einer React-Komponente beziehen.
 export function BrandMark({ size = 28 }: BrandMarkProps) {
-  // Bei mehreren Marken auf einer Seite duerfen sich die Verlaufs-IDs nicht
-  // ueberschneiden, sonst zieht die zweite die Fuellung der ersten.
+  // Bei mehreren Marken auf einer Seite dürfen sich die Verlaufs-IDs nicht
+  // überschneiden, sonst zieht die zweite die Füllung der ersten.
   const gradientId = useId()
 
   return (

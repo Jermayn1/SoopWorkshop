@@ -6,22 +6,22 @@ import type { Task, TaskCategoryWeight, TaskTest, UnitTestFile } from '../../api
 
 type Schemas = components['schemas']
 
-// Die Grunddaten einer Aufgabe samt Vertrag und Tipps. Testfaelle, JUnit-Dateien
-// und Gewichte hoert dieser Endpunkt nicht — die haben eigene, weil die
-// oeffentliche Aufgabe sie nicht enthalten darf.
+// Die Grunddaten einer Aufgabe samt Vertrag und Tipps. Testfälle, JUnit-Dateien
+// und Gewichte hört dieser Endpunkt nicht — die haben eigene, weil die
+// öffentliche Aufgabe sie nicht enthalten darf.
 export async function fetchAdminTask(id: string, signal?: AbortSignal): Promise<ApiResult<Task>> {
   const result = await request<Schemas['TaskItemDto']>(`/api/admin/tasks/${id}`, { signal })
   return mapResult(result, toTask)
 }
 
 // Eine geforderte Klasse im Formular. Ohne Id: beim Speichern wird der Vertrag
-// als Ganzes ersetzt, eine Identitaet braucht er dabei nicht.
+// als Ganzes ersetzt, eine Identität braucht er dabei nicht.
 export type ExpectedTypeDraft = {
   name: string
   methods: string[]
 }
 
-// Was in beiden Richtungen gleich aussieht — beim Anlegen und beim Aendern.
+// Was in beiden Richtungen gleich aussieht — beim Anlegen und beim Ändern.
 export type TaskDraft = {
   taskCategoryId: string
   title: string
@@ -57,9 +57,9 @@ export async function createTask(
     evaluationMode: draft.evaluationMode,
     expectedTypes: toExpectedTypes(draft),
     hints: draft.hints,
-    // Immer verborgen anlegen. Beim Anlegen gibt es die Testfaelle noch nicht,
-    // und IsVisible umgeht im Backend die Pruefung auf passende Testdaten —
-    // eine sofort sichtbare Aufgabe waere also womoeglich eine, die still
+    // Immer verborgen anlegen. Beim Anlegen gibt es die Testfälle noch nicht,
+    // und IsVisible umgeht im Backend die Prüfung auf passende Testdaten —
+    // eine sofort sichtbare Aufgabe wäre also womöglich eine, die still
     // milder bewertet wird.
     isVisible: false,
   }
@@ -89,8 +89,8 @@ export async function updateTask(
     evaluationMode: draft.evaluationMode,
     expectedTypes: toExpectedTypes(draft),
     hints: draft.hints,
-    // Unveraendert durchreichen: umgeschaltet wird ueber den eigenen Endpunkt,
-    // der die Testdaten dabei prueft.
+    // Unverändert durchreichen: umgeschaltet wird über den eigenen Endpunkt,
+    // der die Testdaten dabei prüft.
     isVisible,
   }
 
@@ -103,7 +103,7 @@ export async function updateTask(
   return mapResult(result, toTask)
 }
 
-// Nimmt per Cascade alle Testfaelle, JUnit-Dateien, Gewichte und Abgaben mit.
+// Nimmt per Cascade alle Testfälle, JUnit-Dateien, Gewichte und Abgaben mit.
 export function deleteTask(id: string, signal?: AbortSignal): Promise<ApiResult<void>> {
   return jsonRequest<void>(`/api/admin/tasks/${id}`, 'DELETE', undefined, signal)
 }
@@ -120,7 +120,7 @@ export function toggleTaskVisibility(
   )
 }
 
-// ── Konsolen-Testfaelle ────────────────────────────────────────────────
+// ── Konsolen-Testfälle ────────────────────────────────────────────────
 
 export async function fetchTaskTests(
   taskItemId: string,
@@ -135,7 +135,7 @@ export async function fetchTaskTests(
 
 export type TaskTestDraft = Pick<TaskTest, 'input' | 'expectedOutput' | 'description'>
 
-// Blockspeicherung: was nicht mitkommt, wird geloescht. Die Reihenfolge ergibt
+// Blockspeicherung: was nicht mitkommt, wird gelöscht. Die Reihenfolge ergibt
 // sich aus der Position in der Liste — der Nutzer verschiebt Zeilen, er tippt
 // keine Ordnungszahlen.
 export async function saveTaskTests(
@@ -164,12 +164,10 @@ export async function saveTaskTests(
 
 // ── JUnit-Dateien ──────────────────────────────────────────────────────
 
-// Nur lesend. Das Bearbeiten kommt in Etappe 5.3 — gebraucht wird die Liste
-// aber schon jetzt: ohne sie kann der Editor nicht sagen, ob eine Aufgabe im
-// Modus UnitTestOnly ueberhaupt freigeschaltet werden darf.
-//
 // Anders als TaskItemDto.visibleUnitTestFiles kommen hier ALLE Dateien mit,
-// auch die fuer Teilnehmer verborgenen.
+// auch die für Teilnehmer verborgenen. Der Editor braucht die vollständige
+// Liste, sonst kann er nicht sagen, ob eine Aufgabe im Modus UnitTestOnly
+// überhaupt freigeschaltet werden darf.
 export async function fetchTaskUnitTestFiles(
   taskItemId: string,
   signal?: AbortSignal,
@@ -186,11 +184,11 @@ export type UnitTestFileDraft = Pick<
   'fileName' | 'content' | 'isVisibleToParticipant'
 >
 
-// Blockspeicherung: was nicht mitkommt, wird geloescht. Die Reihenfolge ergibt
+// Blockspeicherung: was nicht mitkommt, wird gelöscht. Die Reihenfolge ergibt
 // sich aus der Position in der Liste.
 //
 // Achtung: der Server vergibt dabei NEUE Ids (SaveAllAsync). Wer die Antwort
-// nicht uebernimmt, arbeitet danach mit veralteten Schluesseln weiter.
+// nicht übernimmt, arbeitet danach mit veralteten Schlüsseln weiter.
 export async function saveTaskUnitTestFiles(
   taskItemId: string,
   files: UnitTestFileDraft[],

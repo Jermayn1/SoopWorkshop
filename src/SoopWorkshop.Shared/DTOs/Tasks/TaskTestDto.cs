@@ -1,7 +1,7 @@
 ﻿namespace SoopWorkshop.Shared.DTOs.Tasks
 {
-    // Lese-DTO fuer einen Konsolen-Testfall.
-    // Zum Anlegen und Aendern dienen CreateTaskTestDto und UpdateTaskTestDto
+    // Lese-DTO für einen Konsolen-Testfall.
+    // Zum Anlegen und Ändern dienen CreateTaskTestDto und UpdateTaskTestDto
     // unter DTOs/Tasks/Requests.
     public class TaskTestDto
     {

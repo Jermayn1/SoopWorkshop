@@ -18,14 +18,9 @@ artifacts/
 
 # Nicht Teil der Anwendung
 .git/
-.github/
 .vs/
 .idea/
 .claude/
-.config/
-archive/
-docs/
-scripts/
 tests/
 **/*.md
 !README.md

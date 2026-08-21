@@ -48,8 +48,8 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
           <BrandMark size={32} />
           Soop Judge
         </NavLink>
-        {/* Kennzeichnung in Slate. Gruen und Rot sind im ganzen Projekt fuer
-            Bewertungen reserviert — ein gruener Rahmen hier hiesse "bestanden". */}
+        {/* Kennzeichnung in Slate. Grün und Rot sind im ganzen Projekt für
+            Bewertungen reserviert — ein grüner Rahmen hier hieße "bestanden". */}
         <span className="mt-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
           Verwaltung
         </span>
@@ -138,7 +138,7 @@ export function AdminSidebar({ categories, loading, error, onRetry }: AdminSideb
                   </span>
                 </button>
 
-                {/* Wie in der Teilnehmerleiste: das Raster faehrt von 1fr auf
+                {/* Wie in der Teilnehmerleiste: das Raster fährt von 1fr auf
                     0fr, und "inert" nimmt den eingeklappten Bereich aus der
                     Tab-Reihenfolge. Ohne das blieben die Links antabbar. */}
                 <div id={regionId} className={`klapp ${isOpen ? '' : 'klapp-zu'}`} inert={!isOpen}>

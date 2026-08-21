@@ -2,15 +2,15 @@
 #
 # Der Build-Kontext ist das REPOSITORY-WURZELVERZEICHNIS, nicht dieser Ordner -
 # gebraucht werden Directory.Build.props, Directory.Packages.props und lib/.
-# Aufruf deshalb ueber docker-compose.yml (context: .), nicht mit "docker build"
+# Aufruf deshalb über docker-compose.yml (context: .), nicht mit "docker build"
 # aus diesem Verzeichnis heraus.
 
 # ---------------------------------------------------------------- Bauen -------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /quelle
 
-# Erst nur die Projektdateien: solange sich keine Abhaengigkeit aendert, bleibt
-# die wiederhergestellte Paketschicht im Cache und ein Codeaenderung kostet
+# Erst nur die Projektdateien: solange sich keine Abhängigkeit ändert, bleibt
+# die wiederhergestellte Paketschicht im Cache und ein Codeänderung kostet
 # keinen erneuten Restore.
 COPY Directory.Build.props Directory.Packages.props ./
 COPY src/SoopWorkshop.Shared/SoopWorkshop.Shared.csproj                             src/SoopWorkshop.Shared/
@@ -32,11 +32,11 @@ RUN dotnet publish src/SoopWorkshop.Backend.API/SoopWorkshop.Backend.API.csproj 
 # --------------------------------------------------------------- Laufen -------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
-# Das JDK gehoert in die LAUFZEIT, nicht in den Build: javac und java werden zur
+# Das JDK gehört in die LAUFZEIT, nicht in den Build: javac und java werden zur
 # Auswertung jeder Abgabe als Prozess aufgerufen (IProcessRunner). Fehlen sie,
 # scheitert nicht der Start, sondern still jede einzelne Abgabe.
 #
-# curl fuer den Healthcheck aus docker-compose.yml - die aspnet-Images bringen
+# curl für den Healthcheck aus docker-compose.yml - die aspnet-Images bringen
 # es nicht mit.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -53,14 +53,14 @@ COPY --from=build /anwendung .
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
-# Das Verzeichnis der DataProtection-Schluessel muss SCHON IM IMAGE dem
-# Benutzer app gehoeren, unter dem der Prozess laeuft.
+# Das Verzeichnis der DataProtection-Schlüssel muss SCHON IM IMAGE dem
+# Benutzer app gehören, unter dem der Prozess läuft.
 #
 # Grund: docker-compose.yml mountet dort ein benanntes Volume. Ein frisches
-# Volume uebernimmt Inhalt UND Eigentuemer aus dem Image - existiert das
-# Verzeichnis dort nicht, legt Docker es an und es gehoert root. Der Prozess
-# kann dann keinen Schluessel schreiben, und die ANMELDUNG scheitert mit einem
-# 500er, waehrend alles andere laeuft. Genau so ist es beim ersten Anlauf
+# Volume übernimmt Inhalt UND Eigentümer aus dem Image - existiert das
+# Verzeichnis dort nicht, legt Docker es an und es gehört root. Der Prozess
+# kann dann keinen Schlüssel schreiben, und die ANMELDUNG scheitert mit einem
+# 500er, während alles andere läuft. Genau so ist es beim ersten Anlauf
 # passiert (UnauthorizedAccessException in FileSystemXmlRepository).
 RUN mkdir -p /home/app/.aspnet/DataProtection-Keys \
     && chown -R app:app /home/app

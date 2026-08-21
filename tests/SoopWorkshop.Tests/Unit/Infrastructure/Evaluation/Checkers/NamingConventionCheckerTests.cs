@@ -13,7 +13,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         private Task<CheckerOutcome> CheckAsync(IReadOnlyList<SubmissionFile> files) =>
             _checker.CheckAsync(EvaluationContextFactory.For(files: files), CancellationToken.None);
 
-        // Reihenfolge der Teilpruefungen: 0 = Klassennamen, 1 = keine snake_case-Bezeichner.
+        // Reihenfolge der Teilprüfungen: 0 = Klassennamen, 1 = keine snake_case-Bezeichner.
         private static TestCaseResult ClassNames(CheckerOutcome outcome) => outcome.Results.ElementAt(0);
 
         private static TestCaseResult CamelCase(CheckerOutcome outcome) => outcome.Results.ElementAt(1);
@@ -91,8 +91,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldNotBeNullOrEmpty();
         }
 
-        // Ohne Klassendeklaration gilt die PascalCase-Pruefung als bestanden,
-        // weil es nichts zu pruefen gibt.
+        // Ohne Klassendeklaration gilt die PascalCase-Prüfung als bestanden,
+        // weil es nichts zu prüfen gibt.
         [Fact]
         public async Task CheckAsync_OhneKlassendeklaration_BestehtBeideTeilpruefungen()
         {
@@ -108,7 +108,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // SCREAMING_SNAKE_CASE ist fuer Java-Konstanten korrekt und wird
+        // SCREAMING_SNAKE_CASE ist für Java-Konstanten korrekt und wird
         // vom Regex bewusst nicht erfasst.
         [Fact]
         public async Task CheckAsync_ScreamingSnakeCaseKonstante_BestehtBeideTeilpruefungen()
@@ -125,8 +125,9 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Behebt das Finding aus §9: frueher schlug der Regex hier an, obwohl der
-        // Code selbst einwandfrei war. Kommentare werden jetzt vorher entfernt.
+        // Der Quelltext läuft vorher durch StripCommentsAndLiterals. Ohne das
+        // schlägt der Regex auf einen Klassennamen an, der nur in einem Kommentar
+        // steht - der Code selbst wäre einwandfrei.
         [Fact]
         public async Task CheckAsync_KlassennameImKommentar_WirdNichtMehrBeanstandet()
         {
@@ -160,8 +161,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             ClassNames(outcome).Passed.ShouldBeTrue();
         }
 
-        // Zweite Auspraegung desselben Findings: snake_case in einer Ausgabe sagt
-        // nichts ueber die Benennung im Programm aus.
+        // Dieselbe Absicherung für String-Literale: snake_case in einer Ausgabe
+        // sagt nichts über die Benennung im Programm aus.
         [Fact]
         public async Task CheckAsync_SnakeCaseImStringLiteral_WirdNichtMehrBeanstandet()
         {
@@ -179,8 +180,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             CamelCase(outcome).Passed.ShouldBeTrue();
         }
 
-        // Der Verstoss im echten Code darf durch das Entfernen der Literale
-        // natuerlich nicht verschwinden.
+        // Der Verstoß im echten Code darf durch das Entfernen der Literale
+        // natürlich nicht verschwinden.
         [Fact]
         public async Task CheckAsync_SnakeCaseImCodeUndImString_WirdWeiterhinBeanstandet()
         {
@@ -221,7 +222,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.Count.ShouldBe(2);
         }
 
-        // Namenskonventionen sind seit der Bewertungs-Engine v2 eine Teilpruefung
+        // Namenskonventionen sind seit der Bewertungs-Engine v2 eine Teilprüfung
         // unter Clean Code und keine eigene Kategorie mehr.
         [Fact]
         public void Category_IstCleanCode()

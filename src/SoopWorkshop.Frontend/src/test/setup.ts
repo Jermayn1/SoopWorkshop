@@ -2,13 +2,13 @@ import '@testing-library/jest-dom/vitest'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
-// jsdom kennt matchMedia nicht. ResultView fragt darueber
+// jsdom kennt matchMedia nicht. ResultView fragt darüber
 // prefers-reduced-motion ab; ohne Stub wirft der erste Render.
 //
-// matches: true ist Absicht und nicht bloss der bequemere Wert: damit setzt
-// useCountUp den Zielwert sofort statt ihn ueber requestAnimationFrame
-// hochzuzaehlen, und der Punktestand steht ohne Warten im DOM. Bewegung laesst
-// sich ohnehin nicht sinnvoll automatisiert pruefen (CLAUDE.md §6.1).
+// matches: true ist Absicht und nicht bloß der bequemere Wert: damit setzt
+// useCountUp den Zielwert sofort, statt ihn über requestAnimationFrame
+// hochzuzählen, und der Punktestand steht ohne Warten im DOM. Geprüft wird
+// damit das Ergebnis der Animation, nicht ihr Ablauf.
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
@@ -24,7 +24,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Ohne das teilen sich aufeinanderfolgende Tests denselben DOM-Baum, und ein
-// getByText faende das Element aus dem vorherigen Test.
+// getByText fände das Element aus dem vorherigen Test.
 afterEach(() => {
   cleanup()
 })

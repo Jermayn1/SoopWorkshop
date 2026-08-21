@@ -2,14 +2,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
 {
-    // Setzt alle Konsolen-Testfaelle einer Aufgabe in einem Aufruf, wie es
-    // SaveTaskUnitTestFilesDto fuer die JUnit-Dateien tut - was hier nicht
-    // drinsteht, wird geloescht.
+    // Setzt alle Konsolen-Testfälle einer Aufgabe in einem Aufruf, wie es
+    // SaveTaskUnitTestFilesDto für die JUnit-Dateien tut - was hier nicht
+    // drinsteht, wird gelöscht.
     //
-    // Der Editor bearbeitet die Testfaelle einer Aufgabe als Block. Ohne diesen
-    // Endpunkt muesste er pro Zeile einzeln anlegen, aendern und loeschen und
-    // koennte mitten in der Folge scheitern - die Aufgabe stuende dann mit einer
-    // halb gespeicherten Pruefung da.
+    // Der Editor bearbeitet die Testfälle einer Aufgabe als Block. Ohne diesen
+    // Endpunkt müsste er pro Zeile einzeln anlegen, ändern und löschen und
+    // könnte mitten in der Folge scheitern - die Aufgabe stünde dann mit einer
+    // halb gespeicherten Prüfung da.
     public class SaveTaskTestsDto
     {
         [Required]
@@ -26,9 +26,10 @@ namespace SoopWorkshop.Shared.DTOs.Tasks.Requests
         [Required(ErrorMessage = "Die erwartete Ausgabe ist erforderlich.")]
         public string ExpectedOutput { get; set; } = string.Empty;
 
-        // Der Satz, den der Teilnehmer als Beschreibung der Teilpruefung liest —
-        // Wortlaut nach §5.7: eine Aussage ueber die Abgabe, nicht ueber das
-        // Ergebnis ("Das Programm addiert zwei positive Zahlen").
+        // Der Satz, den der Teilnehmer als Beschreibung der Teilprüfung liest.
+        // Er ist eine Aussage über die Abgabe, nicht über das Ergebnis des Laufs
+        // ("Das Programm addiert zwei positive Zahlen") - ob sie zutrifft, sagt
+        // das Häkchen daneben.
         [Required(ErrorMessage = "Die Beschreibung ist erforderlich.")]
         [MaxLength(500, ErrorMessage = "Die Beschreibung darf maximal 500 Zeichen lang sein.")]
         public string Description { get; set; } = string.Empty;

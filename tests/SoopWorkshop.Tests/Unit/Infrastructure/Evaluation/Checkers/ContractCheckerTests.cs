@@ -56,7 +56,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
         }
 
         // Der Fall, wegen dem es den Checker gibt: Java erzwingt nur, dass
-        // Dateiname und Klassenname zusammenpassen - nicht, dass sie heissen wie
+        // Dateiname und Klassenname zusammenpassen - nicht, dass sie heißen wie
         // die Aufgabe verlangt.
         [Fact]
         public async Task CheckAsync_FalscherKlassenname_FaelltDurchUndNenntBeideNamen()
@@ -91,7 +91,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeTrue();
         }
 
-        // Gross-/Kleinschreibung ist in Java bedeutsam - 'main' ist nicht 'Main'.
+        // Groß-/Kleinschreibung ist in Java bedeutsam - 'main' ist nicht 'Main'.
         [Fact]
         public async Task CheckAsync_KlassennameNurAndersGeschrieben_FaelltDurch()
         {
@@ -110,8 +110,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             var method = outcome.Results.Single(result => result.Description.Contains("Methode"));
             method.Passed.ShouldBeFalse();
 
-            // Der Name in der Ueberschrift, die vollstaendige Signatur daneben -
-            // sonst sprengt sie die Zeile und laesst sich nicht vergleichen.
+            // Der Name in der Überschrift, die vollständige Signatur daneben -
+            // sonst sprengt sie die Zeile und lässt sich nicht vergleichen.
             method.Description.ShouldBe("Die Methode „addiere“ steht in „Main“");
             method.ExpectedOutput.ShouldBe("public static int addiere(int a, int b)");
             method.ActualOutput.ShouldBe("in dieser Klasse nicht gefunden");
@@ -163,8 +163,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.ErrorTip.ShouldBeNull();
         }
 
-        // Der eigentliche Grund fuer den Umbau: vorher wurde im gesamten
-        // Quelltext gesucht, 'einzahlen' zaehlte also auch dann als vorhanden,
+        // Der eigentliche Grund für den Umbau: vorher wurde im gesamten
+        // Quelltext gesucht, 'einzahlen' zählte also auch dann als vorhanden,
         // wenn es in der falschen Klasse stand.
         [Fact]
         public async Task CheckAsync_MethodeInDerFalschenKlasse_FaelltDurch()
@@ -189,8 +189,8 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
                 .ShouldAllBe(result => result.Passed);
         }
 
-        // Fehlt die Klasse, wird ihre Methode trotzdem als eigene Teilpruefung
-        // gezeigt - eine verschwiegene Pruefung waere eine stillschweigend
+        // Fehlt die Klasse, wird ihre Methode trotzdem als eigene Teilprüfung
+        // gezeigt - eine verschwiegene Prüfung wäre eine stillschweigend
         // mildere Bewertung.
         [Fact]
         public async Task CheckAsync_KlasseFehlt_MeldetAuchIhreMethodenAlsNichtBestanden()
@@ -206,10 +206,10 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             method.ActualOutput.ShouldBe("Klasse „Konto“ fehlt");
         }
 
-        // Ist-Verhalten, bewusst hingenommen: der Rumpf wird ueber Klammern
-        // abgegrenzt, eine innere Klasse liegt damit im Rumpf der aeusseren und
-        // ihre Methoden zaehlen auch fuer diese. Innere Klassen kommen im
-        // Workshop nicht vor, und die genaue Zugehoerigkeit prueft die
+        // Ist-Verhalten, bewusst hingenommen: der Rumpf wird über Klammern
+        // abgegrenzt, eine innere Klasse liegt damit im Rumpf der äußeren und
+        // ihre Methoden zählen auch für diese. Innere Klassen kommen im
+        // Workshop nicht vor, und die genaue Zugehörigkeit prüft die
         // JUnit-Kompilierung ohnehin exakt.
         [Fact]
         public async Task CheckAsync_MethodeInInnererKlasse_ZaehltAuchFuerDieAeussere()
@@ -227,7 +227,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Kommentare und Zeichenketten sind kein Code - eine dort erwaehnte
+        // Kommentare und Zeichenketten sind kein Code - eine dort erwähnte
         // Klasse ist nicht deklariert.
         [Fact]
         public async Task CheckAsync_KlassennameNurImKommentar_FaelltDurch()
@@ -235,7 +235,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             var outcome = await CheckAsync(
                 Task(Type("Main")),
                 """
-                // class Main waere hier richtig gewesen
+                // class Main wäre hier richtig gewesen
                 public class Rechner {
                     String hinweis = "class Main";
                 }
@@ -244,10 +244,10 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldHaveSingleItem().Passed.ShouldBeFalse();
         }
 
-        // Ist-Verhalten, bewusst hingenommen: geprueft wird die Anwesenheit des
-        // Namens vor einer Klammer, nicht die vollstaendige Deklaration. Ein
-        // blosser Aufruf zaehlt deshalb bereits als Treffer. Die exakte Signatur
-        // prueft ohnehin der Compiler beim Uebersetzen der JUnit-Datei.
+        // Ist-Verhalten, bewusst hingenommen: geprüft wird die Anwesenheit des
+        // Namens vor einer Klammer, nicht die vollständige Deklaration. Ein
+        // bloßer Aufruf zählt deshalb bereits als Treffer. Die exakte Signatur
+        // prüft ohnehin der Compiler beim Übersetzen der JUnit-Datei.
         [Fact]
         public async Task CheckAsync_MethodeNurAufgerufen_GiltBereitsAlsVorhanden()
         {
@@ -258,7 +258,7 @@ namespace SoopWorkshop.Tests.Unit.Infrastructure.Evaluation.Checkers
             outcome.Results.ShouldAllBe(result => result.Passed);
         }
 
-        // Ein Aufruf auf einem Objekt zaehlt dagegen nicht - sonst wuerde jede
+        // Ein Aufruf auf einem Objekt zählt dagegen nicht - sonst würde jede
         // Nutzung einer fremden Bibliothek als eigene Methode durchgehen.
         [Fact]
         public async Task CheckAsync_MethodenaufrufAufFremdemObjekt_ZaehltNicht()

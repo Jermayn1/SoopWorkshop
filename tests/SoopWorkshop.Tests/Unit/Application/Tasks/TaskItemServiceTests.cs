@@ -55,8 +55,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             await _taskItemRepository.Received(1).AddAsync(Arg.Any<TaskItem>());
         }
 
-        // Vorher lief das in die Fremdschluesselbedingung und kam als 500
-        // "Ein unerwarteter Fehler ist aufgetreten." zurueck.
+        // Vorher lief das in die Fremdschlüsselbedingung und kam als 500
+        // "Ein unerwarteter Fehler ist aufgetreten." zurück.
         [Fact]
         public async Task CreateAsync_KategorieExistiertNicht_LiefertFehlerUndLegtNichtsAn()
         {
@@ -74,7 +74,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             await _taskItemRepository.DidNotReceive().AddAsync(Arg.Any<TaskItem>());
         }
 
-        // Umhaengen war ueber die API gar nicht moeglich, weil UpdateTaskItemDto
+        // Umhängen war über die API gar nicht möglich, weil UpdateTaskItemDto
         // kein TaskCategoryId hatte.
         [Fact]
         public async Task UpdateAsync_AndereKategorie_HaengtDieAufgabeUm()
@@ -116,17 +116,18 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             await _taskItemRepository.DidNotReceive().UpdateAsync(Arg.Any<TaskItem>());
         }
 
-        // Regressionswache fuer einen 500er, der jede Aenderung an einer Aufgabe
+        // Regressionswache für einen 500er, der jede Änderung an einer Aufgabe
         // mit Tipps oder Signaturen getroffen hat.
         //
-        // Beim Aendern ist die Aufgabe bereits von EF verfolgt. An einem gesetzten
-        // Schluessel erkennt die Aenderungsverfolgung eine BESTEHENDE Zeile und
+        // Beim Ändern ist die Aufgabe bereits von EF verfolgt. An einem gesetzten
+        // Schlüssel erkennt die Änderungsverfolgung eine BESTEHENDE Zeile und
         // schickt ein UPDATE auf etwas, das es nicht gibt -> null betroffene
-        // Zeilen -> DbUpdateConcurrencyException. Neue Kinder muessen deshalb
+        // Zeilen -> DbUpdateConcurrencyException. Neue Kinder müssen deshalb
         // ohne Id in die Sammlung wandern.
         //
-        // Den Fehler selbst kann dieser Test nicht ausloesen - dazu braeuchte er
-        // eine echte Datenbank (Phase 6, §10.5). Er haelt aber die Ursache fest.
+        // Den Fehler selbst kann dieser Test nicht auslösen - dazu bräuchte er
+        // eine echte Datenbank. Er hält aber die Ursache fest; die Wirkung prüft
+        // AdminTasksControllerTests gegen PostgreSQL.
         [Fact]
         public async Task UpdateAsync_NeueTippsUndKlassen_KommenOhneVorgegebeneIdInDieSammlung()
         {
@@ -209,7 +210,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             item.IsVisible.ShouldBeFalse();
         }
 
-        // Ausschalten ist immer erlaubt — die Pruefung gilt nur fuers Freischalten.
+        // Ausschalten ist immer erlaubt — die Prüfung gilt nur fürs Freischalten.
         [Fact]
         public async Task ToggleVisibilityAsync_SichtbareAufgabeOhneTestdaten_LaesstSichVerbergen()
         {
@@ -223,10 +224,10 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
             item.IsVisible.ShouldBeFalse();
         }
 
-        // Auf dieser Filterung steht die Vorschau aus Etappe 5.5: das Panel laedt
-        // ueber denselben DTO wie die oeffentliche Seite und ist damit ehrlich
-        // durch Konstruktion. Faellt die Filterung weg, faellt sie unbemerkt mit —
-        // im Panel saehe alles weiter richtig aus.
+        // Auf dieser Filterung steht die Vorschau im Verwaltungsbereich: sie lädt
+        // über denselben DTO wie die öffentliche Seite und ist damit ehrlich
+        // durch Konstruktion. Fällt die Filterung weg, fällt sie unbemerkt mit —
+        // in der Vorschau sähe alles weiter richtig aus.
         [Fact]
         public async Task GetByIdAsync_NurFreigeschalteteJUnitDateienVerlassenDenAdminBereich()
         {

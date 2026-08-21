@@ -53,7 +53,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Is<List<TaskTest>>(tests => tests.Count == 2));
         }
 
-        // Eine leere Liste ist eine gueltige Angabe: sie loescht alle Testfaelle.
+        // Eine leere Liste ist eine gültige Angabe: sie löscht alle Testfälle.
         // Das braucht der Editor, wenn der Modus auf UnitTestOnly wechselt.
         [Fact]
         public async Task SaveAllAsync_LeereListe_LoeschtAlleTestfaelle()
@@ -92,8 +92,8 @@ namespace SoopWorkshop.Tests.Unit.Application.Tasks
                 Arg.Any<Guid>(), Arg.Any<List<TaskTest>>());
         }
 
-        // Zwei Testfaelle auf derselben Position machen die Anzeigereihenfolge
-        // von der Datenbank abhaengig statt von der Vorgabe.
+        // Zwei Testfälle auf derselben Position machen die Anzeigereihenfolge
+        // von der Datenbank abhängig statt von der Vorgabe.
         [Fact]
         public async Task SaveAllAsync_DoppelteReihenfolge_LehntAb()
         {

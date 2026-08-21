@@ -31,8 +31,8 @@ namespace SoopWorkshop.Tests.Integration.Repositories
 
         // Die Filterung greift auf ZWEI Ebenen, und das ist der Kern: eine
         // sichtbare Kategorie darf keine verborgene Aufgabe durchlassen. Ohne
-        // das Where im Include stuenden unfertige Aufgaben in der
-        // Teilnehmersicht, obwohl sie ausdruecklich verborgen sind.
+        // das Where im Include stünden unfertige Aufgaben in der
+        // Teilnehmersicht, obwohl sie ausdrücklich verborgen sind.
         [Fact]
         public async Task GetAllVisibleAsync_FiltertKategorieUndAufgabe()
         {
@@ -85,10 +85,10 @@ namespace SoopWorkshop.Tests.Integration.Repositories
             });
         }
 
-        // Darauf steht der Replace-Import aus Etappe 5.4: die Vorschau nennt die
-        // Zahl der Abgaben, die mitgehen. Traegt die Kaskade nicht bis dorthin,
-        // bricht der Import an einer Fremdschluesselbedingung ab - oder, schlimmer,
-        // die Vorschau sagt etwas anderes als das, was passiert.
+        // Darauf steht der Replace-Import: seine Vorschau nennt die Zahl der
+        // Abgaben, die mitgehen. Trägt die Kaskade nicht bis dorthin, bricht der
+        // Import an einer Fremdschlüsselbedingung ab - oder, schlimmer, die
+        // Vorschau sagt etwas anderes als das, was danach passiert.
         [Fact]
         public async Task DeleteAsync_LoeschtAllesDarunterBisZurAbgabe()
         {

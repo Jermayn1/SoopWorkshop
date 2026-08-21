@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchSession, login, logout } from './api/session'
 
-// Vier Zustaende, nicht zwei. "Nicht angemeldet" und "Server antwortet nicht"
+// Vier Zustände, nicht zwei. "Nicht angemeldet" und "Server antwortet nicht"
 // verlangen verschiedene Bildschirme: beim einen hilft das Passwort, beim
 // anderen nur ein laufendes Backend. Wer beides zusammenwirft, zeigt bei
 // gestopptem Server eine Anmeldemaske, die nie funktionieren kann.
@@ -35,12 +35,12 @@ export function useAdminSession() {
     return () => controller.abort()
   }, [attempt])
 
-  // Erneut versuchen nach dem Muster aus AppLayout: ein Zaehler in der
-  // Abhaengigkeitsliste stoesst den Effekt an.
+  // Erneut versuchen nach dem Muster aus AppLayout: ein Zähler in der
+  // Abhängigkeitsliste stößt den Effekt an.
   const recheck = useCallback(() => setAttempt((n) => n + 1), [])
 
-  // Liefert die Begruendung des Servers zurueck, oder null bei Erfolg. Die
-  // Meldung kommt im Wortlaut aus der API — wie ueberall sonst auch.
+  // Liefert die Begründung des Servers zurück, oder null bei Erfolg. Die
+  // Meldung kommt im Wortlaut aus der API — wie überall sonst auch.
   const signIn = useCallback(async (password: string): Promise<string | null> => {
     const result = await login(password)
 
@@ -53,7 +53,7 @@ export function useAdminSession() {
   }, [])
 
   const signOut = useCallback(async () => {
-    // Das Ergebnis wird bewusst nicht geprueft: der Endpunkt antwortet auch
+    // Das Ergebnis wird bewusst nicht geprüft: der Endpunkt antwortet auch
     // dann mit 204, wenn gar keine Sitzung mehr bestand. Und scheitert der
     // Aufruf am Netz, ist Abmelden trotzdem das, was der Nutzer wollte.
     await logout()

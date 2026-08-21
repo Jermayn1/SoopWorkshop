@@ -1,11 +1,11 @@
 namespace SoopWorkshop.Shared.Constants
 {
-    // Die Laengengrenzen der Aufgabenverwaltung an einer Stelle.
+    // Die Längengrenzen der Aufgabenverwaltung an einer Stelle.
     //
     // Sie stammen aus den EF-Konfigurationen (TaskCategoryConfiguration,
     // TaskItemConfiguration, TaskTestConfiguration, TaskUnitTestFileConfiguration,
-    // TaskExpectedTypeConfiguration) und stehen bisher zusaetzlich als
-    // DataAnnotations an den Request-DTOs. Der Import prueft gegen dieselben
+    // TaskExpectedTypeConfiguration) und stehen bisher zusätzlich als
+    // DataAnnotations an den Request-DTOs. Der Import prüft gegen dieselben
     // Werte - eine Datei soll nicht erst in der Datenbank scheitern.
     public static class TaskFieldLimits
     {

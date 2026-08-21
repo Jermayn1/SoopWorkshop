@@ -22,15 +22,15 @@ namespace SoopWorkshop.Backend.Application.Common
         public T? Value { get; private set; }
         public string ErrorMessage { get; private set; } = string.Empty;
 
-        // Nur bei IsSuccess == false aussagekraeftig.
+        // Nur bei IsSuccess == false aussagekräftig.
         public ResultFailure Failure { get; private set; }
 
         private Result() { }
 
         public static Result<T> Ok(T value) => new() { IsSuccess = true, Value = value };
 
-        // Bleibt der Standard, damit bestehende Aufrufer unveraendert gelten:
-        // ein Fehlschlag ohne naehere Angabe ist eine ungueltige Anfrage.
+        // Bleibt der Standard, damit bestehende Aufrufer unverändert gelten:
+        // ein Fehlschlag ohne nähere Angabe ist eine ungültige Anfrage.
         public static Result<T> Fail(string error) =>
             new() { IsSuccess = false, ErrorMessage = error, Failure = ResultFailure.Invalid };
 

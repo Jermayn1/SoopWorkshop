@@ -20,9 +20,9 @@ const MODE_OPTIONS = (Object.keys(MODE_LABELS) as EvaluationMode[]).map((value) 
   label: MODE_LABELS[value],
 }))
 
-// Bewusst nur das Noetigste. Vertrag, Tipps, Testfaelle und Gewichte kommen im
+// Bewusst nur das Nötigste. Vertrag, Tipps, Testfälle und Gewichte kommen im
 // Editor dazu — beim Anlegen gibt es sie noch gar nicht, und ein Formular, das
-// nach allem auf einmal fragt, beantwortet niemand vollstaendig.
+// nach allem auf einmal fragt, beantwortet niemand vollständig.
 export function NewTaskPage() {
   const navigate = useNavigate()
   const { categories, reload } = useAdminCatalog()
@@ -31,9 +31,9 @@ export function NewTaskPage() {
   const [categoryId, setCategoryId] = useState(params.get('kategorie') ?? '')
 
   // Die Vorauswahl kann nicht im Anfangswert von useState stehen: dieser Bau
-  // rendert, waehrend das Layout die Kategorien noch laedt, und useState nimmt
+  // rendert, während das Layout die Kategorien noch lädt, und useState nimmt
   // seinen Anfangswert nur beim ersten Mal. Die Liste war dann leer, die Auswahl
-  // blieb leer, und das Anlegen scheiterte an der eigenen Pruefung — obwohl im
+  // blieb leer, und das Anlegen scheiterte an der eigenen Prüfung — obwohl im
   // Auswahlfeld sichtbar eine Kategorie stand.
   useEffect(() => {
     if (categoryId.length === 0 && categories.length > 0) setCategoryId(categories[0].id)
@@ -60,7 +60,7 @@ export function NewTaskPage() {
 
     setBusy(true)
 
-    // Ans Ende der gewaehlten Kategorie einsortieren.
+    // Ans Ende der gewählten Kategorie einsortieren.
     const category = categories.find((c) => c.id === categoryId)
     const nextOrder = (category?.tasks.reduce((max, t) => Math.max(max, t.order), 0) ?? 0) + 1
 
@@ -71,8 +71,8 @@ export function NewTaskPage() {
       difficulty,
       order: nextOrder,
       evaluationMode,
-      // Der Vertrag entsteht im Editor: beim Anlegen weiss man oft noch nicht,
-      // wie die Klassen heissen sollen.
+      // Der Vertrag entsteht im Editor: beim Anlegen weiß man oft noch nicht,
+      // wie die Klassen heißen sollen.
       expectedTypes: [],
       hints: [],
     })
@@ -85,7 +85,7 @@ export function NewTaskPage() {
     }
 
     reload()
-    // Direkt in den Editor: dort kommen Vertrag, Testfaelle und Gewichte dazu.
+    // Direkt in den Editor: dort kommen Vertrag, Testfälle und Gewichte dazu.
     navigate(`/admin/aufgaben/${result.value.id}`)
   }
 

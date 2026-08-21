@@ -15,7 +15,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
-            // Reichlich Platz fuer einen Symbolnamen; die laengsten in der
+            // Reichlich Platz für einen Symbolnamen; die längsten in der
             // Sammlung haben rund 20 Zeichen.
             entityTypeBuilder.Property(c => c.IconName)
                 .IsRequired()

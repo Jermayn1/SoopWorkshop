@@ -10,7 +10,7 @@ namespace SoopWorkshop.Backend.Infrastructure.Persistence.Configurations
         {
             builder.HasKey(type => type.Id);
 
-            // Gleiche Laenge wie frueher ExpectedClassName auf der Aufgabe.
+            // Gleiche Länge wie früher ExpectedClassName auf der Aufgabe.
             builder.Property(type => type.Name)
                 .IsRequired()
                 .HasMaxLength(200);

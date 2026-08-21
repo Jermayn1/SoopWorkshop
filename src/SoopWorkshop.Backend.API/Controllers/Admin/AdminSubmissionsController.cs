@@ -6,10 +6,10 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Backend.API.Controllers.Admin
 {
-    // Uebersicht ueber die abgegebenen Loesungen. Der Nachzuegler aus Phase 5:
-    // beim Pflegen der Aufgaben half sie nicht (dafuer gibt es den Probelauf),
-    // waehrend des Workshops ist sie der einzige Weg zu sehen, wo die
-    // Teilnehmer stehen.
+    // Übersicht über die abgegebenen Lösungen. Sie beantwortet eine andere Frage
+    // als der Probelauf: nicht "bewertet die Aufgabe richtig", sondern "wo stehen
+    // die Teilnehmer gerade" — und ist damit der einzige Blick auf den laufenden
+    // Workshop.
     [ApiController]
     [Authorize]
     [Route("api/admin/submissions")]
@@ -24,7 +24,7 @@ namespace SoopWorkshop.Backend.API.Controllers.Admin
 
         // Seitenweise, neueste zuerst. Filter sind optional.
         //
-        // Die Zeilen tragen keine Auswertungsdetails - dafuer verlinkt das
+        // Die Zeilen tragen keine Auswertungsdetails - dafür verlinkt das
         // Panel auf /abgaben/{id}, also auf dieselbe Ergebnisanzeige, die der
         // Teilnehmer sieht. Eine zweite, nachgebaute Anzeige liefe beim ersten
         // Umbau auseinander (dieselbe Entscheidung wie bei der Vorschau in 5.5).

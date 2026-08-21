@@ -16,7 +16,7 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
             TaskBundleValidator.Validate(bundle).ShouldBeEmpty();
         }
 
-        // Ohne diese Pruefung liest eine spaetere Fassung die Datei still falsch.
+        // Ohne diese Prüfung liest eine spätere Fassung die Datei still falsch.
         [Fact]
         public void Validate_FremdesFormat_LehntAbUndPrueftNichtWeiter()
         {
@@ -104,10 +104,10 @@ namespace SoopWorkshop.Tests.Unit.Application.Transfer
                 .ShouldContain(error => error.Contains("größer als 0"));
         }
 
-        // Die Luecke, gegen die diese Pruefung gebaut ist: IsVisible kommt beim
-        // Anlegen und Aendern an DescribeMissingTestData vorbei, die greift nur
-        // ueber PATCH .../visibility. Eine Datei koennte also genau die Lage
-        // herstellen, gegen die die Pruefung existiert.
+        // Die Lücke, gegen die diese Prüfung gebaut ist: IsVisible kommt beim
+        // Anlegen und Ändern an DescribeMissingTestData vorbei, die greift nur
+        // über PATCH .../visibility. Eine Datei könnte also genau die Lage
+        // herstellen, gegen die die Prüfung existiert.
         [Fact]
         public void Validate_SichtbareAufgabeOhnePassendeTestdaten_LehntAb()
         {

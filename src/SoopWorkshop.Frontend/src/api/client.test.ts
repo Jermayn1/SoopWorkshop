@@ -45,7 +45,7 @@ describe('request — die fuenf Ausgaenge', () => {
   })
 
   // 401 und 403 fallen bewusst zusammen: bei genau einer Rolle ist "darf nicht"
-  // dasselbe wie "nicht angemeldet" - in beiden Faellen hilft nur die Anmeldung.
+  // dasselbe wie "nicht angemeldet" - in beiden Fällen hilft nur die Anmeldung.
   it.each([401, 403])('%i liefert unauthorized', async (status) => {
     gibZurueck(antwort(status, '', 'text/plain'))
 
@@ -98,7 +98,7 @@ describe('request — die fuenf Ausgaenge', () => {
 
   // Der Fall, an dem das stillgelegte Blazor-Frontend gescheitert ist: ohne
   // eigenen Ausgang stand bei gestopptem Backend "Diese Aufgabe gibt es nicht
-  // (mehr)" auf der Seite - die denkbar irrefuehrendste Auskunft.
+  // (mehr)" auf der Seite - die denkbar irreführendste Auskunft.
   it('ein Netzwerkfehler liefert unreachable, nicht notFound', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
@@ -109,8 +109,8 @@ describe('request — die fuenf Ausgaenge', () => {
   })
 
   // Ein Abbruch ist kein Fehler des Servers. Er wird durchgereicht, damit der
-  // Aufrufer ihn als das erkennt, was er ist - der Polling-Hook verlaesst sich
-  // darauf beim Aufraeumen.
+  // Aufrufer ihn als das erkennt, was er ist - der Polling-Hook verlässt sich
+  // darauf beim Aufräumen.
   it('ein Abbruch wird weitergeworfen statt verpackt', async () => {
     vi.stubGlobal(
       'fetch',
@@ -130,13 +130,13 @@ describe('request — was auf die Leitung geht', () => {
     const kopf = spy.mock.calls[0][1].headers.Accept
     expect(kopf).toBe('text/plain, application/json')
 
-    // Die Reihenfolge ist der ganze Punkt: ASP.NET waehlt den ersten passenden
+    // Die Reihenfolge ist der ganze Punkt: ASP.NET wählt den ersten passenden
     // Formatter. Stand JSON vorn, kam die Ablehnung als »"'notiz.txt' ist
-    // keine .java-Datei."« an - mit Anfuehrungszeichen.
+    // keine .java-Datei."« an - mit Anführungszeichen.
     expect(kopf.indexOf('text/plain')).toBeLessThan(kopf.indexOf('application/json'))
   })
 
-  // Ohne "include" laesst der Browser das Anmelde-Cookie weg, weil Frontend und
+  // Ohne "include" lässt der Browser das Anmelde-Cookie weg, weil Frontend und
   // API auf verschiedenen Ports liegen - jeder Admin-Endpunkt antwortet dann 401.
   it('schickt Anmeldedaten mit', async () => {
     const spy = gibZurueck(antwort(200, '{}'))
@@ -155,7 +155,7 @@ describe('request — was auf die Leitung geht', () => {
   })
 
   // Beim Hochladen muss der Browser den Content-Type selbst bilden, weil er die
-  // multipart-Grenze enthaelt. Deshalb steht er in jsonRequest und nicht in
+  // multipart-Grenze enthält. Deshalb steht er in jsonRequest und nicht in
   // request - wer ihn dort pauschal setzt, macht jeden Upload kaputt.
   it('setzt ohne Rumpf keinen Content-Type', async () => {
     const spy = gibZurueck(antwort(200, '{}'))

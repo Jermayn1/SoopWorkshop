@@ -10,7 +10,7 @@ type TextAreaProps = {
   error?: string
   placeholder?: string
   rows?: number
-  /** Monospace fuer alles, was Code oder Konsolenausgabe ist. */
+  /** Monospace für alles, was Code oder Konsolenausgabe ist. */
   mono?: boolean
   disabled?: boolean
 }
@@ -39,9 +39,9 @@ export function TextArea({
         aria-describedby={describedBy(id, hint !== undefined, error !== undefined)}
         aria-invalid={error !== undefined}
         disabled={disabled}
-        // Konsolenein- und -ausgaben werden Zeichen fuer Zeichen verglichen.
-        // Ein automatischer Umbruch im Feld wuerde vortaeuschen, dort stuenden
-        // Zeilenumbrueche, die gar nicht im Wert stehen.
+        // Konsolenein- und -ausgaben werden Zeichen für Zeichen verglichen.
+        // Ein automatischer Umbruch im Feld würde vortäuschen, dort stünden
+        // Zeilenumbrüche, die gar nicht im Wert stehen.
         spellCheck={!mono}
         className={`${inputClass(error !== undefined)} ${mono ? 'font-mono text-sm' : ''}`}
       />

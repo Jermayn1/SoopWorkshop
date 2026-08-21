@@ -3,8 +3,8 @@ using SoopWorkshop.Shared.Enums;
 
 namespace SoopWorkshop.Shared.DTOs.Transfer.Requests
 {
-    // Dieselbe Form fuer die Vorschau und fuer das Ausfuehren. Die Vorschau ist
-    // genau derselbe Aufruf ohne Schreiben - sonst koennten die beiden
+    // Dieselbe Form für die Vorschau und für das Ausführen. Die Vorschau ist
+    // genau derselbe Aufruf ohne Schreiben - sonst könnten die beiden
     // auseinanderlaufen.
     public class ImportRequestDto
     {

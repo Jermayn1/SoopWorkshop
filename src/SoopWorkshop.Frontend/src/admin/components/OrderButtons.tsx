@@ -11,10 +11,9 @@ type OrderButtonsProps = {
 
 // Hoch und runter statt Ziehen und Ablegen.
 //
-// Drag & Drop stand in der Roadmap als "idealerweise", loest aber dasselbe
-// Problem schlechter: es braucht entweder ein Paket oder eigene Pointer-Logik,
-// und es ist mit der Tastatur nicht bedienbar. Das waere ein Rueckschritt
-// gegenueber dem, was in Phase 4 an Barrierefreiheit erreicht wurde.
+// Drag & Drop löst dasselbe Problem schlechter: es braucht entweder ein Paket
+// oder eigene Pointer-Logik, und es ist mit der Tastatur nicht bedienbar. Zwei
+// Knöpfe sind es dagegen von selbst.
 export function OrderButtons({ label, onUp, onDown, canMoveUp, canMoveDown }: OrderButtonsProps) {
   const buttonClass =
     'rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent'
